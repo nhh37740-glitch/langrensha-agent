@@ -18,13 +18,12 @@
 - [需求分析](文档/需求/需求分析.md)
 - [架构与设计模式评估](文档/架构/架构与设计模式评估.md)
 - [首个可玩版本详细设计](文档/详细设计/首个可玩版本/详细设计.md)
-- [Wiki：阅读导航](https://github.com/nhh37740-glitch/langrensha-agent/wiki)
-- [项目看板](https://github.com/nhh37740-glitch/langrensha-agent/projects)
+- [中文任务看板](https://github.com/users/nhh37740-glitch/projects/2)
 
 ## 协作方式
 
 从最小可测试的对局内核起步。每项新功能或缺陷先建中文 Issue，在分支中实施，通过 PR 与 GitHub Actions 检查后合入 `main`。每项新功能合入后为对应主线提交打 Git tag；每个版本用 Archify 绘制与实际实现相符的图。具体规则以[开发流程](文档/规范/开发流程与协作规范.md)为准。
 
-Codex Cloud 用于编写、构建和验证代码；游戏最终运行位置仍需在实施阶段确定，部署后须核对实际入口和线上对局。当前不把云端开发环境当成已上线服务。
+Codex Cloud 用于编写、构建和验证代码；最终计划部署到用户服务器，具体方式在实施前核实。部署后须核对实际入口和线上对局，不能把云端开发环境当成已上线服务。
 
 仓库内 `.agents/skills/archify/` 固定保存 Archify 3.2.0，供 Codex Cloud 任务使用；其原始 [MIT 许可证](.agents/skills/archify/LICENSE) 与第三方声明随包保留。当前 GitHub Actions 只检查文档；业务代码出现后再由对应 Issue 补上 Python 与前端构建，不把文档检查称为应用编译。
