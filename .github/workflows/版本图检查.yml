@@ -1,0 +1,36 @@
+name: 版本图检查
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  diagram:
+    name: 版本图检查
+    runs-on: ubuntu-latest
+    steps:
+      - name: 获取仓库与图中引用的提交
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: 准备 Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: 核对版本图及浏览器布局
+        run: >-
+          node .agents/skills/archify/bin/archify.mjs finalize architecture
+          文档/版本/v0.1.0/最小内核架构.architecture.json
+          临时/版本图检查/最小内核架构.html
+          --repo-root . --quality showcase --out-dir 临时/版本图检查/证据 --json
+      - name: 保存版本图验证证据
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: 内核版本图验证
+          path: 临时/版本图检查/
