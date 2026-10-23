@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "langrensha-agent"
-version = "0.1.0"
+version = "0.2.0"
 description = "狼人杀智能体的确定性对局内核"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -12,9 +12,11 @@ dependencies = []
 
 [project.optional-dependencies]
 dev = ["pytest==8.4.2", "ruff==0.14.2", "build==1.3.0"]
+ai = ["langchain-deepseek==1.1.1", "langgraph==1.2.16", "python-dotenv==1.2.4"]
 
 [project.scripts]
 langrensha-demo = "langrensha.__main__:main"
+langrensha-ai-demo = "langrensha.ai_demo:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
