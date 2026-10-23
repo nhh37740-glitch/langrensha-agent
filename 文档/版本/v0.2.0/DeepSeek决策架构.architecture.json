@@ -8,7 +8,7 @@
     "quality_profile": "showcase",
     "repository": {
       "url": "https://github.com/nhh37740-glitch/langrensha-agent.git",
-      "revision": "857919995a6089df62e5066103b07675319dd99d",
+      "revision": "683d52cdac444dd04831994429cb4283b94cb49e",
       "provider": "github"
     }
   },
@@ -22,8 +22,8 @@
       "id": "decision-graph", "type": "backend", "label": "LangGraph 决策循环",
       "sublabel": "独立消息 · 有界轮数 · 弃权", "pos": [380, 40], "size": [240, 90],
       "sources": [
-        {"path": "src/langrensha/ai.py", "line": 116, "end_line": 205},
-        {"path": "src/langrensha/ai.py", "line": 207, "end_line": 274}
+        {"path": "src/langrensha/ai.py", "line": 116, "end_line": 220},
+        {"path": "src/langrensha/ai.py", "line": 222, "end_line": 289}
       ]
     },
     {
@@ -38,7 +38,7 @@
       "id": "bound-rule-service", "type": "security", "label": "会话与规则校验",
       "sublabel": "过滤视图 · 绑定操作者与窗口", "pos": [380, 340], "size": [240, 100],
       "sources": [
-        {"path": "src/langrensha/service.py", "line": 53, "end_line": 125},
+        {"path": "src/langrensha/service.py", "line": 53, "end_line": 124},
         {"path": "src/langrensha/rules.py", "line": 136, "end_line": 230}
       ]
     },
