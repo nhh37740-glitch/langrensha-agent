@@ -1,0 +1,2 @@
+include requirements-dev.lock
+include .github/scripts/校验版本图.py
