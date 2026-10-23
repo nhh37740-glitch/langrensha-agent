@@ -1,0 +1,25 @@
+name: 文档阶段检查
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  documents:
+    name: 文档阶段检查
+    runs-on: ubuntu-latest
+    steps:
+      - name: 获取仓库
+        uses: actions/checkout@v4
+      - name: 检查正式入口
+        run: |
+          test -f README.md
+          test -f AGENTS.md
+          test -f 项目说明.md
+          test -f 文档/规范/开发流程与协作规范.md
+          test -f 文档/需求/需求分析.md
+      - name: 检查需求正文长度
+        run: |
+          python -c "from pathlib import Path; text = Path('文档/需求/需求分析.md').read_text(encoding='utf-8'); body = text.split('\n\n', 2)[2].strip(); assert len(body) <= 600, f'需求正文 {len(body)} 字，超过 600 字'"

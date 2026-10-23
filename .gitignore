@@ -1,0 +1,15 @@
+/wolfcha/
+/临时/
+/.archify/
+.env
+.env.*
+!.env.example
+.venv/
+__pycache__/
+*.py[cod]
+node_modules/
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/

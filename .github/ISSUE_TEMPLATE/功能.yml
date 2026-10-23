@@ -1,0 +1,27 @@
+name: 功能需求
+description: 提交一个可验收的新功能
+title: "[功能] "
+labels: ["功能"]
+body:
+  - type: textarea
+    id: goal
+    attributes:
+      label: 用户要完成什么
+      description: 用用户能看到的结果说明需求。
+      placeholder: 例如：真人能够在自己的回合查看有权看到的历史发言。
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: 范围与依据
+      description: 关联正式需求或设计文档，并列出受影响业务模块。
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: 验收方式
+      description: 写出可观察、可测试的结果。
+    validations:
+      required: true
