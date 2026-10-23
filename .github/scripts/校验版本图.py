@@ -3,7 +3,7 @@
 import hashlib
 import json
 import sys
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 from uuid import UUID
 
 
@@ -30,8 +30,8 @@ def verify(source, published, generated):
         UUID(receipt["receiptId"])
         # 绝对工作目录因开发机和 runner 而异；文件名和内容身份必须一致。
         if (
-            Path(receipt["input"]).name != source.name
-            or Path(receipt["output"]).name != artifact.name
+            PureWindowsPath(receipt["input"]).name != source.name
+            or PureWindowsPath(receipt["output"]).name != artifact.name
         ):
             raise ValueError(f"{artifact.name} 的交付凭据指向其他文件")
         if receipt["specification"] != identity(source_bytes):

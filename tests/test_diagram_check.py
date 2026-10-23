@@ -49,7 +49,16 @@ def run_check(diagram):
     )
 
 
-def test_matching_html_and_receipts_pass_across_workspaces(diagram):
+@pytest.mark.parametrize("prefix", ["/original", "C:\\工作目录", "\\\\服务器\\共享目录"])
+def test_matching_html_and_receipts_pass_across_workspaces(diagram, prefix):
+    source, *artifacts = diagram
+    for artifact in artifacts:
+        path = artifact.with_suffix(".delivery.json")
+        receipt = json.loads(path.read_text(encoding="utf-8"))
+        separator = "\\" if "\\" in prefix else "/"
+        receipt["input"] = prefix + separator + source.name
+        receipt["output"] = prefix + separator + artifact.name
+        path.write_text(json.dumps(receipt), encoding="utf-8")
     assert run_check(diagram).returncode == 0
 
 
