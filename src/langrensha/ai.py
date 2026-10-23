@@ -165,7 +165,7 @@ class DecisionRunner:
         def dispatch(state):
             messages, audit = list(state["messages"]), list(state["audit"])
             version = state["view"]["version"]
-            for call in state["calls"][: self.config.max_tools_per_reply]:
+            for index, call in enumerate(state["calls"][: self.config.max_tools_per_reply]):
                 name, args = call["name"], call["args"]
                 try:
                     result = session.submit(
@@ -184,6 +184,14 @@ class DecisionRunner:
                 audit.append({"tool": name, "args": args, "result": result})
                 messages.append(ToolMessage(content=json.dumps(result), tool_call_id=call["id"]))
                 if result["accepted"] and name != "wolf_chat":
+                    for skipped in state["calls"][index + 1 :]:
+                        audit.append(
+                            {
+                                "tool": skipped["name"],
+                                "args": skipped["args"],
+                                "result": {"accepted": False, "code": "window_completed"},
+                            }
+                        )
                     return {
                         "messages": messages,
                         "audit": audit,
@@ -193,6 +201,13 @@ class DecisionRunner:
                     }
             # 被截断的工具不执行，但需要回执，保持后续模型消息协议完整。
             for call in state["calls"][self.config.max_tools_per_reply :]:
+                audit.append(
+                    {
+                        "tool": call["name"],
+                        "args": call["args"],
+                        "result": {"accepted": False, "code": "batch_limit"},
+                    }
+                )
                 messages.append(
                     ToolMessage(
                         content='{"accepted":false,"code":"batch_limit"}', tool_call_id=call["id"]
