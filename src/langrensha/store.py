@@ -19,6 +19,10 @@ class Store:
                 id INTEGER PRIMARY KEY, game_id TEXT NOT NULL,
                 actor INTEGER NOT NULL, code TEXT NOT NULL, time TEXT NOT NULL
             )""")
+            db.execute("""CREATE TABLE IF NOT EXISTS ai_decisions (
+                id TEXT PRIMARY KEY, game_id TEXT NOT NULL,
+                actor INTEGER NOT NULL, report TEXT NOT NULL
+            )""")
 
     @contextmanager
     def transaction(self):

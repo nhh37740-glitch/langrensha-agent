@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "055e0385-4939-473c-a26f-f8755a922c3a",
+  "status": "current",
+  "command": "deliver",
+  "type": "architecture",
+  "input": "/workspace/langrensha-agent/文档/版本/v0.2.0/DeepSeek决策架构.architecture.json",
+  "output": "/workspace/langrensha-agent/文档/版本/v0.2.0/DeepSeek决策架构.html",
+  "specification": {
+    "sha256": "f6c141641c5798160fe514ae1a9d3a607fd47fb9ff61f731da24fd1480354e06",
+    "bytes": 3393
+  },
+  "artifact": {
+    "sha256": "dcfcaea8df7a074e91b23649510f6d64baf85ecf19b5f4ebca342e5712299292",
+    "bytes": 817484
+  }
+}
