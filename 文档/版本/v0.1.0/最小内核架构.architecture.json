@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "v0.1.0 最小对局内核 · 演练模式",
+    "locale": "zh-CN",
+    "output": "文档/版本/v0.1.0/最小内核架构.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/nhh37740-glitch/langrensha-agent.git",
+      "revision": "3703f420b32b29b99c8dbda65719b3cfbfab4590",
+      "provider": "github"
+    }
+  },
+  "components": [
+    {
+      "id": "trusted-caller", "type": "external", "label": "受信演练调用方",
+      "sublabel": "绑定玩家 · 读取视图", "pos": [40, 40], "size": [180, 80],
+      "sources": [{"path": "src/langrensha/__main__.py", "line": 13, "end_line": 45}]
+    },
+    {
+      "id": "game-service", "type": "backend", "label": "对局与会话服务",
+      "sublabel": "身份绑定 · 原子提交", "pos": [380, 40], "size": [210, 80],
+      "sources": [{"path": "src/langrensha/service.py", "line": 20, "end_line": 78}]
+    },
+    {
+      "id": "sqlite-file", "type": "database", "label": "SQLite 私密文件",
+      "sublabel": "快照 · 事件 · 拒绝审计", "pos": [800, 40], "size": [210, 80],
+      "sources": [{"path": "src/langrensha/store.py", "line": 9, "end_line": 49}]
+    },
+    {
+      "id": "rules-and-view", "type": "security", "label": "规则与可见范围",
+      "sublabel": "计票 · 幂等 · 按身份过滤", "pos": [380, 300], "size": [210, 90],
+      "sources": [
+        {"path": "src/langrensha/rules.py", "line": 99, "end_line": 125},
+        {"path": "src/langrensha/rules.py", "line": 136, "end_line": 230}
+      ]
+    }
+  ],
+  "connections": [
+    {"id": "submit-bound-action", "from": "trusted-caller", "to": "game-service", "label": "绑定后提交行动", "variant": "emphasis"},
+    {"id": "commit-state", "from": "game-service", "to": "sqlite-file", "label": "事务读写及恢复"},
+    {"id": "apply-policy", "from": "game-service", "to": "rules-and-view", "label": "校验行动与过滤视图", "variant": "security"}
+  ],
+  "cards": [
+    {"dot": "cyan", "title": "实际实现", "items": ["十二人身份分配与受控行动窗口", "夜袭计票 → 顺序发言 → 下一轮演练", "并列或全弃票时不产生夜袭目标"]},
+    {"dot": "rose", "title": "信任与信息边界", "items": ["绑定会话为进程内接口，尚无公网鉴权", "私聊、选票和计票仅狼队及主持可见", "同一请求重试返回已有回执"]},
+    {"dot": "amber", "title": "后续功能", "items": ["尚无死亡、警长、特殊技能与胜负结算", "尚未接入模型、检索、网页和部署", "本图只描述所引用提交的实际代码"]}
+  ]
+}

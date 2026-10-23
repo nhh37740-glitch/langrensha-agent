@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "6d7442b5-ca86-4f41-86e3-9be4a8b3f4f5",
+  "status": "current",
+  "command": "deliver",
+  "type": "architecture",
+  "input": "/workspace/langrensha-agent/文档/版本/v0.1.0/最小内核架构.architecture.json",
+  "output": "/workspace/langrensha-agent/文档/版本/v0.1.0/最小内核架构.html",
+  "specification": {
+    "sha256": "c38e3878fde278fe0c45a629d82c2f7a27221faff7c236f6a3bad09f15bf6c0a",
+    "bytes": 2683
+  },
+  "artifact": {
+    "sha256": "f9082de69a850f1b89b6866c49056dc18df91d2e53ce6ef445878a9461b94486",
+    "bytes": 813761
+  }
+}
