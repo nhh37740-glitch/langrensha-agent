@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "v0.2.0 DeepSeek 受控决策 · 内核演练",
+    "locale": "zh-CN",
+    "output": "文档/版本/v0.2.0/DeepSeek决策架构.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/nhh37740-glitch/langrensha-agent.git",
+      "revision": "857919995a6089df62e5066103b07675319dd99d",
+      "provider": "github"
+    }
+  },
+  "components": [
+    {
+      "id": "ai-caller", "type": "external", "label": "受信 AI 调用方",
+      "sublabel": "选择已绑定的 AI 会话", "pos": [40, 40], "size": [180, 90],
+      "sources": [{"path": "src/langrensha/ai_demo.py", "line": 28, "end_line": 36}]
+    },
+    {
+      "id": "decision-graph", "type": "backend", "label": "LangGraph 决策循环",
+      "sublabel": "独立消息 · 有界轮数 · 弃权", "pos": [380, 40], "size": [240, 90],
+      "sources": [
+        {"path": "src/langrensha/ai.py", "line": 116, "end_line": 205},
+        {"path": "src/langrensha/ai.py", "line": 207, "end_line": 274}
+      ]
+    },
+    {
+      "id": "deepseek-provider", "type": "cloud", "label": "DeepSeek 原生工具",
+      "sublabel": "ChatDeepSeek · 官方 API", "pos": [900, 40], "size": [210, 90],
+      "sources": [
+        {"path": "src/langrensha/ai.py", "line": 17, "end_line": 39},
+        {"path": "src/langrensha/ai.py", "line": 137, "end_line": 163}
+      ]
+    },
+    {
+      "id": "bound-rule-service", "type": "security", "label": "会话与规则校验",
+      "sublabel": "过滤视图 · 绑定操作者与窗口", "pos": [380, 340], "size": [240, 100],
+      "sources": [
+        {"path": "src/langrensha/service.py", "line": 53, "end_line": 125},
+        {"path": "src/langrensha/rules.py", "line": 136, "end_line": 230}
+      ]
+    },
+    {
+      "id": "private-sqlite", "type": "database", "label": "SQLite 私密状态",
+      "sublabel": "事件 · 回执 · 主持决策审计", "pos": [900, 340], "size": [210, 100],
+      "sources": [
+        {"path": "src/langrensha/store.py", "line": 9, "end_line": 53},
+        {"path": "src/langrensha/service.py", "line": 46, "end_line": 60}
+      ]
+    }
+  ],
+  "connections": [
+    {"id": "run-player", "from": "ai-caller", "to": "decision-graph", "label": "启动单次决策", "variant": "emphasis"},
+    {"id": "native-model-request", "from": "decision-graph", "to": "deepseek-provider", "label": "可见上下文与原生工具"},
+    {"id": "submit-checked-action", "from": "decision-graph", "to": "bound-rule-service", "label": "过滤视图与校验行动", "variant": "security"},
+    {"id": "atomic-state", "from": "bound-rule-service", "to": "private-sqlite", "label": "事务状态与主持审计"}
+  ],
+  "cards": [
+    {"dot": "cyan", "title": "实际验证", "items": ["真实 DeepSeek 原生调用进入确定性内核", "默认三轮，最多二十轮；纯文本不算行动", "模型不可用或轮数耗尽时后台弃权"]},
+    {"dot": "rose", "title": "权限与密钥", "items": ["模型只接收该玩家的近期可见视图", "人物资料不增加工具或身份权限", "密钥不入提示词；审计只给主持读取"]},
+    {"dot": "amber", "title": "当前边界", "items": ["仅狼队行动与公开发言的内核演练", "完整角色规则、RAG 和网页仍待实现", "CI 用模型替身；真实验证另行执行"]}
+  ]
+}

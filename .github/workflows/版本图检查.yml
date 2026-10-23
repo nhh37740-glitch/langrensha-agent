@@ -32,17 +32,17 @@ jobs:
           文档/版本/v0.1.0/最小内核架构.architecture.json
           refs/heads/evidence/archify-v0.1.0
       - name: 核对版本图及浏览器布局
-        run: >-
-          node .agents/skills/archify/bin/archify.mjs finalize architecture
-          文档/版本/v0.1.0/最小内核架构.architecture.json
-          临时/版本图检查/最小内核架构.html
-          --repo-root . --quality showcase --out-dir 临时/版本图检查/证据 --json
-      - name: 核对仓库交付件与再生成结果完全一致
-        run: >-
-          python .github/scripts/校验版本图.py
-          文档/版本/v0.1.0/最小内核架构.architecture.json
-          文档/版本/v0.1.0/最小内核架构.html
-          临时/版本图检查/最小内核架构.html
+        run: |
+          for diagram_name in 'v0.1.0/最小内核架构' 'v0.2.0/DeepSeek决策架构'; do
+            node .agents/skills/archify/bin/archify.mjs finalize architecture \
+              "文档/版本/$diagram_name.architecture.json" \
+              "临时/版本图检查/$diagram_name.html" \
+              --repo-root . --quality showcase --out-dir "临时/版本图检查/$diagram_name-证据" --json
+            python .github/scripts/校验版本图.py \
+              "文档/版本/$diagram_name.architecture.json" \
+              "文档/版本/$diagram_name.html" \
+              "临时/版本图检查/$diagram_name.html"
+          done
       - name: 保存版本图验证证据
         if: always()
         uses: actions/upload-artifact@v4
