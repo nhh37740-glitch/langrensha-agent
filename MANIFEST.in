@@ -1,2 +1,3 @@
 include requirements-dev.lock
 include .github/scripts/校验版本图.py
+include .github/scripts/获取版本图源码.py

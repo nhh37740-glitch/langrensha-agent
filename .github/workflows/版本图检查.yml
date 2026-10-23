@@ -26,6 +26,11 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: 获取长期保留的图源提交
+        run: >-
+          python .github/scripts/获取版本图源码.py
+          文档/版本/v0.1.0/最小内核架构.architecture.json
+          refs/heads/evidence/archify-v0.1.0
       - name: 核对版本图及浏览器布局
         run: >-
           node .agents/skills/archify/bin/archify.mjs finalize architecture
