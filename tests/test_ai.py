@@ -84,7 +84,10 @@ def test_plain_text_is_not_action_and_round_limit_abstains(game):
     assert result["reason"] == "thinking_rounds_exhausted"
     actions = [e for e in game[0].host_snapshot(game[1])["events"] if e["kind"] == "action"]
     assert len(actions) == 1
-    assert actions[0]["data"] == {"tool": "abstain", "reason": "thinking_rounds_exhausted"}
+    assert actions[0]["data"] == {"tool": "abstain"}
+    assert game[0].host_decisions(game[1])[0]["reason"] == "thinking_rounds_exhausted"
+    for seat in range(1, 13):
+        assert "thinking_rounds_exhausted" not in json.dumps(session(game, seat).view())
 
 
 def test_illegal_tool_is_rejected_then_next_model_round_can_act(game):
@@ -116,6 +119,9 @@ def test_chat_can_precede_final_action_in_same_reply(game):
     assert result["rounds"] == 1
     assert game[0].host_snapshot(game[1])["version"] == 2
     assert "秘密暗号" not in json.dumps(session(game, 1).view(), ensure_ascii=False)
+    audit = game[0].host_decisions(game[1])[0]["calls"]
+    assert audit[-1]["result"] == {"accepted": False, "code": "window_completed"}
+    assert audit[-1]["args"] == {"target": 2}
 
 
 def test_provider_failure_is_redacted_and_has_distinct_fallback(game):
@@ -201,6 +207,23 @@ def test_tool_batch_is_bounded_and_tool_messages_remain_complete(game):
     assert result["rounds"] == 2
     assert game[0].host_snapshot(game[1])["version"] == 3
     assert sum("batch_limit" in str(m.content) for m in model.requests[-1]) == 2
+    audit = game[0].host_decisions(game[1])[0]["calls"]
+    capped = [call for call in audit if call["result"].get("code") == "batch_limit"]
+    assert len(audit) == 5 and len(capped) == 2
+    assert [call["args"] for call in capped] == [{"text": "三"}, {"target": 1}]
+
+
+def test_daytime_automatic_abstention_hides_internal_reason(game):
+    for seat in game[2]:
+        submit(session(game, seat))
+    result = DecisionRunner(Model(RuntimeError("provider failed"))).run(session(game, 1))
+    assert result["reason"] == "model_unavailable"
+    for seat in range(1, 13):
+        view = session(game, seat).view()
+        assert "model_unavailable" not in json.dumps(view)
+        abstentions = [e for e in view["events"] if e["kind"] == "action"]
+        assert abstentions[-1]["data"] == {"tool": "abstain"}
+    assert game[0].host_decisions(game[1])[0]["reason"] == "model_unavailable"
 
 
 def test_maximum_rounds_terminate_without_langgraph_recursion_error(game):

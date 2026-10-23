@@ -78,7 +78,6 @@ class GameService:
                 },
                 now=utc_now(),
             )
-            updated["events"][result["event_id"] - 1]["data"]["reason"] = reason
             self.store.save(db, updated)
         return result
 
