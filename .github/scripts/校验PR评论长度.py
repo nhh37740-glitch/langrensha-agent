@@ -6,7 +6,7 @@
   python .github/scripts/校验PR评论长度.py --text-file 临时/评论.md --split
 
 默认模式只报告是否超限；--split 输出按段拆分的多条评论，保证每条汉字数不超限。
-只统计汉字，标点、链接与代码片段中的 ASCII 字符不占汉字额度。
+只统计正文汉字：标点、链接地址与代码片段（围栏代码与行内代码）不占汉字额度。
 """
 
 import argparse
@@ -17,11 +17,7 @@ from pathlib import Path
 HANZI_LIMIT = 300
 HANZI_RE = re.compile(r"[\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff]")
 FENCE_RE = re.compile(r"^\s*```")
-
-
-def count_hanzi(text):
-    """返回文本中的汉字数量；标点、英文、链接与代码不计入。"""
-    return len(HANZI_RE.findall(text))
+INLINE_CODE_RE = re.compile(r"`[^`\n]*`")
 
 
 def fence_ranges(text):
@@ -40,12 +36,35 @@ def fence_ranges(text):
     return ranges
 
 
-def _take_prefix(text, start, limit):
-    """从 start 起取尽量长的片段，使其汉字数不超过 limit。"""
+def code_ranges(text):
+    """返回应排除出汉字统计的代码区间：围栏块与行内代码，按起点排序。"""
+    ranges = fence_ranges(text)
+    ranges.extend(match.span() for match in INLINE_CODE_RE.finditer(text))
+    return sorted(ranges)
+
+
+def mask_code(text, ranges=None):
+    """把代码区间的字符替换为非汉字占位符，长度与换行保持不变。"""
+    ranges = code_ranges(text) if ranges is None else ranges
+    characters = list(text)
+    for begin, end in ranges:
+        for index in range(begin, end):
+            if characters[index] != "\n":
+                characters[index] = "x"
+    return "".join(characters)
+
+
+def count_hanzi(text):
+    """返回正文汉字数量；标点、链接地址与代码片段不计入。"""
+    return len(HANZI_RE.findall(mask_code(text)))
+
+
+def _take_prefix(masked, start, limit):
+    """从 start 起在掩码文本上取尽量长的片段，使其汉字数不超过 limit。"""
     used = 0
     index = start
-    while index < len(text):
-        if HANZI_RE.match(text[index]):
+    while index < len(masked):
+        if HANZI_RE.match(masked[index]):
             if used == limit:
                 break
             used += 1
@@ -53,16 +72,16 @@ def _take_prefix(text, start, limit):
     return index
 
 
-def _fence_containing(ranges, position):
+def _range_containing(ranges, position):
     for begin, end in ranges:
         if begin < position < end:
             return begin, end
     return None
 
 
-def _preferred_break(text, start, end):
+def _preferred_break(masked, start, end):
     """在 [start, end) 内找自然断点；没有则返回 end。"""
-    window = text[start:end]
+    window = masked[start:end]
     for separator in ("\n\n", "\n", "。", "！", "？", "；", "!", "?", ";", " "):
         position = window.rfind(separator)
         if position > 0:
@@ -71,23 +90,24 @@ def _preferred_break(text, start, end):
 
 
 def split_comment(text, limit=HANZI_LIMIT):
-    """把一条超长评论按原文顺序拆成多条，每条汉字数不超过 limit。"""
+    """把一条超长评论按原文顺序拆成多条，每条正文汉字数不超过 limit。"""
     if limit < 1:
         raise ValueError("limit_must_be_positive")
     if text is None:
         raise ValueError("text_required")
+    ranges = code_ranges(text)
+    masked = mask_code(text, ranges)
     chunks = []
     start = 0
-    fences = fence_ranges(text)
     while start < len(text):
         if count_hanzi(text[start:]) <= limit:
             chunks.append(text[start:])
             break
-        end = _take_prefix(text, start, limit)
-        end = _preferred_break(text, start, end)
-        fence = _fence_containing(fences, end)
-        if fence is not None:
-            begin, close = fence
+        end = _take_prefix(masked, start, limit)
+        end = _preferred_break(masked, start, end)
+        protected = _range_containing(ranges, end)
+        if protected is not None:
+            begin, close = protected
             if count_hanzi(text[start:close]) <= limit:
                 end = close
             elif begin > start:
