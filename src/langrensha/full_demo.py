@@ -32,7 +32,7 @@ def main():
 
         from .ai import DecisionConfig, DecisionRunner, DeepSeekConfig, Persona
 
-        load_dotenv(override=False)
+        load_dotenv(".env", override=False)
         runner = DecisionRunner(DeepSeekConfig.from_env().client(), DecisionConfig(max_rounds=3))
     windows = 0
     for _ in range(args.limit):

@@ -224,7 +224,7 @@ def main():
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", default=8000, type=int)
     args = parser.parse_args()
-    load_dotenv(override=False)
+    load_dotenv(".env", override=False)
     access = os.environ.get("LANGRENSHA_ACCESS_TOKEN")
     if args.host not in {"127.0.0.1", "localhost", "::1"} and not access:
         parser.error("远程监听必须设置 LANGRENSHA_ACCESS_TOKEN")
