@@ -52,6 +52,7 @@ def create_full_game(*, now, human_seat=1, human_role=None, rng=None):
         antidote=True,
         poison=True,
         seer_last=None,
+        seer_last_round=None,
         night={},
         candidates_pk=[],
     )
@@ -266,7 +267,10 @@ def _settle(state, now):
 def targets(state, actor, tool):
     seats = alive(state)
     if tool == "inspect":
-        return [s for s in seats if s not in {actor, state["seer_last"]}]
+        previous = (
+            state["seer_last"] if state.get("seer_last_round") == state["round"] - 1 else None
+        )
+        return [s for s in seats if s not in {actor, previous}]
     if tool in {"shoot", "transfer_badge"}:
         return [s for s in seats if s != actor]
     if tool == "sheriff_vote":
@@ -358,6 +362,7 @@ def _apply(state, actor, tool, payload, now):
     elif tool == "inspect":
         target = payload["target"]
         state["seer_last"] = target
+        state["seer_last_round"] = state["round"]
         event(
             state,
             "vision",

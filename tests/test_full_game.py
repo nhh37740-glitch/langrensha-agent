@@ -318,3 +318,14 @@ def test_legal_random_play_reaches_a_consistent_ending(seed):
         assert state["version"] == previous + 1
     assert state["winner"] in {"wolves", "village", "draw"}
     assert game.pending(state) == []
+
+
+def test_seer_may_repeat_after_skipping_a_night():
+    state = reach(new(), "night_seer")
+    seer = seat(state, Role.SEER)
+    state = act(state, seer, "inspect", target=1)
+    state = reach(state, "night_seer")
+    assert 1 not in game.targets(state, seer, "inspect")
+    state = act(state, seer)
+    state = reach(state, "night_seer")
+    assert 1 in game.targets(state, seer, "inspect")
