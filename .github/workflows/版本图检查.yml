@@ -27,19 +27,21 @@ jobs:
           python-version: '3.12'
       - name: 核对版本图及浏览器布局
         run: |
-          for diagram_name in 'v0.1.0/最小内核架构' 'v0.2.0/DeepSeek决策架构' 'v0.3.0/完整对局架构' 'v0.3.1/暗牌呈现架构' 'v0.4.0/HTTPS与恢复架构' 'v0.4.0/自动发布架构' 'v0.4.1/代码架构' 'v0.5.0/前端状态图'; do
-            diagram_version="${diagram_name%%/*}"
+          for diagram_name in 'v0.1.0/最小内核架构.architecture' 'v0.2.0/DeepSeek决策架构.architecture' 'v0.3.0/完整对局架构.architecture' 'v0.3.1/暗牌呈现架构.architecture' 'v0.4.0/HTTPS与恢复架构.architecture' 'v0.4.0/自动发布架构.architecture' 'v0.4.1/代码架构.architecture' 'v0.5.0/前端状态图.lifecycle'; do
+            diagram_type="${diagram_name##*.}"
+            diagram_path="${diagram_name%.*}"
+            diagram_version="${diagram_path%%/*}"
             python .github/scripts/获取版本图源码.py \
-              "文档/版本/$diagram_name.architecture.json" \
+              "文档/版本/$diagram_path.$diagram_type.json" \
               "refs/heads/evidence/archify-$diagram_version"
-            node .agents/skills/archify/bin/archify.mjs finalize architecture \
-              "文档/版本/$diagram_name.architecture.json" \
-              "临时/版本图检查/$diagram_name.html" \
-              --repo-root . --quality showcase --out-dir "临时/版本图检查/$diagram_name-证据" --json
+            node .agents/skills/archify/bin/archify.mjs finalize "$diagram_type" \
+              "文档/版本/$diagram_path.$diagram_type.json" \
+              "临时/版本图检查/$diagram_path.$diagram_type.html" \
+              --repo-root . --quality showcase --out-dir "临时/版本图检查/$diagram_path.$diagram_type-证据" --json
             python .github/scripts/校验版本图.py \
-              "文档/版本/$diagram_name.architecture.json" \
-              "文档/版本/$diagram_name.html" \
-              "临时/版本图检查/$diagram_name.html"
+              "文档/版本/$diagram_path.$diagram_type.json" \
+              "文档/版本/$diagram_path.html" \
+              "临时/版本图检查/$diagram_path.$diagram_type.html"
           done
       - name: 保存版本图验证证据
         if: always()
