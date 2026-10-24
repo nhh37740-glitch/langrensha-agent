@@ -6,7 +6,8 @@
   python .github/scripts/校验PR评论长度.py --text-file 临时/评论.md --split
 
 默认模式只报告是否超限；--split 输出按段拆分的多条评论，保证每条汉字数不超限。
-只统计正文汉字：标点、链接地址与代码片段（围栏代码与行内代码）不占汉字额度。
+只统计正文汉字：标点、链接地址与代码片段（闭合围栏代码与行内代码）不占汉字额度。
+无法安全识别为闭合代码/完整链接的内容按正文计数，宁可多算也不放行超限评论。
 """
 
 import argparse
@@ -16,11 +17,12 @@ from pathlib import Path
 
 HANZI_LIMIT = 300
 HANZI_RE = re.compile(r"[\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff]")
-FENCE_RE = re.compile(r"^\s*```")
+FENCE_OPEN_RE = re.compile(r"^\s*(`{3,})")
+FENCE_CLOSE_RE = re.compile(r"^\s*(`{3,})\s*$")
 INLINE_CODE_RE = re.compile(r"`[^`\n]*`")
 INLINE_LINK_RE = re.compile(r"\[[^\]\n]*\]\(([^)\n]*)\)")
 ANGLE_LINK_RE = re.compile(r"<(https?://[^>\s]+)>")
-BARE_LINK_RE = re.compile(r"https?://[^\s)>\]`]+")
+BARE_LINK_RE = re.compile(r"https?://[^\s)>\]`'\"]+")
 
 
 def merge_ranges(ranges):
@@ -35,53 +37,35 @@ def merge_ranges(ranges):
 
 
 def fence_ranges(text):
-    """返回代码围栏内部的字符区间列表，避免把代码块从中间拆开。"""
+    """返回闭合围栏代码的字符区间；只有同长度以上的闭合围栏才结束代码。"""
     ranges = []
     opening = None
+    opening_ticks = 0
     cursor = 0
     for line in text.splitlines(keepends=True):
-        if FENCE_RE.match(line):
-            if opening is None:
-                opening = cursor
-            else:
-                ranges.append((opening, cursor + len(line)))
-                opening = None
+        opened = FENCE_OPEN_RE.match(line)
+        closed = FENCE_CLOSE_RE.match(line)
+        if opening is None and opened:
+            opening = cursor
+            opening_ticks = len(opened.group(1))
+        elif opening is not None and closed and len(closed.group(1)) >= opening_ticks:
+            ranges.append((opening, cursor + len(line)))
+            opening = None
         cursor += len(line)
     return ranges
 
 
-def link_destination_ranges(text):
-    """返回链接地址区间；链接显示文字仍计入正文汉字。"""
-    ranges = []
-    for pattern, group in (
-        (INLINE_LINK_RE, 1),
-        (ANGLE_LINK_RE, 1),
-        (BARE_LINK_RE, 0),
-    ):
-        ranges.extend(match.span(group) for match in pattern.finditer(text))
-    return ranges
-
-
-def syntax_ranges(text):
-    """返回拆分时不可切断的区间：代码片段与完整链接语法。"""
+def code_ranges(text):
+    """返回闭合代码区间：围栏代码与单反引号行内代码。"""
     ranges = fence_ranges(text)
-    ranges.extend(match.span() for match in INLINE_CODE_RE.finditer(text))
-    ranges.extend(match.span() for match in INLINE_LINK_RE.finditer(text))
-    ranges.extend(match.span() for match in BARE_LINK_RE.finditer(text))
+    for match in INLINE_CODE_RE.finditer(text):
+        if not any(begin <= match.start() < end for begin, end in ranges):
+            ranges.append(match.span())
     return merge_ranges(ranges)
 
 
-def excluded_ranges(text):
-    """返回不占汉字额度的区间：代码与链接地址，并合并重叠部分。"""
-    ranges = fence_ranges(text)
-    ranges.extend(match.span() for match in INLINE_CODE_RE.finditer(text))
-    ranges.extend(link_destination_ranges(text))
-    return merge_ranges(ranges)
-
-
-def mask_excluded(text, ranges=None):
-    """把不占额度的区间替换为非汉字占位符，长度与换行保持不变。"""
-    ranges = excluded_ranges(text) if ranges is None else ranges
+def mask_ranges(text, ranges):
+    """把指定区间的字符替换为非汉字占位符，长度与换行保持不变。"""
     characters = list(text)
     for begin, end in ranges:
         for index in range(begin, end):
@@ -90,9 +74,42 @@ def mask_excluded(text, ranges=None):
     return "".join(characters)
 
 
+def link_matches(text, code=None):
+    """只在代码之外识别链接，返回 (完整匹配区间, 地址区间) 列表。"""
+    code = code_ranges(text) if code is None else code
+    masked = mask_ranges(text, code)
+    matches = []
+    for pattern, address_group in (
+        (INLINE_LINK_RE, 1),
+        (ANGLE_LINK_RE, 1),
+        (BARE_LINK_RE, 0),
+    ):
+        for match in pattern.finditer(masked):
+            if any(begin <= match.start() < end for begin, end in code):
+                continue
+            matches.append((match.span(), match.span(address_group)))
+    return matches
+
+
+def excluded_ranges(text):
+    """返回不占汉字额度的区间：代码与链接地址，并合并重叠部分。"""
+    code = code_ranges(text)
+    ranges = list(code)
+    ranges.extend(address for _, address in link_matches(text, code))
+    return merge_ranges(ranges)
+
+
+def syntax_ranges(text):
+    """返回拆分时不可切断的区间：代码与完整链接语法。"""
+    code = code_ranges(text)
+    ranges = list(code)
+    ranges.extend(match for match, _ in link_matches(text, code))
+    return merge_ranges(ranges)
+
+
 def count_hanzi(text):
     """返回正文汉字数量；标点、链接地址与代码片段不计入。"""
-    return len(HANZI_RE.findall(mask_excluded(text)))
+    return len(HANZI_RE.findall(mask_ranges(text, excluded_ranges(text))))
 
 
 def _take_prefix(masked, start, limit):
@@ -131,9 +148,8 @@ def split_comment(text, limit=HANZI_LIMIT):
         raise ValueError("limit_must_be_positive")
     if text is None:
         raise ValueError("text_required")
-    ranges = excluded_ranges(text)
+    masked = mask_ranges(text, excluded_ranges(text))
     protected = syntax_ranges(text)
-    masked = mask_excluded(text, ranges)
     chunks = []
     start = 0
     while start < len(text):
