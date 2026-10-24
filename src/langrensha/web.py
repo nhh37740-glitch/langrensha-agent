@@ -4,6 +4,7 @@ import hashlib
 import os
 import secrets
 import threading
+from importlib.metadata import version
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request, Response
@@ -90,7 +91,7 @@ def create_app(
 
     @app.get("/api/health")
     def health():
-        return {"status": "ok", "version": "0.3.1"}
+        return {"status": "ok", "version": version("langrensha-agent")}
 
     @app.post("/api/enter")
     async def enter(request: Request, response: Response):

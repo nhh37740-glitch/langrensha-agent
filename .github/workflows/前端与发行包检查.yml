@@ -42,7 +42,7 @@ jobs:
         run: |
           python -m build
           python -m venv 临时/网页发行包/venv
-          临时/网页发行包/venv/bin/python -m pip install -c requirements-dev.lock 'dist/langrensha_agent-0.3.1-py3-none-any.whl[ai,web]'
+          临时/网页发行包/venv/bin/python -m pip install -c requirements-dev.lock 'dist/langrensha_agent-0.4.0-py3-none-any.whl[ai,web]'
           临时/网页发行包/venv/bin/python -I -c "from importlib.resources import files; from langrensha.web import create_app; p=files('langrensha')/'static'; assert (p/'index.html').is_file(); assert list((p/'assets').iterdir())"
           python .github/scripts/校验发行包运行.py 临时/网页发行包/venv/bin/python
       - name: 保存网页截图与可安装发行包
@@ -60,6 +60,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: 安装部署验收依赖
+        run: python -m pip install -c requirements-dev.lock -e '.[dev,ai,web]'
       - name: 构建完整应用镜像
         run: docker build -t mist-town:ci .
       - name: 用非密钥测试配置验证启动和内置网页
@@ -74,6 +79,16 @@ jobs:
           curl --fail http://127.0.0.1:8000/api/health
           curl --fail --silent http://127.0.0.1:8000/ > /tmp/mist-ci-index.html
           python -c "from pathlib import Path; assert '雾钟镇' in Path('/tmp/mist-ci-index.html').read_text()"
+      - name: 真实 HTTPS、私密会话与备份恢复
+        run: |
+          bash -n 部署/运行.sh
+          python 部署/验收.py --image mist-town:ci
+      - name: 保存不含私密配置的部署验收结果
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: HTTPS与恢复验收
+          path: 临时/部署验收/*/结果.json
       - name: 保存容器日志并清理
         if: always()
         run: |
