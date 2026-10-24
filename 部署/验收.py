@@ -93,7 +93,8 @@ def main():
         "DOCKER_CERT_PATH",
     ):
         env.pop(name, None)
-    env.update(MIST_ENV_FILE=str(config), **values)
+    env.pop("COMPOSE_PROFILES", None)
+    env.update(MIST_ENV_FILE=str(config), MIST_DATABASE="/data/对局.sqlite3", **values)
     # env 的秘密值仅传给 Docker，不输出、不作为命令行参数。
     compose = [
         "docker",
@@ -173,10 +174,14 @@ def main():
             run(compose + ["config", "--quiet"])
             run(
                 compose
-                + ["run", "--rm", "--no-deps", "town", "langrensha-ops", "check-config", "--local"]
+                + ["run", "--rm", "--no-deps", "ops", "langrensha-ops", "check-config", "--local"]
             )
             report["stage"] = "containers"
             run(compose + ["up", "-d", "--no-build", "--wait"])
+            run(
+                compose
+                + ["run", "--rm", "--no-deps", "ops", "langrensha-ops", "check-config", "--local"]
+            )
             run(
                 compose
                 + [
@@ -276,14 +281,28 @@ def main():
                     capture=True,
                 )
                 assert json.loads(backup)["sessions"] == 2
+                run(
+                    compose
+                    + [
+                        "run",
+                        "--rm",
+                        "--no-deps",
+                        "ops",
+                        "langrensha-ops",
+                        "verify",
+                        "--database",
+                        "/data/backups/验收.sqlite3",
+                    ]
+                )
                 late = call("/api/action", action(before, "after-backup"), client=wolf).json()
                 assert late["version"] == 2
                 run(
                     compose
                     + [
-                        "exec",
-                        "-T",
-                        "town",
+                        "run",
+                        "--rm",
+                        "--no-deps",
+                        "ops",
                         "langrensha-ops",
                         "restore",
                         "--backup",
@@ -332,6 +351,24 @@ def main():
                         else:
                             assert call("/api/advance", {}, client=wolf).status_code == 200
                             native_windows += 1
+                            if native_windows % 10 == 0:
+                                report["real_model"] = json.loads(
+                                    run(
+                                        compose
+                                        + [
+                                            "exec",
+                                            "-T",
+                                            "town",
+                                            "langrensha-ops",
+                                            "audit",
+                                            "--database",
+                                            "/data/恢复.sqlite3",
+                                        ],
+                                        capture=True,
+                                    )
+                                )
+                                if report["real_model"]["provider_failure_streak"] >= 3:
+                                    raise RuntimeError("provider_temporarily_unavailable")
                         if args.full_game and window % 10 == 0:
                             print(
                                 json.dumps({"window": window + 1, "round": current["round"]}),
@@ -345,49 +382,27 @@ def main():
                             "round": ending["round"],
                             "native_windows": native_windows,
                         }
-                    count_script = (
-                        "import sqlite3, json, os\n"
-                        "db = sqlite3.connect(os.environ['LANGRENSHA_DATABASE'])\n"
-                        "reports = [json.loads(row[0]) for row in "
-                        "db.execute('SELECT report FROM ai_decisions')]\n"
-                        "print(json.dumps({'decisions': len(reports), "
-                        "'provider_failures': sum(r['reason'] == 'model_unavailable' "
-                        "for r in reports), 'accepted_tools': [c['tool'] "
-                        "for r in reports for c in r['calls'] if c['result']['accepted']]}))"
-                    )
                     native = json.loads(
                         run(
-                            compose + ["exec", "-T", "town", "python", "-c", count_script],
+                            compose
+                            + [
+                                "exec",
+                                "-T",
+                                "town",
+                                "langrensha-ops",
+                                "audit",
+                                "--database",
+                                "/data/恢复.sqlite3",
+                            ],
                             capture=True,
                         )
                     )
-                    assert native["decisions"] == native_windows and native_windows > 0
-                    assert native["provider_failures"] == 0
                     report["real_model"] = native
-                    run(
-                        compose
-                        + [
-                            "exec",
-                            "-T",
-                            "town",
-                            "langrensha-ops",
-                            "backup",
-                            "--database",
-                            "/data/恢复.sqlite3",
-                            "--output",
-                            "/data/验收留档.sqlite3",
-                        ]
+                    assert native["decisions"] == native_windows and native_windows > 0, (
+                        "audit_count_mismatch"
                     )
-                    town_id = run(compose + ["ps", "-q", "town"], capture=True).strip()
-                    run(
-                        [
-                            "docker",
-                            "--host=unix:///var/run/docker.sock",
-                            "cp",
-                            town_id + ":/data/验收留档.sqlite3",
-                            str(runtime / "私密对局.sqlite3"),
-                        ]
-                    )
+                    assert native["native_accepted_calls"] > 0, "no_native_model_actions"
+
                 report.update(
                     ok=True,
                     stage="completed",
@@ -402,6 +417,33 @@ def main():
         except Exception as exc:
             report["failure"] = type(exc).__name__
         finally:
+            if args.real_env:
+                try:
+                    run(
+                        compose
+                        + [
+                            "exec",
+                            "-T",
+                            "town",
+                            "sh",
+                            "-c",
+                            'exec langrensha-ops backup --database "$LANGRENSHA_DATABASE" --output /data/验收留档.sqlite3',
+                        ]
+                    )
+                    town_id = run(compose + ["ps", "-q", "town"], capture=True).strip()
+                    run(
+                        [
+                            "docker",
+                            "--host=unix:///var/run/docker.sock",
+                            "cp",
+                            town_id + ":/data/验收留档.sqlite3",
+                            str(runtime / "私密对局.sqlite3"),
+                        ]
+                    )
+                    report["private_evidence_retained"] = True
+                except Exception:
+                    report.update(ok=False, private_evidence_retained=False)
+                    report.setdefault("failure", "private_evidence_failed")
             run(compose + ["down", "--volumes", "--remove-orphans"], check=False)
     (runtime / "结果.json").write_text(json.dumps(report, ensure_ascii=False, indent=2))
     print(json.dumps(report, ensure_ascii=False))

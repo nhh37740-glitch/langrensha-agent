@@ -33,9 +33,9 @@ operation="${1:-status}"
 [[ $# -eq 0 ]] || shift
 case "$operation" in
   build) "${compose[@]}" build ;;
-  check) "${compose[@]}" run --rm --no-deps town langrensha-ops check-config "${local_flags[@]}" ;;
+  check) "${compose[@]}" run --rm --no-deps ops langrensha-ops check-config "${local_flags[@]}" ;;
   start)
-    "${compose[@]}" run --rm --no-deps town langrensha-ops check-config "${local_flags[@]}"
+    "${compose[@]}" run --rm --no-deps ops langrensha-ops check-config "${local_flags[@]}"
     "${compose[@]}" up -d --no-build --wait ;;
   stop) "${compose[@]}" stop ;;
   status) "${compose[@]}" ps ;;
@@ -46,9 +46,9 @@ case "$operation" in
     if [[ "$operation" == backup ]]; then
       "${compose[@]}" exec -T town sh -c 'exec langrensha-ops backup --database "$LANGRENSHA_DATABASE" --output "$1"' -- "/data/backups/$name"
     elif [[ "$operation" == verify ]]; then
-      "${compose[@]}" run --rm --no-deps town langrensha-ops verify --database "/data/backups/$name"
+      "${compose[@]}" run --rm --no-deps ops langrensha-ops verify --database "/data/backups/$name"
     else
-      "${compose[@]}" run --rm --no-deps town langrensha-ops restore --backup "/data/backups/$name" --database "/data/restored/$name"
+      "${compose[@]}" run --rm --no-deps ops langrensha-ops restore --backup "/data/backups/$name" --database "/data/restored/$name"
       echo '已生成全新恢复库，原库保持原样。激活命令：'
       printf 'MIST_DATABASE=%q 部署/运行.sh --env-file %q' "/data/restored/$name" "$config_file"
       [[ ${#local_flags[@]} -eq 0 ]] || printf ' --local'

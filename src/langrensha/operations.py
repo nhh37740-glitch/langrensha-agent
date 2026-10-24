@@ -9,6 +9,7 @@ import re
 import sqlite3
 import tempfile
 import time
+from collections import Counter
 from contextlib import closing
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -181,6 +182,55 @@ def copy_database(source, destination):
             Path(str(temp) + suffix).unlink(missing_ok=True)
 
 
+def audit_summary(database):
+    """只输出固定代码与次数，不输出操作者、参数、模型正文或会话。"""
+    from .full_game import TARGET_TOOLS, TEXT_TOOLS
+    from .retrieval import QUERY_TOOLS
+
+    allowed_tools = (
+        TARGET_TOOLS
+        | TEXT_TOOLS
+        | QUERY_TOOLS
+        | {"signup", "withdraw", "antidote", "reveal", "explode", "abstain"}
+    )
+    allowed_reasons = {"acted", "window_closed", "model_unavailable", "thinking_rounds_exhausted"}
+    path = Path(database)
+    if not path.is_file():
+        raise OperationError("database_not_found")
+    _inspect(path)
+    reasons, tools = [], Counter()
+    try:
+        with closing(_read_only(path)) as db:
+            for (encoded,) in db.execute("SELECT report FROM ai_decisions ORDER BY rowid"):
+                report = json.loads(encoded)
+                reason = report.get("reason")
+                reasons.append(reason if reason in allowed_reasons else "unknown")
+                for call in report.get("calls", []):
+                    name = call.get("tool")
+                    if (
+                        name in allowed_tools
+                        and call.get("result", {}).get("accepted") is True
+                        and "automatic_reason" not in call
+                    ):
+                        tools[name] += 1
+    except (sqlite3.Error, json.JSONDecodeError, AttributeError, TypeError) as exc:
+        raise OperationError("invalid_audit") from exc
+    streak = 0
+    for reason in reversed(reasons):
+        if reason != "model_unavailable":
+            break
+        streak += 1
+    return {
+        "ok": True,
+        "decisions": len(reasons),
+        "provider_failures": reasons.count("model_unavailable"),
+        "provider_failure_streak": streak,
+        "native_accepted_calls": sum(tools.values()),
+        "accepted_tools": dict(tools),
+        "reasons": dict(Counter(reasons)),
+    }
+
+
 def main():
     parser = argparse.ArgumentParser(description="雾钟镇部署预检与私密数据库备份恢复")
     commands = parser.add_subparsers(dest="operation", required=True)
@@ -195,6 +245,8 @@ def main():
     restore.add_argument("--database", required=True, type=Path)
     verify = commands.add_parser("verify")
     verify.add_argument("--database", required=True, type=Path)
+    audit = commands.add_parser("audit")
+    audit.add_argument("--database", required=True, type=Path)
     args = parser.parse_args()
     try:
         if args.operation == "check-config":
@@ -209,6 +261,8 @@ def main():
             else:
                 values = os.environ
             result = check_configuration(values, local=args.local)
+        elif args.operation == "audit":
+            result = audit_summary(args.database)
         elif args.operation == "verify":
             result = verify_database(args.database)
         else:

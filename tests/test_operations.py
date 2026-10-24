@@ -215,3 +215,24 @@ def test_proxy_network_configuration_rejects_collisions(field, value):
     with pytest.raises(OperationError) as error:
         check_configuration({**CONFIG, field: value})
     assert field in error.value.fields
+
+
+def test_audit_summary_counts_native_actions_and_fallbacks_without_private_data(tmp_path):
+    from langrensha.operations import audit_summary
+
+    service = GameService(tmp_path / "audit.sqlite3")
+    gid = service.create(full=True)
+    for reason in ["acted", "model_unavailable", "model_unavailable"]:
+        call = {
+            "tool": "abstain",
+            "args": {"private": "PRIVATE-CONTENT"},
+            "result": {"accepted": True, "private": "PRIVATE-RESULT"},
+        }
+        if reason != "acted":
+            call["automatic_reason"] = reason
+        service._record_decision(gid, 1, {"id": str(uuid4()), "reason": reason, "calls": [call]})
+    summary = audit_summary(tmp_path / "audit.sqlite3")
+    assert summary["decisions"] == 3 and summary["provider_failures"] == 2
+    assert summary["provider_failure_streak"] == 2 and summary["native_accepted_calls"] == 1
+    assert summary["accepted_tools"] == {"abstain": 1}
+    assert "PRIVATE" not in json.dumps(summary) and gid not in json.dumps(summary)
