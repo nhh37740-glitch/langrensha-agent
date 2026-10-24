@@ -327,7 +327,13 @@ def _apply(state, actor, tool, payload, now):
     audience = (
         wolves(state)
         if phase == "night_wolves"
-        else ([actor] if private or phase in VOTES else None)
+        else (
+            [actor]
+            if private
+            or tool in {"sheriff_vote", "exile_vote"}
+            or (tool == "abstain" and phase in VOTES)
+            else None
+        )
     )
     # 技能内部名字只保留在主持事实；对外事件由各自可见视图转为剧本文案。
     event_id = event(
@@ -336,6 +342,8 @@ def _apply(state, actor, tool, payload, now):
     if tool == "wolf_chat":
         return event_id
     if tool == "explode":
+        player(state, actor)["revealed"] = True
+        event(state, "reveal", {"seat": actor, "role": Role.WOLF}, now=now)
         interrupted = not state["election_done"]
         if interrupted:
             state["election_explosions"] += 1
@@ -496,6 +504,11 @@ def player_view(state, actor):
                     **({"role": q["role"]} if q["revealed"] or state["winner"] else {}),
                 }
                 for q in state["players"]
+            ],
+            "known_facts": [
+                {"source": f"event:{e['id']}", "round": e["round"], **e["data"]}
+                for e in visible
+                if e["kind"] == "vision"
             ],
             "events": [{k: v for k, v in e.items() if k != "audience"} for e in visible],
         }

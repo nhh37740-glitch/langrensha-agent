@@ -50,10 +50,20 @@ def history_documents(view):
             text = f"{e['actor']}号夜间选择{data['target']}号。"
         elif e["kind"] == "wolf_tally":
             text = f"夜间同伴商议结果：{data['target'] or '无人'}。"
+        elif e["kind"] == "vision":
+            alignment = "潜藏暗影" if data["alignment"] == "wolves" else "未见暗影"
+            text = f"你记下的星兆：{data['target']}号{alignment}。"
         else:
             continue
+        category = "speech" if data.get("tool") in {"speak", "wolf_chat"} else e["kind"]
         documents.append(
-            {"source": f"event:{e['id']}", "actor": e["actor"], "round": e["round"], "text": text}
+            {
+                "source": f"event:{e['id']}",
+                "category": category,
+                "actor": e["actor"],
+                "round": e["round"],
+                "text": text,
+            }
         )
     return documents
 
@@ -93,9 +103,11 @@ def query(view, name, payload):
         raise Rejected("invalid_round")
     if name == "self_info":
         title = ROLE_NAMES[view["role"]]
+        facts = [d for d in history_documents(view) if d["category"] == "vision"]
         return {
-            "answer": f"你坐在{view['seat']}号位置，身份是{title}。{GUIDANCE[view['role']]}",
-            "sources": [{"source": "self:identity", "text": title}],
+            "answer": f"你坐在{view['seat']}号位置，身份是{title}。{GUIDANCE[view['role']]}"
+            + "".join(d["text"] for d in facts),
+            "sources": [{"source": "self:identity", "text": title}, *facts],
             "method": "fact",
         }
     if name == "ask_world":
@@ -109,6 +121,7 @@ def query(view, name, payload):
             for d in history_documents(view)
             if lower <= d["round"] <= upper
             and ("seat" not in payload or d["actor"] == payload["seat"])
+            and (name != "summarize_player" or d["category"] == "speech")
         ]
         question = (
             _bounded_text(payload["query"], optional=True)
@@ -117,7 +130,14 @@ def query(view, name, payload):
         )
         matches = _rank(docs, question) if name != "summarize_player" else docs[-12:]
     if name == "speech_hint":
-        evidence = "；".join(f"{d['actor']}号曾说“{d['text'][:140]}”" for d in matches[-3:])
+        evidence = "；".join(
+            (
+                f"{d['actor']}号曾说“{d['text'][:140]}”"
+                if d["category"] == "speech"
+                else d["text"][:140]
+            )
+            for d in matches[-3:]
+        )
         answer = (
             f"我想先核对这些证词：{evidence}。请当事人解释前后依据；在得到回答前，我保留判断。"
             if evidence

@@ -10,7 +10,8 @@ from pathlib import Path
 
 
 def main():
-    executable = Path(sys.argv[1]).resolve()
+    # 保留 venv 解释器入口；resolve 会跟随符号链接回基础 Python，丢失隔离环境。
+    executable = Path(sys.argv[1]).absolute()
     runtime = Path("临时/网页发行包/独立运行").resolve()
     runtime.mkdir(parents=True, exist_ok=True)
     (runtime / ".env").write_text(

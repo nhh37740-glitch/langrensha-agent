@@ -239,3 +239,45 @@ def test_each_role_native_tool_reaches_real_backend(tmp_path, role, phase, tool)
     assert report["reason"] == "acted"
     accepted = service.host_decisions(gid)[0]["calls"][0]
     assert accepted["tool"] == tool and accepted["result"]["accepted"]
+
+
+def test_seer_keeps_old_visions_in_context_and_retrieval(tmp_path):
+    service = GameService(tmp_path / "vision.db")
+    gid = service.create(full=True, human_role="seer", rng=random.Random(9))
+    seer = service.bind_player(gid, 1)
+    first = True
+    for _ in range(150):
+        state = service.host_snapshot(gid)
+        actor = pending(state)[0]
+        current = service.bind_player(gid, actor)
+        v = current.view()
+        if actor == 1 and "inspect" in v["tools"]:
+            if first:
+                current.submit(command(v, "inspect", {"target": 2}))
+                first = False
+            elif state["round"] >= 3:
+                break
+            else:
+                current.submit(command(v, "abstain", {}))
+        else:
+            current.submit(command(v, "abstain", {}))
+    v = seer.view()
+    assert v["known_facts"] and v["known_facts"][0]["target"] == 2
+    assert not any(e["kind"] == "vision" for e in v["events"][-32:])
+    assert seer.query("search_history", {"query": "星兆"})["sources"]
+    assert "2号" in seer.query("self_info", {})["answer"]
+    ordinary = next(p["seat"] for p in state["players"] if p["role"] == "villager")
+    other = service.bind_player(gid, ordinary)
+    assert not other.view()["known_facts"]
+    assert not other.query("search_history", {"query": "星兆"})["sources"]
+
+    class RememberingModel:
+        def bind_tools(self, tools):
+            return self
+
+        def invoke(self, messages, config):
+            context = json.loads(messages[1].content)
+            assert context["known_facts"][0]["target"] == 2
+            return AIMessage(content="", tool_calls=[{"name": "abstain", "args": {}, "id": "done"}])
+
+    assert DecisionRunner(RememberingModel()).run(seer)["reason"] == "acted"

@@ -329,3 +329,19 @@ def test_seer_may_repeat_after_skipping_a_night():
     state = act(state, seer)
     state = reach(state, "night_seer")
     assert 1 in game.targets(state, seer, "inspect")
+
+
+@pytest.mark.parametrize(
+    "phase", ["sheriff_vote", "sheriff_pk_vote", "exile_vote", "exile_pk_vote"]
+)
+def test_explosion_is_public_even_during_secret_ballots(phase):
+    state = new()
+    state["election_done"] = True
+    state["candidates"] = [1, 2]
+    state["candidates_pk"] = [1, 2]
+    state = task(state, phase)
+    wolf = game.wolves(state)[0]
+    state = act(state, wolf, "explode")
+    ordinary = game.player_view(state, 1)
+    assert any(e["data"].get("tool") == "explode" for e in ordinary["events"])
+    assert ordinary["players"][wolf - 1]["role"] == Role.WOLF
