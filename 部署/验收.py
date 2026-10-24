@@ -427,7 +427,8 @@ def main():
                             "town",
                             "sh",
                             "-c",
-                            'exec langrensha-ops backup --database "$LANGRENSHA_DATABASE" --output /data/验收留档.sqlite3',
+                            'exec langrensha-ops backup --database "$LANGRENSHA_DATABASE" '
+                            "--output /data/验收留档.sqlite3",
                         ]
                     )
                     town_id = run(compose + ["ps", "-q", "town"], capture=True).strip()

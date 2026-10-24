@@ -40,6 +40,7 @@ case "$operation" in
   stop) "${compose[@]}" stop ;;
   status) "${compose[@]}" ps ;;
   logs) "${compose[@]}" logs --tail=100 ;;
+  audit) "${compose[@]}" exec -T town sh -c 'exec langrensha-ops audit --database "$LANGRENSHA_DATABASE"' ;;
   backup|restore|verify)
     name="${1:-$(date -u +%Y%m%dT%H%M%SZ).sqlite3}"
     [[ "$name" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*\.sqlite3$ ]] || { echo '只接受不含路径的 .sqlite3 备份名。' >&2; exit 2; }
@@ -56,5 +57,5 @@ case "$operation" in
       printf ' start\n'
       echo '确认后将 MIST_DATABASE 写入原私密配置以保持下次启动一致。'
     fi ;;
-  *) echo '用法：部署/运行.sh [--env-file 路径] [--local] [--ca-bundle 路径] build|check|start|stop|status|logs|backup|verify|restore [备份名.sqlite3]' >&2; exit 2 ;;
+  *) echo '用法：部署/运行.sh [--env-file 路径] [--local] [--ca-bundle 路径] build|check|start|stop|status|logs|audit|backup|verify|restore [备份名.sqlite3]' >&2; exit 2 ;;
 esac
