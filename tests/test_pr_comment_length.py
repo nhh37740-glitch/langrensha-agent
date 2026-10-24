@@ -63,6 +63,20 @@ def test_link_does_not_cross_inline_code_boundary():
     assert not length.check_comment(text)["ok"]
 
 
+def test_link_label_may_contain_inline_code():
+    text = "汉" * 297 + " [`模块`](文档/开发/说明.md)"
+    assert length.count_hanzi(text) == 297
+    assert length.check_comment(text)["ok"]
+    over = "汉" * 301 + " [`模块`](文档/开发/说明.md)"
+    assert length.count_hanzi(over) == 301
+    assert not length.check_comment(over)["ok"]
+    chunks = length.split_comment(over)
+    assert "".join(chunks) == over
+    assert all(length.count_hanzi(chunk) <= 300 for chunk in chunks)
+    assert sum(chunk.count("](") for chunk in chunks) == 1
+    assert any("(文档/开发/说明.md)" in chunk for chunk in chunks)
+
+
 def test_unsplittable_link_is_blocked_instead_of_broken():
     text = "[" + "汉" * 301 + "](https://example.com)"
     result = length.check_comment(text)

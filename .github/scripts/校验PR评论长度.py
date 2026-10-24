@@ -80,7 +80,10 @@ def _overlaps(span, ranges):
 
 
 def link_matches(text, code=None):
-    """只在代码之外识别完整链接，返回 (完整匹配区间, 地址区间) 列表。"""
+    """只在代码之外识别完整链接，返回 (完整匹配区间, 地址区间) 列表。
+
+    行内链接允许显示文字内部出现代码；地址或跨边界的代码片段视为不合法匹配。
+    """
     code = code_ranges(text) if code is None else code
     masked = mask_ranges(text, code)
     matches = []
@@ -90,9 +93,20 @@ def link_matches(text, code=None):
         (BARE_LINK_RE, 0),
     ):
         for match in pattern.finditer(masked):
-            if _overlaps(match.span(), code):
+            span = match.span()
+            if pattern is INLINE_LINK_RE:
+                label_length = masked[span[0] : span[1]].find("](")
+                if label_length < 0:
+                    continue
+                label_end = span[0] + label_length + 1
+                overlaps = [
+                    item for item in code if item[0] < span[1] and span[0] < item[1]
+                ]
+                if any(not (item[0] >= span[0] and item[1] <= label_end) for item in overlaps):
+                    continue
+            elif _overlaps(span, code):
                 continue
-            matches.append((match.span(), match.span(address_group)))
+            matches.append((span, match.span(address_group)))
     return matches
 
 
