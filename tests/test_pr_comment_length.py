@@ -4,6 +4,8 @@ import importlib.util
 import json
 from pathlib import Path
 
+import pytest
+
 SCRIPT = Path(__file__).resolve().parents[1] / ".github/scripts/校验PR评论长度.py"
 spec = importlib.util.spec_from_file_location("comment_length", SCRIPT)
 length = importlib.util.module_from_spec(spec)
@@ -35,6 +37,23 @@ def test_chinese_link_address_does_not_consume_quota():
     assert length.check_comment(text)["ok"]
     bare = "说明 " + url + " 结束"
     assert length.count_hanzi(bare) == 4
+
+
+def test_inline_code_url_does_not_swallow_following_text():
+    text = "`https://example.com`" + "汉" * 301
+    assert length.count_hanzi(text) == 301
+    assert not length.check_comment(text)["ok"]
+
+
+def test_unsplittable_link_is_blocked_instead_of_broken():
+    text = "[" + "汉" * 301 + "](https://example.com)"
+    result = length.check_comment(text)
+    assert not result["ok"] and result["needs_split"]
+    assert result["unsplittable"] is True
+    assert result["code"] == "protected_range_exceeds_limit"
+    with pytest.raises(ValueError, match="protected_range_exceeds_limit"):
+        length.split_comment(text)
+    assert length.main(["--text", text, "--split"]) == 2
 
 
 def test_exact_boundaries_299_300_301():

@@ -20,7 +20,7 @@ FENCE_RE = re.compile(r"^\s*```")
 INLINE_CODE_RE = re.compile(r"`[^`\n]*`")
 INLINE_LINK_RE = re.compile(r"\[[^\]\n]*\]\(([^)\n]*)\)")
 ANGLE_LINK_RE = re.compile(r"<(https?://[^>\s]+)>")
-BARE_LINK_RE = re.compile(r"https?://[^\s)>\]]+")
+BARE_LINK_RE = re.compile(r"https?://[^\s)>\]`]+")
 
 
 def merge_ranges(ranges):
@@ -149,6 +149,9 @@ def split_comment(text, limit=HANZI_LIMIT):
                 end = close
             elif begin > start:
                 end = begin
+            else:
+                # 代码块或完整链接自身超过额度：拦截，绝不拆坏原链接或围栏。
+                raise ValueError("protected_range_exceeds_limit")
         if end <= start:
             end = start + 1
         chunks.append(text[start:end])
@@ -166,9 +169,16 @@ def check_comment(text, limit=HANZI_LIMIT):
         "needs_split": total > limit,
     }
     if total > limit:
-        chunks = split_comment(text, limit)
-        result["comments"] = chunks
-        result["comment_hanzi"] = [count_hanzi(chunk) for chunk in chunks]
+        try:
+            chunks = split_comment(text, limit)
+        except ValueError as error:
+            result["unsplittable"] = True
+            result["code"] = str(error)
+            result["comments"] = []
+            result["comment_hanzi"] = []
+        else:
+            result["comments"] = chunks
+            result["comment_hanzi"] = [count_hanzi(chunk) for chunk in chunks]
     return result
 
 
@@ -197,6 +207,14 @@ def main(argv=None):
         print(json.dumps({"ok": False, "code": str(error)}, ensure_ascii=False))
         return 2
     if args.split and result["needs_split"]:
+        if result.get("unsplittable"):
+            print(
+                json.dumps(
+                    {"ok": False, "code": result["code"], "hanzi": result["hanzi"]},
+                    ensure_ascii=False,
+                )
+            )
+            return 2
         print(
             json.dumps(
                 {
