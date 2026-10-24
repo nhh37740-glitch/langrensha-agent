@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "71736229-fc8c-414c-b917-bcdcafcd4007",
+  "status": "current",
+  "command": "deliver",
+  "type": "architecture",
+  "input": "X:\\deepseek接班处理项目问题\\临时\\issue-20\\repo\\文档\\版本\\v0.4.1\\代码架构.architecture.json",
+  "output": "X:\\deepseek接班处理项目问题\\临时\\issue-20\\repo\\文档\\版本\\v0.4.1\\代码架构.html",
+  "specification": {
+    "sha256": "312056e1e9d446a21b3ed5e5ac93660189da68c97a8be4010822286d8553423b",
+    "bytes": 12680
+  },
+  "artifact": {
+    "sha256": "d899622fbfc395a227665310e52c9de718015a30547c5fccdab420ea4e584e61",
+    "bytes": 850352
+  }
+}
