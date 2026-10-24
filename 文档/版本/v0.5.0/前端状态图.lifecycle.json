@@ -30,33 +30,32 @@
     {
       "id": "night",
       "type": "active",
-      "label": "雾夜对局",
-      "sublabel": "夜间行动、私密信息与夜景",
+      "label": "雾夜",
+      "sublabel": "夜间行动与私密信息",
       "tag": "夜",
       "step": "02",
-      "sources": [
-        { "path": "前端/src/main.js", "line": 61, "end_line": 80 },
-        { "path": "前端/src/scene.js", "line": 449, "end_line": 465 },
-        { "path": "前端/src/scene.js", "line": 182, "end_line": 230 }
-      ]
-    },
-    {
-      "id": "day",
-      "type": "active",
-      "label": "白昼对局",
-      "sublabel": "证词、表决与天亮配色",
-      "tag": "昼",
-      "step": "03",
       "sources": [
         { "path": "前端/src/main.js", "line": 61, "end_line": 80 },
         { "path": "前端/src/scene.js", "line": 449, "end_line": 465 }
       ]
     },
     {
+      "id": "day",
+      "type": "active",
+      "label": "白昼",
+      "sublabel": "证词、表决与天亮",
+      "tag": "昼",
+      "step": "03",
+      "sources": [
+        { "path": "前端/src/main.js", "line": 61, "end_line": 80 },
+        { "path": "前端/src/scene.js", "line": 182, "end_line": 230 }
+      ]
+    },
+    {
       "id": "ended",
       "type": "success",
-      "label": "雾散结局",
-      "sublabel": "终局文案与身份复盘",
+      "label": "结局",
+      "sublabel": "终局与身份复盘",
       "tag": "结束",
       "step": "04",
       "sources": [
@@ -68,9 +67,9 @@
     {
       "id": "action",
       "type": "decision",
-      "label": "行动可用",
-      "sublabel": "回合徽标与行动区高亮",
-      "tag": "轮到你",
+      "label": "轮到你",
+      "sublabel": "回合徽标与行动区",
+      "tag": "行动",
       "sources": [
         { "path": "前端/src/main.js", "line": 62, "end_line": 80 },
         { "path": "前端/src/style.css", "line": 900, "end_line": 925 },
@@ -80,8 +79,8 @@
     {
       "id": "waiting",
       "type": "waiting",
-      "label": "等待旅人",
-      "sublabel": "自动推进与思索提示",
+      "label": "等待中",
+      "sublabel": "自动推进与思索",
       "tag": "等待",
       "sources": [
         { "path": "前端/src/main.js", "line": 63, "end_line": 80 },
@@ -92,8 +91,8 @@
     {
       "id": "private",
       "type": "neutral",
-      "label": "私密记录",
-      "sublabel": "仅当前玩家可见的事件",
+      "label": "私密",
+      "sublabel": "仅本人可见的事件",
       "tag": "只读",
       "sources": [
         { "path": "前端/src/main.js", "line": 167, "end_line": 180 },
@@ -103,8 +102,8 @@
     {
       "id": "error",
       "type": "failure",
-      "label": "断线提示",
-      "sublabel": "请求失败后可重试",
+      "label": "断线",
+      "sublabel": "请求失败可重试",
       "tag": "网络",
       "sources": [
         { "path": "前端/src/main.js", "line": 33, "end_line": 44 },
@@ -130,20 +129,16 @@
     { "id": "night-day", "from": "night", "to": "day", "label": "晨钟天亮", "variant": "emphasis" },
     { "id": "day-ended", "from": "day", "to": "ended", "label": "胜负落定", "variant": "emphasis" },
     { "id": "day-night", "from": "day", "to": "night", "label": "夜幕再临" },
-    { "id": "night-action", "from": "night", "to": "action", "label": "轮到真人" },
-    { "id": "day-action", "from": "day", "to": "action", "label": "轮到真人" },
-    { "id": "action-night", "from": "action", "to": "night", "label": "夜间行动生效" },
-    { "id": "action-day", "from": "action", "to": "day", "label": "白昼行动生效" },
-    { "id": "night-waiting", "from": "night", "to": "waiting", "label": "非真人待行" },
-    { "id": "waiting-night", "from": "waiting", "to": "night", "label": "推进到夜晚" },
-    { "id": "day-waiting", "from": "day", "to": "waiting", "label": "非真人待行" },
-    { "id": "waiting-day", "from": "waiting", "to": "day", "label": "推进到白昼" },
+    { "id": "night-action", "from": "night", "to": "action", "label": "轮到你" },
+    { "id": "action-night", "from": "action", "to": "night", "label": "行动生效" },
+    { "id": "night-waiting", "from": "night", "to": "waiting", "label": "AI 待行" },
+    { "id": "waiting-night", "from": "waiting", "to": "night", "label": "推进" },
     { "id": "night-private", "from": "night", "to": "private", "label": "私密事件" },
-    { "id": "private-night", "from": "private", "to": "night", "label": "收起记录" },
+    { "id": "private-night", "from": "private", "to": "night", "label": "收起" },
     { "id": "night-error", "from": "night", "to": "error", "label": "请求失败", "variant": "security" },
-    { "id": "error-night", "from": "error", "to": "night", "label": "重试成功" },
-    { "id": "night-reduced", "from": "night", "to": "reduced", "label": "系统偏好减少动效", "variant": "dashed" },
-    { "id": "reduced-night", "from": "reduced", "to": "night", "label": "恢复动效" }
+    { "id": "error-night", "from": "error", "to": "night", "label": "重试" },
+    { "id": "night-reduced", "from": "night", "to": "reduced", "label": "系统偏好", "variant": "dashed" },
+    { "id": "reduced-night", "from": "reduced", "to": "night", "label": "恢复" }
   ],
   "cards": [
     {
@@ -152,25 +147,25 @@
       "items": [
         "main.js 把受限视图写入 html 的 data-mode/phase/turn/alive/error/motion",
         "CSS 与 Phaser 只消费公开状态；隐藏身份与私聊不会进入场景",
-        "私密记录仅展示服务器已过滤给当前玩家的事件"
+        "私密记录只展示服务器已过滤给当前玩家的事件"
       ]
     },
     {
       "dot": "amber",
       "title": "行动与等待",
       "items": [
-        "轮到时显示回合徽标与行动区顶光；提交仍走既有 HTTP API",
-        "非真人待行只显示思索提示，自动推进不跳过真人",
+        "轮到你时显示回合徽标与行动区顶光；提交仍走既有 HTTP API",
+        "等待只显示思索提示，自动推进不跳过真人",
         "断线只影响请求重试，不改变对局状态或规则裁定"
       ]
     },
     {
       "dot": "emerald",
-      "title": "减少动效降级",
+      "title": "昼夜与减少动效",
       "items": [
+        "雾夜与白昼共用同一状态机，场景配色与灯火随 night 切换",
         "prefers-reduced-motion 与运行期开关都写入 data-motion=reduced",
-        "连续漂浮、闪烁与扫光停止，状态切换即时完成",
-        "Playwright 用例验证降级后仍可入镇、行动与刷新恢复"
+        "Playwright 验证降级后仍可入镇、行动与刷新恢复"
       ]
     }
   ]
