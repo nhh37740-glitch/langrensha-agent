@@ -10,49 +10,7 @@
       "url": "https://github.com/nhh37740-glitch/langrensha-agent.git",
       "revision": "7a7c0defb4d19480412bfb64d08c29a6c2cb3733",
       "provider": "github"
-    },
-    "views": [
-      {
-        "id": "request",
-        "label": "一次真人行动",
-        "focus": [
-          "browser-main",
-          "http-boundary",
-          "bound-session",
-          "game-service",
-          "domain-reducer",
-          "snapshot-store",
-          "sqlite-file"
-        ],
-        "note": "受信会话固定操作者；服务在同一事务里加载、裁定、保存。"
-      },
-      {
-        "id": "privacy",
-        "label": "权限与札记",
-        "focus": [
-          "http-boundary",
-          "bound-session",
-          "game-service",
-          "domain-reducer",
-          "web-presentation",
-          "visible-query",
-          "grounded-assistant"
-        ],
-        "note": "先由 player_view 过滤，再检索和呈现；札记模型没有行动工具。"
-      },
-      {
-        "id": "ai",
-        "label": "AI 查询与行动",
-        "focus": [
-          "http-boundary",
-          "decision-runner",
-          "bound-session",
-          "visible-query",
-          "external-deepseek"
-        ],
-        "note": "非真人待行窗口才运行 AI；query 只读，submit 仍进入同一规则事务。"
-      }
-    ]
+    }
   },
   "components": [
     {
