@@ -597,7 +597,7 @@ class TownScene extends Phaser.Scene {
       this.drawPerson(player.seat, {
         alive: player.alive,
         you: player.seat === state.seat,
-        sheriff: player.seat === state.sheriff,
+        sheriff: Boolean(player.sheriff),
         color: player.color,
       });
     });
@@ -683,7 +683,10 @@ export function makeScene({ reducedMotion = false } = {}) {
   });
   return {
     update: (state) => {
-      if (scene.ready && state) scene.applyState(state);
+      if (!state) return;
+      // 画布可能晚于首个 /api/state 就绪；先保存状态，create() 完成后补画。
+      scene.state = state;
+      if (scene.ready) scene.applyState(state);
     },
     setReducedMotion: (reduced) => scene.setReducedMotion(reduced),
     destroy: () => instance.destroy(true),
