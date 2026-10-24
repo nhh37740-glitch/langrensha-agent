@@ -33,8 +33,11 @@ jobs:
       - name: 安装测试浏览器
         working-directory: 前端
         run: npx playwright install --with-deps chromium
-      - name: 安装中文字体（截图证据）
-        run: sudo apt-get update && sudo apt-get install -y fonts-noto-cjk
+      - name: 安装中文字体（截图证据，失败不阻塞）
+        continue-on-error: true
+        run: |
+          sudo timeout 180 apt-get update || true
+          sudo timeout 180 apt-get install -y fonts-noto-cjk || true
       - name: 实际浏览器交互及截图
         working-directory: 前端
         env:
