@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "08cc85ae-6c51-4ad2-aa81-a1aa7b179d1d",
+  "status": "current",
+  "command": "deliver",
+  "type": "workflow",
+  "input": "/home/runner/work/langrensha-agent/langrensha-agent/文档/版本/v0.5.1/一次行动运行过程.workflow.json",
+  "output": "/home/runner/work/langrensha-agent/langrensha-agent/文档/版本/v0.5.1/一次行动运行过程.html",
+  "specification": {
+    "sha256": "88d1b36fa5b6f5c7a142555959b2411425078faf3c00831a412d10e1b4c4735d",
+    "bytes": 8184
+  },
+  "artifact": {
+    "sha256": "a4710a1c9333bfb4368445185ffc1a180930787b698cd720f0f95114add04149",
+    "bytes": 831074
+  }
+}
