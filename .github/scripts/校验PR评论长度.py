@@ -17,9 +17,9 @@ from pathlib import Path
 
 HANZI_LIMIT = 300
 HANZI_RE = re.compile(r"[\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff]")
-FENCE_OPEN_RE = re.compile(r"^\s*(`{3,})")
+FENCE_OPEN_RE = re.compile(r"^\s*(`{3,})[^`]*$")
 FENCE_CLOSE_RE = re.compile(r"^\s*(`{3,})\s*$")
-INLINE_CODE_RE = re.compile(r"`[^`\n]*`")
+INLINE_CODE_RE = re.compile(r"(?<!\\)`(?:\\.|[^`\\\n])*`")
 INLINE_LINK_RE = re.compile(r"\[[^\]\n]*\]\(([^)\n]*)\)")
 ANGLE_LINK_RE = re.compile(r"<(https?://[^>\s]+)>")
 BARE_LINK_RE = re.compile(r"https?://[^\s)>\]`'\"]+")

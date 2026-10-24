@@ -77,6 +77,18 @@ def test_link_label_may_contain_inline_code():
     assert any("(文档/开发/说明.md)" in chunk for chunk in chunks)
 
 
+def test_escaped_backticks_are_body_text():
+    text = "\\`" + "汉" * 301 + "\\`"
+    assert length.count_hanzi(text) == 301
+    assert not length.check_comment(text)["ok"]
+
+
+def test_fence_info_string_with_backtick_is_not_a_fence():
+    text = "```example```\n" + "汉" * 301 + "\n```\ncode\n```\n"
+    assert length.count_hanzi(text) == 301
+    assert not length.check_comment(text)["ok"]
+
+
 def test_unsplittable_link_is_blocked_instead_of_broken():
     text = "[" + "汉" * 301 + "](https://example.com)"
     result = length.check_comment(text)
