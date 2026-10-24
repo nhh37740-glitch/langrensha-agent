@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "langrensha-agent"
-version = "0.4.0"
+version = "0.4.1"
 description = "狼人杀智能体的确定性对局内核"
 readme = "README.md"
 requires-python = ">=3.12"

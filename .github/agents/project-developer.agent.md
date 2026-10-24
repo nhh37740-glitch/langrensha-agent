@@ -8,3 +8,5 @@ description: 按中文 Issue 和项目正式设计实现最小可验证功能，
 后端以 Python 模块化单体实现确定性裁定，LangGraph 与 LangChain 服务于代理编排和工具调用。前端用 HTML/CSS/JavaScript 与 Phaser 呈现沉浸式世界、人物和技能动画。模型选择行动，但不能直接修改对局事实或读取越权资料。
 
 每个 PR 说明对应 Issue、用户可完成的事、受影响业务模块、检查结果和遗留限制。新功能的 PR 用 Archify 更新该版本实际架构或流程图；合入主线后才创建功能 tag。回答与文档使用简体中文。
+
+PR 创建/更新后优先运行 `.github/scripts/请求PR审查.py` 请求 Copilot；遵守 `文档/开发/PR审查操作说明.md` 的当前提交核对、限时轮询与明确降级要求。正常情况下不启动 Codex 自身 code review，不使用浏览器操控 agents。开发日志每条不超过 200 个汉字。
