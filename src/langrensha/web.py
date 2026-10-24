@@ -90,7 +90,7 @@ def create_app(
 
     @app.get("/api/health")
     def health():
-        return {"status": "ok", "version": "0.3.0"}
+        return {"status": "ok", "version": "0.3.1"}
 
     @app.post("/api/enter")
     async def enter(request: Request, response: Response):

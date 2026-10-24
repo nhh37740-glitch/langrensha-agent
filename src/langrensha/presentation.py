@@ -135,13 +135,18 @@ def present(view):
             }
         )
     night = view["phase"].startswith("night")
+    chapter = "灯火熄灭之后" if night else PHASE_NAMES.get(view["phase"], "雾中的等待")
+    if view["phase"] == "hunter" and "shoot" not in view["tools"]:
+        chapter = PHASE_NAMES["last_words"]
+    elif view["phase"] == "idiot" and "reveal" not in view["tools"]:
+        chapter = PHASE_NAMES["exile_vote"]
     return {
         "game_id": view["game_id"],
         "seat": view["seat"],
         "identity": ROLE_NAMES[view["role"]],
         "round": view["round"],
         "night": night,
-        "chapter": "灯火熄灭之后" if night else PHASE_NAMES.get(view["phase"], "雾中的等待"),
+        "chapter": chapter,
         "phase_id": view["phase_id"],
         "version": view["version"],
         "alive": own["alive"],
