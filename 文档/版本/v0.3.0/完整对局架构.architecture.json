@@ -1,0 +1,253 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "v0.3.0 雾钟镇完整可玩版",
+    "locale": "zh-CN",
+    "output": "文档/版本/v0.3.0/完整对局架构.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/nhh37740-glitch/langrensha-agent.git",
+      "revision": "865171e729e4450ed24e7681314af309bc347444",
+      "provider": "github"
+    }
+  },
+  "components": [
+    {
+      "id": "human-page",
+      "type": "frontend",
+      "label": "真人与 Phaser 网页",
+      "sublabel": "世界 · 人物 · 可见能力动画",
+      "pos": [
+        40,
+        40
+      ],
+      "size": [
+        210,
+        90
+      ],
+      "sources": [
+        {
+          "path": "前端/src/main.js",
+          "line": 22,
+          "end_line": 47
+        },
+        {
+          "path": "前端/src/scene.js",
+          "line": 125,
+          "end_line": 175
+        }
+      ]
+    },
+    {
+      "id": "authenticated-web",
+      "type": "security",
+      "label": "认证与对局入口",
+      "sublabel": "HttpOnly 会话 · 同源写入",
+      "pos": [
+        420,
+        40
+      ],
+      "size": [
+        240,
+        90
+      ],
+      "sources": [
+        {
+          "path": "src/langrensha/web.py",
+          "line": 22,
+          "end_line": 132
+        },
+        {
+          "path": "src/langrensha/web.py",
+          "line": 180,
+          "end_line": 215
+        }
+      ]
+    },
+    {
+      "id": "game-and-query",
+      "type": "backend",
+      "label": "对局裁定与可见资料",
+      "sublabel": "完整规则 · 权限视图 · 检索辅助",
+      "pos": [
+        850,
+        40
+      ],
+      "size": [
+        260,
+        90
+      ],
+      "sources": [
+        {
+          "path": "src/langrensha/full_game.py",
+          "line": 406,
+          "end_line": 515
+        },
+        {
+          "path": "src/langrensha/service.py",
+          "line": 97,
+          "end_line": 142
+        },
+        {
+          "path": "src/langrensha/retrieval.py",
+          "line": 79,
+          "end_line": 160
+        }
+      ]
+    },
+    {
+      "id": "durable-private-store",
+      "type": "database",
+      "label": "SQLite 私密状态",
+      "sublabel": "事务 · 去重 · 主持审计",
+      "pos": [
+        1280,
+        40
+      ],
+      "size": [
+        210,
+        90
+      ],
+      "sources": [
+        {
+          "path": "src/langrensha/store.py",
+          "line": 9,
+          "end_line": 53
+        },
+        {
+          "path": "src/langrensha/web.py",
+          "line": 25,
+          "end_line": 29
+        }
+      ]
+    },
+    {
+      "id": "bounded-agent",
+      "type": "backend",
+      "label": "有界决策与真人札记",
+      "sublabel": "独立上下文 · 有据建议 · 不代真人行动",
+      "pos": [
+        390,
+        360
+      ],
+      "size": [
+        300,
+        100
+      ],
+      "sources": [
+        {
+          "path": "src/langrensha/ai.py",
+          "line": 145,
+          "end_line": 244
+        },
+        {
+          "path": "src/langrensha/ai.py",
+          "line": 260,
+          "end_line": 334
+        },
+        {
+          "path": "src/langrensha/assistant.py",
+          "line": 1,
+          "end_line": 81
+        }
+      ]
+    },
+    {
+      "id": "native-provider",
+      "type": "cloud",
+      "label": "DeepSeek 官方 API",
+      "sublabel": "原生工具协议 · 密钥留在服务器",
+      "pos": [
+        850,
+        360
+      ],
+      "size": [
+        260,
+        100
+      ],
+      "sources": [
+        {
+          "path": "src/langrensha/ai.py",
+          "line": 20,
+          "end_line": 43
+        },
+        {
+          "path": "src/langrensha/ai.py",
+          "line": 181,
+          "end_line": 207
+        }
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "browser-api",
+      "from": "human-page",
+      "to": "authenticated-web",
+      "label": "同源 API",
+      "variant": "emphasis"
+    },
+    {
+      "id": "bound-human",
+      "from": "authenticated-web",
+      "to": "game-and-query",
+      "label": "绑定真人会话",
+      "variant": "security"
+    },
+    {
+      "id": "persist-state",
+      "from": "game-and-query",
+      "to": "durable-private-store",
+      "label": "SQLite 事务"
+    },
+    {
+      "id": "one-window",
+      "from": "authenticated-web",
+      "to": "bounded-agent",
+      "label": "AI 窗口或可见札记"
+    },
+    {
+      "id": "agent-authority",
+      "from": "bounded-agent",
+      "to": "game-and-query",
+      "label": "决策视图与行动",
+      "variant": "security"
+    },
+    {
+      "id": "provider-call",
+      "from": "bounded-agent",
+      "to": "native-provider",
+      "label": "原生工具调用"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "完整规则与呈现",
+      "items": [
+        "mist-v1：昼夜、警长、平票、死亡技能及胜负",
+        "场景、独立人物与私密能力动画分层",
+        "网页及 Phaser 随发行包提供，无外部 CDN"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "权限先于检索",
+      "items": [
+        "权限视图先行，累计星兆不随近期裁剪遗失",
+        "狼人私聊、夜袭票、私人星兆按身份隔离",
+        "思考轮数用尽同阶段弃权；审计只供主持"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "运行边界",
+      "items": [
+        "单 Uvicorn worker；逐窗口串行推进",
+        "源码可构建 wheel 与非 root 持久化容器",
+        "用户服务器连接未知，未声称已线上部署"
+      ]
+    }
+  ]
+}

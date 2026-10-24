@@ -14,3 +14,7 @@ build/
 .mypy_cache/
 .ruff_cache/
 *.egg-info/
+
+/src/langrensha/static/
+/前端/playwright-report/
+/前端/test-results/

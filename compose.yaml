@@ -1,0 +1,15 @@
+services:
+  town:
+    build: .
+    ports:
+      - "127.0.0.1:8000:8000"
+    env_file: .env
+    environment:
+      LANGRENSHA_DATABASE: /data/对局.sqlite3
+      COOKIE_SECURE: ${COOKIE_SECURE:-true}
+    volumes:
+      - town-data:/data
+    restart: unless-stopped
+    stop_grace_period: 45s
+volumes:
+  town-data:

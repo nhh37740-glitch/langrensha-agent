@@ -1,4 +1,4 @@
-"""狼人杀智能体：尚处于最小内核阶段。"""
+"""狼人杀智能体：完整雾钟镇对局与兼容演练。"""
 
 from .service import GameService
 
