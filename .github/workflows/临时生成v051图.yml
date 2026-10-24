@@ -24,6 +24,10 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: 安装中文字体（截图可读）
+        run: |
+          sudo timeout 240 apt-get update || true
+          sudo timeout 240 apt-get install -y fonts-noto-cjk || true
       - name: 生成默认主图并截图
         run: |
           python .github/scripts/获取版本图源码.py \
