@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "802ed453-9049-41bc-8574-53092a8027ae",
+  "status": "current",
+  "command": "deliver",
+  "type": "lifecycle",
+  "input": "/home/runner/work/langrensha-agent/langrensha-agent/文档/版本/v0.5.0/前端状态图.lifecycle.json",
+  "output": "/home/runner/work/langrensha-agent/langrensha-agent/文档/版本/v0.5.0/前端状态图.html",
+  "specification": {
+    "sha256": "617712090fd4ea91c0795fb877bae5ce06566f4786b91b38eea4491968e0ba63",
+    "bytes": 6297
+  },
+  "artifact": {
+    "sha256": "4439557755914a0ae645d88607f7862a62e7921ea226fc10c6fce2e8472eb63f",
+    "bytes": 835261
+  }
+}

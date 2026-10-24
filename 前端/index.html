@@ -3,51 +3,72 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <meta name="theme-color" content="#101c22" />
+    <meta name="theme-color" content="#0e1a24" />
+    <meta name="color-scheme" content="dark" />
     <title>雾钟镇 · 钟声之后</title>
   </head>
   <body>
     <div class="app">
-      <header>
+      <header class="site-header">
         <a class="brand" href="/" aria-label="雾钟镇首页"
-          ><span class="emblem">♜</span
-          ><span>雾钟镇<small>THE MIST & THE BELL</small></span></a
+          ><span class="emblem" aria-hidden="true">♜</span
+          ><span class="brand__text"
+            >雾钟镇<small>THE MIST &amp; THE BELL</small></span
+          ></a
         >
         <div class="header-right">
-          <span class="live-dot"></span
+          <span class="live-dot" aria-hidden="true"></span
           ><span id="chapter">十二位旅人，一个雾夜</span
+          ><span id="phase-chip" class="phase-chip" hidden
+            ><i class="phase-chip__beam" aria-hidden="true"></i
+            ><span id="phase-label">雾夜初临</span></span
           ><button id="sound" class="quiet" aria-pressed="false">
             开启钟声</button
           ><button id="reset" class="quiet" hidden>重新启程</button>
         </div>
       </header>
       <main>
-        <section class="world-panel">
-          <div class="scene-wrap">
-            <div id="scene" aria-label="雾钟镇十二位旅人的钟楼广场"></div>
+        <section class="world-panel" aria-label="雾钟镇场景与旅人">
+          <div class="scene-wrap" id="scene-wrap">
+            <div
+              id="scene"
+              aria-label="雾钟镇十二位旅人的钟楼广场，画面随昼夜、生死与技能变化"
+            ></div>
+            <div class="scene-atmosphere" aria-hidden="true">
+              <span class="fog-band fog-band--far"></span>
+              <span class="fog-band fog-band--near"></span>
+              <span class="scene-glow"></span>
+              <span class="scene-vignette"></span>
+              <span class="scene-grain"></span>
+            </div>
             <div class="scene-title">
               <span class="eyebrow">钟声之后 / CHAPTER OF THE MIST</span>
               <h1>有人守着灯，<br />有人藏在雾里。</h1>
               <p>听清每一句证词，再决定相信谁。</p>
             </div>
             <div class="scene-caption">
-              <span id="day">雾钟镇 · 初至</span><span>✧ 钟楼广场</span>
+              <span
+                ><i class="caption-dot" aria-hidden="true"></i
+                ><span id="day">雾钟镇 · 初至</span></span
+              >
+              <span id="chapter-caption">✧ 钟楼广场</span>
             </div>
+            <span class="scene-sigil" aria-hidden="true">✦</span>
           </div>
           <div id="identity" class="identity-card" hidden>
-            <span class="identity-icon">✦</span>
-            <div>
+            <span class="identity-icon" aria-hidden="true">✦</span>
+            <div class="identity-card__text">
               <span class="eyebrow">你的秘密</span
               ><strong id="role-title"></strong>
               <p id="role-note"></p>
             </div>
-            <span id="resources"></span>
+            <span id="resources" class="identity-card__resources"></span>
           </div>
           <div class="roster-heading">
             <span class="eyebrow">广场上的旅人</span
             ><span id="alive-count">十二席已备</span>
           </div>
-          <div id="roster" class="roster"></div>
+          <div id="roster" class="roster" aria-label="广场上的旅人"></div>
           <div class="world-footer">
             晨钟响起之前，每个人都有自己的秘密。<span>雾钟镇 · 第一卷</span>
           </div>
@@ -58,12 +79,16 @@
               <span class="eyebrow">钟楼记事</span>
               <h2 id="story-title">等一场雾散</h2>
             </div>
-            <button id="auto" class="quiet" hidden aria-pressed="true">
-              暂停旅人
-            </button>
+            <div class="story-header__tools">
+              <span id="turn-badge" class="turn-badge" hidden
+                >轮到你 · 从容选择</span
+              ><button id="auto" class="quiet" hidden aria-pressed="true">
+                暂停旅人
+              </button>
+            </div>
           </div>
           <div id="intro" class="intro">
-            <span class="intro-sigil">☾</span>
+            <span class="intro-sigil" aria-hidden="true">☾</span>
             <h2>欢迎来到雾钟镇</h2>
             <p>
               雾封住了出镇的路。十一位旅人已经等在广场，今夜，你会带着怎样的秘密入座？
@@ -86,7 +111,7 @@
                 <option value="hunter">守林人 · 最后一枪</option>
                 <option value="idiot">守誓者 · 以誓留席</option></select
               ><button class="primary" type="submit">
-                踏入雾中 <span>→</span>
+                踏入雾中 <span aria-hidden="true">→</span>
               </button>
             </form>
             <p class="intro-foot">一位真人 · 十一位旅人 · 文字与秘密</p>
@@ -98,35 +123,48 @@
             aria-live="polite"
             hidden
           ></div>
-          <div id="status" class="status" role="status"></div>
+          <div class="story-foot">
+            <div id="status" class="status" role="status"></div>
+            <div id="waiting" class="waiting" hidden aria-hidden="true">
+              <span class="waiting__pulse"></span>旅人正在雾中思索
+            </div>
+          </div>
           <div id="error" class="error" role="alert" hidden></div>
           <form id="action-form" class="action-area" hidden>
+            <span class="action-beacon" aria-hidden="true"></span>
             <div class="action-top">
               <span class="eyebrow">轮到你的抉择</span
               ><select id="choice" aria-label="选择行动"></select>
             </div>
-            <div id="target-wrap" hidden>
+            <div id="target-wrap" class="field" hidden>
               <label for="target">看向哪位旅人</label
               ><select id="target"></select>
             </div>
-            <textarea
-              id="speech"
-              maxlength="4000"
-              rows="3"
-              placeholder="把你知道的，告诉广场上的人……"
-              aria-label="你的证词"
-              hidden
-            ></textarea
-            ><button id="submit-action" class="primary" type="submit">
-              作出选择 <span>→</span>
+            <div id="speech-wrap" class="field" hidden>
+              <label for="speech">你的证词</label
+              ><textarea
+                id="speech"
+                maxlength="4000"
+                rows="3"
+                placeholder="把你知道的，告诉广场上的人……"
+                aria-label="你的证词"
+              ></textarea>
+            </div>
+            <button id="submit-action" class="primary" type="submit">
+              作出选择 <span aria-hidden="true">→</span>
             </button>
           </form>
-          <div id="ending" class="ending" hidden></div>
+          <div id="ending" class="ending" role="status" hidden></div>
         </section>
       </main>
       <aside id="assistant" class="assistant" hidden>
-        <button id="assistant-toggle" aria-expanded="false">
-          ✧ 随身札记 <span>查阅线索，整理证词</span><b>＋</b>
+        <button
+          id="assistant-toggle"
+          aria-expanded="false"
+          aria-controls="assistant-body"
+        >
+          ✧ 随身札记 <span>查阅线索，整理证词</span
+          ><b aria-hidden="true">＋</b>
         </button>
         <div id="assistant-body" hidden>
           <form id="query-form">
@@ -144,14 +182,16 @@
             /><select id="query-seat" aria-label="指定旅人" hidden></select
             ><button class="secondary" type="submit">翻阅札记</button>
           </form>
-          <p id="answer" aria-live="polite"></p>
-          <div id="sources"></div>
+          <p id="answer" class="answer" aria-live="polite"></p>
+          <div id="sources" class="sources"></div>
           <button id="use-hint" class="secondary" hidden>
             放入草稿，继续编辑
           </button>
         </div>
       </aside>
-      <footer>雾里听证词，灯下作选择。<span>文字对局 · 无需匆忙</span></footer>
+      <footer>
+        雾里听证词，灯下作选择。<span>文字对局 · 无需匆忙</span>
+      </footer>
     </div>
     <script type="module" src="/src/main.js"></script>
   </body>

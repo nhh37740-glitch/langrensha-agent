@@ -33,6 +33,11 @@ jobs:
       - name: 安装测试浏览器
         working-directory: 前端
         run: npx playwright install --with-deps chromium
+      - name: 安装中文字体（截图证据，失败不阻塞）
+        continue-on-error: true
+        run: |
+          sudo timeout 180 apt-get update || true
+          sudo timeout 180 apt-get install -y fonts-noto-cjk || true
       - name: 实际浏览器交互及截图
         working-directory: 前端
         env:
@@ -42,7 +47,7 @@ jobs:
         run: |
           python -m build
           python -m venv 临时/网页发行包/venv
-          临时/网页发行包/venv/bin/python -m pip install -c requirements-dev.lock 'dist/langrensha_agent-0.4.0-py3-none-any.whl[ai,web]'
+          临时/网页发行包/venv/bin/python -m pip install -c requirements-dev.lock 'dist/langrensha_agent-0.5.0-py3-none-any.whl[ai,web]'
           临时/网页发行包/venv/bin/python -I -c "from importlib.resources import files; from langrensha.web import create_app; p=files('langrensha')/'static'; assert (p/'index.html').is_file(); assert list((p/'assets').iterdir())"
           python .github/scripts/校验发行包运行.py 临时/网页发行包/venv/bin/python
       - name: 保存网页截图与可安装发行包
