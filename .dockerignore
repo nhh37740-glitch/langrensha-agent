@@ -1,0 +1,13 @@
+.git
+.env
+.env.*
+.venv
+临时
+node_modules
+前端/node_modules
+src/langrensha/static
+dist
+build
+**/__pycache__
+.agents
+文档

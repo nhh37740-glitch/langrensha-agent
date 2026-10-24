@@ -1,0 +1,80 @@
+name: 前端与发行包检查
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  web:
+    name: 网页交互与完整发行包
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: 前端/package-lock.json
+      - name: 安装锁定依赖
+        run: |
+          python -m pip install -c requirements-dev.lock -e '.[dev,ai,web]'
+          npm ci --prefix 前端
+      - name: 前端静态检查与生产构建
+        run: |
+          npm run lint --prefix 前端
+          npm run build --prefix 前端
+      - name: 安装测试浏览器
+        working-directory: 前端
+        run: npx playwright install --with-deps chromium
+      - name: 实际浏览器交互及截图
+        working-directory: 前端
+        env:
+          PYTHON: python
+        run: npm test
+      - name: 完整发行包构建与独立安装
+        run: |
+          python -m build
+          python -m venv 临时/网页发行包/venv
+          临时/网页发行包/venv/bin/python -m pip install -c requirements-dev.lock 'dist/langrensha_agent-0.3.0-py3-none-any.whl[ai,web]'
+          临时/网页发行包/venv/bin/python -I -c "from importlib.resources import files; from langrensha.web import create_app; p=files('langrensha')/'static'; assert (p/'index.html').is_file(); assert list((p/'assets').iterdir())"
+      - name: 保存网页截图与可安装发行包
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: 雾钟镇完整发行包与网页验收
+          path: |
+            dist/
+            临时/完整可玩版/网页截图/
+            临时/完整可玩版/浏览器结果/
+
+  container:
+    name: 容器构建与启动
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: 构建完整应用镜像
+        run: docker build -t mist-town:ci .
+      - name: 用非密钥测试配置验证启动和内置网页
+        run: |
+          docker run -d --name mist-ci -p 127.0.0.1:8000:8000 \
+            -e DEEPSEEK_API_KEY=ci-placeholder-no-provider-call \
+            -e LANGRENSHA_ACCESS_TOKEN=ci-only-access mist-town:ci
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:8000/api/health; then break; fi
+            sleep 1
+          done
+          curl --fail http://127.0.0.1:8000/api/health
+          curl --fail --silent http://127.0.0.1:8000/ > /tmp/mist-ci-index.html
+          python -c "from pathlib import Path; assert '雾钟镇' in Path('/tmp/mist-ci-index.html').read_text()"
+      - name: 保存容器日志并清理
+        if: always()
+        run: |
+          docker logs mist-ci || true
+          docker rm -f mist-ci || true

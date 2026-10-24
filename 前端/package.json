@@ -1,0 +1,23 @@
+{
+  "name": "mist-bell-town",
+  "version": "0.3.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "vite build",
+    "lint": "eslint .",
+    "test": "playwright test"
+  },
+  "dependencies": {
+    "phaser": "3.90.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "9.38.0",
+    "@playwright/test": "1.56.1",
+    "eslint": "9.38.0",
+    "globals": "16.4.0",
+    "prettier": "3.6.2",
+    "vite": "7.3.7"
+  }
+}

@@ -4,9 +4,21 @@ import json
 from datetime import UTC, datetime
 from uuid import uuid4
 
+from . import full_game
 from .rules import Rejected as Rejected
-from .rules import create_game, player_view, reduce_action, seat_number
+from .rules import create_game, seat_number
+from .rules import player_view as rehearsal_view
+from .rules import reduce_action as rehearsal_action
 from .store import Store
+
+
+def player_view(state, actor):
+    return (full_game.player_view if state["mode"] == "full_game" else rehearsal_view)(state, actor)
+
+
+def reduce_action(state, actor, command, *, now):
+    reducer = full_game.reduce_action if state["mode"] == "full_game" else rehearsal_action
+    return reducer(state, actor, command, now=now)
 
 
 def utc_now():
@@ -19,8 +31,9 @@ class GameService:
     def __init__(self, database):
         self.store = Store(database)
 
-    def create(self, *, human_seat=1, human_role=None, rng=None):
-        state = create_game(human_seat=human_seat, human_role=human_role, now=utc_now(), rng=rng)
+    def create(self, *, human_seat=1, human_role=None, rng=None, full=False):
+        factory = full_game.create_full_game if full else create_game
+        state = factory(human_seat=human_seat, human_role=human_role, now=utc_now(), rng=rng)
         with self.store.transaction() as db:
             self.store.save(db, state, create=True)
         return state["id"]
@@ -113,6 +126,11 @@ class PlayerSession:
 
     def view(self):
         return self._service._view(self._game_id, self._actor)
+
+    def query(self, name, payload):
+        from .retrieval import query
+
+        return query(self.view(), name, payload)
 
     def submit(self, command):
         return self._service._submit(self._game_id, self._actor, command)
