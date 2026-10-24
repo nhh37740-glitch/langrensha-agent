@@ -83,6 +83,12 @@ def test_escaped_backticks_are_body_text():
     assert not length.check_comment(text)["ok"]
 
 
+def test_backslash_inside_inline_code_does_not_escape_closing_tick():
+    text = "`code\\`" + "汉" * 301 + "`"
+    assert length.count_hanzi(text) == 301
+    assert not length.check_comment(text)["ok"]
+
+
 def test_fence_info_string_with_backtick_is_not_a_fence():
     text = "```example```\n" + "汉" * 301 + "\n```\ncode\n```\n"
     assert length.count_hanzi(text) == 301
