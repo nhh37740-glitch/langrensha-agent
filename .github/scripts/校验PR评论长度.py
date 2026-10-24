@@ -18,6 +18,20 @@ HANZI_LIMIT = 300
 HANZI_RE = re.compile(r"[\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff]")
 FENCE_RE = re.compile(r"^\s*```")
 INLINE_CODE_RE = re.compile(r"`[^`\n]*`")
+INLINE_LINK_RE = re.compile(r"\[[^\]\n]*\]\(([^)\n]*)\)")
+ANGLE_LINK_RE = re.compile(r"<(https?://[^>\s]+)>")
+BARE_LINK_RE = re.compile(r"https?://[^\s)>\]]+")
+
+
+def merge_ranges(ranges):
+    """排序并合并重叠区间，保持字符位置口径。"""
+    merged = []
+    for begin, end in sorted(ranges):
+        if merged and begin <= merged[-1][1]:
+            merged[-1] = (merged[-1][0], max(merged[-1][1], end))
+        else:
+            merged.append((begin, end))
+    return merged
 
 
 def fence_ranges(text):
@@ -36,16 +50,38 @@ def fence_ranges(text):
     return ranges
 
 
-def code_ranges(text):
-    """返回应排除出汉字统计的代码区间：围栏块与行内代码，按起点排序。"""
+def link_destination_ranges(text):
+    """返回链接地址区间；链接显示文字仍计入正文汉字。"""
+    ranges = []
+    for pattern, group in (
+        (INLINE_LINK_RE, 1),
+        (ANGLE_LINK_RE, 1),
+        (BARE_LINK_RE, 0),
+    ):
+        ranges.extend(match.span(group) for match in pattern.finditer(text))
+    return ranges
+
+
+def syntax_ranges(text):
+    """返回拆分时不可切断的区间：代码片段与完整链接语法。"""
     ranges = fence_ranges(text)
     ranges.extend(match.span() for match in INLINE_CODE_RE.finditer(text))
-    return sorted(ranges)
+    ranges.extend(match.span() for match in INLINE_LINK_RE.finditer(text))
+    ranges.extend(match.span() for match in BARE_LINK_RE.finditer(text))
+    return merge_ranges(ranges)
 
 
-def mask_code(text, ranges=None):
-    """把代码区间的字符替换为非汉字占位符，长度与换行保持不变。"""
-    ranges = code_ranges(text) if ranges is None else ranges
+def excluded_ranges(text):
+    """返回不占汉字额度的区间：代码与链接地址，并合并重叠部分。"""
+    ranges = fence_ranges(text)
+    ranges.extend(match.span() for match in INLINE_CODE_RE.finditer(text))
+    ranges.extend(link_destination_ranges(text))
+    return merge_ranges(ranges)
+
+
+def mask_excluded(text, ranges=None):
+    """把不占额度的区间替换为非汉字占位符，长度与换行保持不变。"""
+    ranges = excluded_ranges(text) if ranges is None else ranges
     characters = list(text)
     for begin, end in ranges:
         for index in range(begin, end):
@@ -56,7 +92,7 @@ def mask_code(text, ranges=None):
 
 def count_hanzi(text):
     """返回正文汉字数量；标点、链接地址与代码片段不计入。"""
-    return len(HANZI_RE.findall(mask_code(text)))
+    return len(HANZI_RE.findall(mask_excluded(text)))
 
 
 def _take_prefix(masked, start, limit):
@@ -95,8 +131,9 @@ def split_comment(text, limit=HANZI_LIMIT):
         raise ValueError("limit_must_be_positive")
     if text is None:
         raise ValueError("text_required")
-    ranges = code_ranges(text)
-    masked = mask_code(text, ranges)
+    ranges = excluded_ranges(text)
+    protected = syntax_ranges(text)
+    masked = mask_excluded(text, ranges)
     chunks = []
     start = 0
     while start < len(text):
@@ -105,9 +142,9 @@ def split_comment(text, limit=HANZI_LIMIT):
             break
         end = _take_prefix(masked, start, limit)
         end = _preferred_break(masked, start, end)
-        protected = _range_containing(ranges, end)
-        if protected is not None:
-            begin, close = protected
+        boundary = _range_containing(protected, end)
+        if boundary is not None:
+            begin, close = boundary
             if count_hanzi(text[start:close]) <= limit:
                 end = close
             elif begin > start:

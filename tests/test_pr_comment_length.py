@@ -28,6 +28,15 @@ def test_code_spans_and_fences_do_not_consume_quota():
     assert length.check_comment(mixed)["ok"]
 
 
+def test_chinese_link_address_does_not_consume_quota():
+    url = "https://example.com/" + "汉" * 301
+    text = f"说明 [详情]({url})"
+    assert length.count_hanzi(text) == 4
+    assert length.check_comment(text)["ok"]
+    bare = "说明 " + url + " 结束"
+    assert length.count_hanzi(bare) == 4
+
+
 def test_exact_boundaries_299_300_301():
     for count in (299, 300):
         result = length.check_comment("汉" * count)
@@ -54,12 +63,14 @@ def test_split_preserves_content_and_limits_each_comment():
     assert sum(length.count_hanzi(chunk) for chunk in chunks) == 390
 
 
-def test_split_keeps_code_ranges_whole():
-    text = "汉" * 250 + "\n\n```\n" + "注释" * 30 + "\n```\n" + "汉" * 50
+def test_split_keeps_code_and_link_ranges_whole():
+    url = "https://example.com/" + "汉" * 120
+    text = "汉" * 250 + "\n\n```\n" + "注释" * 30 + "\n```\n[详情](" + url + ")" + "汉" * 50
     chunks = length.split_comment(text)
     assert "".join(chunks) == text
     assert all(length.count_hanzi(chunk) <= 300 for chunk in chunks)
     assert all(chunk.count("```") % 2 == 0 for chunk in chunks)
+    assert all(chunk.count("(") == chunk.count(")") for chunk in chunks)
 
 
 def test_cli_reports_and_splits(capsys):
