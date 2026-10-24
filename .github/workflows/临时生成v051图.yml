@@ -1,0 +1,61 @@
+name: 临时生成v051新手图
+
+on:
+  push:
+    branches: [docs/30-beginner-architecture]
+
+permissions:
+  contents: read
+
+jobs:
+  generate:
+    name: 生成v0.5.1新手源码图与截图
+    runs-on: ubuntu-latest
+    steps:
+      - name: 获取仓库与证据提交
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: 准备 Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: 准备 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: 生成两张图并截图
+        run: |
+          python .github/scripts/获取版本图源码.py \
+            "文档/版本/v0.5.1/系统分层总览.architecture.json" \
+            "refs/heads/evidence/archify-v0.5.1"
+          node .agents/skills/archify/bin/archify.mjs finalize architecture \
+            "文档/版本/v0.5.1/系统分层总览.architecture.json" \
+            "文档/版本/v0.5.1/系统分层总览.html" \
+            --repo-root . --quality showcase \
+            --out-dir "临时/版本图检查/v0.5.1-系统分层总览证据" --json
+          node .agents/skills/archify/bin/archify.mjs visual-check \
+            "文档/版本/v0.5.1/系统分层总览.html" \
+            --require-provenance \
+            --out-dir "临时/版本图检查/v0.5.1-系统分层总览截图" --json
+          python .github/scripts/获取版本图源码.py \
+            "文档/版本/v0.5.1/一次行动运行过程.workflow.json" \
+            "refs/heads/evidence/archify-v0.5.1"
+          node .agents/skills/archify/bin/archify.mjs finalize workflow \
+            "文档/版本/v0.5.1/一次行动运行过程.workflow.json" \
+            "文档/版本/v0.5.1/一次行动运行过程.html" \
+            --repo-root . --quality showcase \
+            --out-dir "临时/版本图检查/v0.5.1-一次行动证据" --json
+          node .agents/skills/archify/bin/archify.mjs visual-check \
+            "文档/版本/v0.5.1/一次行动运行过程.html" \
+            --require-provenance \
+            --out-dir "临时/版本图检查/v0.5.1-一次行动截图" --json
+      - name: 保存图、交付凭据与截图
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v051-新手源码图
+          path: |
+            文档/版本/v0.5.1/*.html
+            文档/版本/v0.5.1/*.delivery.json
+            临时/版本图检查/

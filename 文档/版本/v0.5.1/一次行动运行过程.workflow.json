@@ -1,0 +1,289 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "一次真人行动：从点击到落盘再回到页面（默认主图）",
+    "locale": "zh-CN",
+    "subtitle": "按 ①→⑦ 读。示例是合成数据：4 号镇民在白天投票给 7 号；方框是模块/对象，箭头是调用，返回箭头把结果送回页面。",
+    "output": "文档/版本/v0.5.1/一次行动运行过程.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/nhh37740-glitch/langrensha-agent.git",
+      "revision": "bc49dd6befdba1cbb00234387199d749f26f6977",
+      "provider": "github"
+    }
+  },
+  "lanes": [
+    { "id": "page", "label": "① 页面（浏览器）" },
+    { "id": "http", "label": "② HTTP 入口与认证" },
+    { "id": "service", "label": "③ 应用服务与受限会话" },
+    { "id": "domain", "label": "④ 规则与数据库事务" },
+    { "id": "response", "label": "返回与渲染" },
+    { "id": "reject", "label": "非法/过期行动：不改变对局", "variant": "exception" }
+  ],
+  "phases": [
+    { "id": "intake", "label": "请求进入", "fromCol": 0, "toCol": 1 },
+    { "id": "identity", "label": "确认操作者", "fromCol": 2, "toCol": 2, "variant": "security" },
+    { "id": "transaction", "label": "同一个数据库事务", "fromCol": 3, "toCol": 5, "variant": "emphasis" },
+    { "id": "respond", "label": "返回受限视图", "fromCol": 5, "toCol": 5 }
+  ],
+  "groups": [
+    {
+      "id": "tx",
+      "label": "加载→裁定→保存 在同一个 BEGIN IMMEDIATE 事务里",
+      "lane": "domain",
+      "fromCol": 3,
+      "toCol": 5,
+      "variant": "emphasis"
+    },
+    {
+      "id": "reject_path",
+      "label": "拒绝只写审计，不保存快照、不增加版本",
+      "lane": "reject",
+      "fromCol": 4,
+      "toCol": 5,
+      "variant": "security"
+    }
+  ],
+  "mainPath": [
+    "page-submit",
+    "http-check",
+    "session-bind",
+    "service-submit",
+    "load",
+    "reduce",
+    "save",
+    "response",
+    "page-update"
+  ],
+  "nodes": [
+    {
+      "id": "page-submit",
+      "lane": "page",
+      "col": 0,
+      "type": "frontend",
+      "label": "① 选择行动并提交",
+      "sublabel": "main.js:260-290 · request_id / phase_id / expected_version / tool / payload",
+      "width": 190,
+      "sources": [{ "path": "前端/src/main.js", "line": 260, "end_line": 290 }]
+    },
+    {
+      "id": "http-check",
+      "lane": "http",
+      "col": 1,
+      "type": "security",
+      "label": "② 同源、口令与会话检查",
+      "sublabel": "web.py:23-77 · 用 cookie 摘要查出固定 game/seat",
+      "width": 190,
+      "sources": [{ "path": "src/langrensha/web.py", "line": 23, "end_line": 77 }]
+    },
+    {
+      "id": "session-bind",
+      "lane": "service",
+      "col": 2,
+      "type": "security",
+      "label": "③ 绑定操作者",
+      "sublabel": "service.py:121-142 · PlayerSession 固定 actor，不从参数取",
+      "width": 190,
+      "sources": [{ "path": "src/langrensha/service.py", "line": 121, "end_line": 142 }]
+    },
+    {
+      "id": "service-submit",
+      "lane": "service",
+      "col": 3,
+      "type": "backend",
+      "label": "③b 进入应用服务",
+      "sublabel": "service.py:101-118 · 事务内调用 reducer；拒绝时写审计",
+      "width": 190,
+      "sources": [{ "path": "src/langrensha/service.py", "line": 101, "end_line": 118 }]
+    },
+    {
+      "id": "load",
+      "lane": "domain",
+      "col": 3,
+      "type": "database",
+      "label": "④ 加载对局快照",
+      "sublabel": "store.py:28-45 · BEGIN IMMEDIATE 开始事务",
+      "width": 190,
+      "sources": [{ "path": "src/langrensha/store.py", "line": 28, "end_line": 45 }]
+    },
+    {
+      "id": "reduce",
+      "lane": "domain",
+      "col": 4,
+      "type": "backend",
+      "label": "⑤ 规则裁定（纯函数）",
+      "sublabel": "full_game.py:406-457 · 校验阶段、版本、工具、目标与回执",
+      "width": 190,
+      "sources": [
+        { "path": "src/langrensha/full_game.py", "line": 406, "end_line": 457 },
+        { "path": "src/langrensha/rules.py", "line": 12, "end_line": 54 }
+      ]
+    },
+    {
+      "id": "save",
+      "lane": "domain",
+      "col": 5,
+      "type": "database",
+      "label": "⑥ 保存快照与回执",
+      "sublabel": "store.py:48-53 · version+1，同一事务提交",
+      "width": 190,
+      "sources": [{ "path": "src/langrensha/store.py", "line": 48, "end_line": 53 }]
+    },
+    {
+      "id": "response",
+      "lane": "response",
+      "col": 5,
+      "type": "security",
+      "label": "⑦ 读取受限视图并转页面数据",
+      "sublabel": "web.py:158-165 → player_view/full_game.py:460-515 → presentation.py:116-169",
+      "width": 190,
+      "sources": [
+        { "path": "src/langrensha/web.py", "line": 158, "end_line": 165 },
+        { "path": "src/langrensha/full_game.py", "line": 460, "end_line": 515 },
+        { "path": "src/langrensha/presentation.py", "line": 116, "end_line": 169 }
+      ]
+    },
+    {
+      "id": "page-update",
+      "lane": "page",
+      "col": 5,
+      "type": "frontend",
+      "label": "⑧ 页面与场景更新",
+      "sublabel": "main.js:122-130 · 只渲染服务器返回的受限视图",
+      "width": 190,
+      "sources": [{ "path": "前端/src/main.js", "line": 122, "end_line": 130 }]
+    },
+    {
+      "id": "reject",
+      "lane": "reject",
+      "col": 5,
+      "type": "security",
+      "label": "⑤a 拒绝：写拒绝审计",
+      "sublabel": "service.py:107-118 · 不保存快照、不增加版本，返回 409",
+      "width": 190,
+      "sources": [{ "path": "src/langrensha/service.py", "line": 101, "end_line": 118 }]
+    }
+  ],
+  "edges": [
+    {
+      "id": "submit-http",
+      "from": "page-submit",
+      "to": "http-check",
+      "label": "① 同源 POST /api/action",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "id": "http-bind",
+      "from": "http-check",
+      "to": "session-bind",
+      "label": "② 认证通过后绑定固定席位",
+      "variant": "security",
+      "role": "main"
+    },
+    {
+      "id": "bind-submit",
+      "from": "session-bind",
+      "to": "service-submit",
+      "label": "③ 补入已绑定操作者再提交",
+      "variant": "security",
+      "role": "main"
+    },
+    {
+      "id": "submit-load",
+      "from": "service-submit",
+      "to": "load",
+      "label": "④ 开始事务，加载快照",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "id": "load-reduce",
+      "from": "load",
+      "to": "reduce",
+      "label": "⑤ 在事务内做纯函数裁定",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "id": "reduce-save",
+      "from": "reduce",
+      "to": "save",
+      "label": "⑥ 校验通过：version+1 并保存",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "id": "reduce-reject",
+      "from": "reduce",
+      "to": "reject",
+      "label": "阶段/版本/工具/目标/回执不满足",
+      "variant": "security",
+      "role": "error"
+    },
+    {
+      "id": "save-response",
+      "from": "save",
+      "to": "response",
+      "label": "提交事务后读取视图",
+      "variant": "emphasis",
+      "role": "main"
+    },
+    {
+      "id": "response-page",
+      "from": "response",
+      "to": "page-update",
+      "label": "⑦ 返回 JSON，页面更新",
+      "variant": "emphasis",
+      "role": "return"
+    },
+    {
+      "id": "reject-page",
+      "from": "reject",
+      "to": "page-update",
+      "label": "⑤a 返回 409：版本与快照都没变",
+      "variant": "dashed",
+      "role": "error"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "输入与输出（合成示例）",
+      "items": [
+        "输入：4 号镇民在白天投票，提交 request_id=req-7f、phase_id=day-12、expected_version=42、tool=exile_vote、payload={target:7}",
+        "输出：accepted=true、event_id=91、version=43，页面拿到新的受限视图与可选行动",
+        "示例参数只用于讲解，全部为合成数据；真实字段与校验见 full_game.py:406-457"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "成功与失败的状态变化",
+      "items": [
+        "成功：事件追加、receipts 记录 request_id 与结果、version+1，全部在同一事务提交",
+        "失败：rejections 追加一条审计，快照与 version 都不变，返回 409；重新提交要重新读取版本",
+        "request_id 相同且内容相同会重放旧结果（幂等）；内容不同则拒绝 request_id_conflict"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "为什么浏览器和模型都绕不过规则",
+      "items": [
+        "认证只回答你是谁；授权由 player_view 和工具目标决定，先过滤再检索/呈现",
+        "PlayerSession 的操作者来自服务端绑定；模型只能拿受限会话，不能拿 GameService/Store",
+        "AI 查询走 session.query（只读），行动走 session.submit，仍由 reduce_action 按同一规则校验"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "课堂概念 → 本项目怎么用",
+      "items": [
+        "有限状态机：当前阶段+工具决定下一状态，非法转换在 reduce_action 被 Rejected",
+        "数据库事务：BEGIN IMMEDIATE 包住加载/裁定/保存，异常回滚，不会写一半",
+        "并发控制：expected_version 不符即 stale_version；版本检查与 request_id 幂等解决的是不同问题",
+        "封装与分层：页面只认 JSON，HTTP 只做认证与转发，规则层不碰数据库"
+      ]
+    }
+  ]
+}
