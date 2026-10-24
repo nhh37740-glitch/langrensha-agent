@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "85a5ebf0-e71b-4bd5-9d01-3ec445fba467",
+  "status": "current",
+  "command": "deliver",
+  "type": "architecture",
+  "input": "/workspace/langrensha-agent/文档/版本/v0.3.0/完整对局架构.architecture.json",
+  "output": "/workspace/langrensha-agent/文档/版本/v0.3.0/完整对局架构.html",
+  "specification": {
+    "sha256": "96311d25aa0d205c5715ad678361aa82be56916f5d207abe0937b804065f2af0",
+    "bytes": 5632
+  },
+  "artifact": {
+    "sha256": "6050e99a8109f932c513dc0ce603001b95333bea0a25a06f644b0d560d5f5ceb",
+    "bytes": 822140
+  }
+}
