@@ -1,0 +1,45 @@
+name: 临时生成v050状态图
+
+on:
+  push:
+    branches: [feat/21-visual-overhaul]
+
+permissions:
+  contents: read
+
+jobs:
+  generate:
+    name: 生成v0.5.0前端状态图
+    runs-on: ubuntu-latest
+    steps:
+      - name: 获取仓库与证据提交
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: 准备 Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: 准备 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: 获取证据提交并生成状态图
+        run: |
+          python .github/scripts/获取版本图源码.py \
+            "文档/版本/v0.5.0/前端状态图.lifecycle.json" \
+            "refs/heads/evidence/archify-v0.5.0"
+          node .agents/skills/archify/bin/archify.mjs finalize lifecycle \
+            "文档/版本/v0.5.0/前端状态图.lifecycle.json" \
+            "文档/版本/v0.5.0/前端状态图.html" \
+            --repo-root . --quality showcase \
+            --out-dir "临时/版本图检查/v0.5.0-证据" --json
+      - name: 保存状态图与交付凭据
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v050-前端状态图
+          path: |
+            文档/版本/v0.5.0/前端状态图.html
+            文档/版本/v0.5.0/前端状态图.delivery.json
+            临时/版本图检查/v0.5.0-证据/

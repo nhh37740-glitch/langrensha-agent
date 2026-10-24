@@ -140,25 +140,22 @@ test("暗牌、可见目标与断线提示", async ({ page }) => {
   await expect(page.locator("#submit-action")).toBeEnabled();
 });
 
-test.describe("减少动效模式", () => {
-  test.use({ reducedMotion: "reduce" });
-  test("系统偏好减少动效时仍可入镇、行动并恢复", async ({ page }) => {
-    const failures = [];
-    page.on("pageerror", (e) => failures.push(e.message));
-    await page.goto("/");
-    await expect(page.locator("html")).toHaveAttribute(
-      "data-motion",
-      "reduced",
-    );
-    await expect(page.locator("#scene canvas")).toBeVisible();
-    await start(page, "wolf");
-    await page.locator("#choice").selectOption("wolf_chat");
-    await page.locator("#speech").fill("雾里先听，不急着开口。");
-    await page.locator("#submit-action").click();
-    await expect(page.locator("#story")).toContainText("雾里先听");
-    await page.reload();
-    await expect(page.locator("#identity")).toBeVisible();
-    await expect(page.locator("#scene canvas")).toBeVisible();
-    expect(failures).toEqual([]);
-  });
+test("减少动效：系统偏好减少动效时仍可入镇、行动并恢复", async ({
+  page,
+}) => {
+  const failures = [];
+  page.on("pageerror", (e) => failures.push(e.message));
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/");
+  await expect(page.locator("html")).toHaveAttribute("data-motion", "reduced");
+  await expect(page.locator("#scene canvas")).toBeVisible();
+  await start(page, "wolf");
+  await page.locator("#choice").selectOption("wolf_chat");
+  await page.locator("#speech").fill("雾里先听，不急着开口。");
+  await page.locator("#submit-action").click();
+  await expect(page.locator("#story")).toContainText("雾里先听");
+  await page.reload();
+  await expect(page.locator("#identity")).toBeVisible();
+  await expect(page.locator("#scene canvas")).toBeVisible();
+  expect(failures).toEqual([]);
 });
