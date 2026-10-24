@@ -11,7 +11,7 @@ requires-python = ">=3.12"
 dependencies = []
 
 [project.optional-dependencies]
-dev = ["pytest==8.4.2", "ruff==0.14.2", "build==1.3.0"]
+dev = ["pytest==8.4.2", "ruff==0.14.2", "build==1.3.0", "import-linter==2.15"]
 web = ["fastapi==0.161.1", "uvicorn==0.54.0"]
 ai = ["langchain-deepseek==1.1.1", "langgraph==1.2.16", "python-dotenv==1.2.4"]
 
@@ -38,3 +38,38 @@ line-length = 100
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP"]
+
+[tool.importlinter]
+root_package = "langrensha"
+include_external_packages = true
+
+[[tool.importlinter.contracts]]
+name = "完整模块分层与同层独立"
+type = "layers"
+containers = ["langrensha"]
+exhaustive = true
+layers = [
+    "web : __main__ : ai_demo : full_demo : operations",
+    "ai | assistant | presentation | service",
+    "retrieval | store | full_game",
+    "content | rules",
+]
+
+[[tool.importlinter.contracts]]
+name = "规则与只读查询不依赖外部框架"
+type = "forbidden"
+source_modules = ["langrensha.full_game", "langrensha.rules", "langrensha.content", "langrensha.retrieval", "langrensha.presentation"]
+forbidden_modules = ["fastapi", "uvicorn", "langchain_core", "langchain_deepseek", "langgraph", "langsmith"]
+
+[[tool.importlinter.contracts]]
+name = "模型编排不可依赖受信主持及存储"
+type = "forbidden"
+source_modules = ["langrensha.ai", "langrensha.assistant"]
+forbidden_modules = ["langrensha.service", "langrensha.store", "langrensha.web", "langrensha.operations"]
+
+[[tool.importlinter.contracts]]
+name = "Store 仅由应用服务直接装配"
+type = "protected"
+protected_modules = ["langrensha.store"]
+allowed_importers = ["langrensha.service"]
+
