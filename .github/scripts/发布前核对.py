@@ -94,8 +94,25 @@ def release_plan(existing, tag, commit):
     return "sealed"
 
 
+def find_visible_release(api, tag, attempts=10, delay=1.0):
+    """刚创建的草稿可能短时间读不到；先轮询等待，再决定发布计划。"""
+    for attempt in range(attempts):
+        existing = api(f"releases/tags/{tag}", missing=True)
+        if existing is None:
+            existing = next(
+                (r for r in api("releases?per_page=100") if r.get("tag_name") == tag), None
+            )
+        if existing is not None:
+            return existing
+        if attempt + 1 < attempts:
+            time.sleep(delay)
+    return None
+
+
 def publish_files(tag, commit, folder, api, existing):
     """只增加缺少的附件，绝不删除或覆盖已有 Release 附件。"""
+    if existing is None:
+        existing = find_visible_release(api, tag)
     plan = release_plan(existing, tag, commit)
     if plan == "sealed":
         return
@@ -176,11 +193,7 @@ def main():
 
         checks = api(f"commits/{commit}/check-runs?per_page=100")["check_runs"]
         verify_checks(checks)
-        existing = api(f"releases/tags/{args.tag}", missing=True)
-        if existing is None:
-            existing = next(
-                (r for r in api("releases?per_page=100") if r["tag_name"] == args.tag), None
-            )
+        existing = find_visible_release(api, args.tag)
         plan = release_plan(existing, args.tag, commit)
         directory = Path("临时/发布")
         directory.mkdir(parents=True, exist_ok=True)

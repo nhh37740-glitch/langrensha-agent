@@ -156,3 +156,72 @@ def test_partial_draft_resumes_without_replacing_assets_and_checksums_remote_byt
         digest, name = line.split("  ", 1)
         assert digest == hashlib.sha256(remote_bytes[name]).hexdigest()
     assert commands[-1] == ["gh", "release", "edit", TAG, "--draft=false"]
+
+
+def test_release_visibility_polling_waits_for_new_draft(monkeypatch):
+    release = {
+        "id": 9,
+        "tag_name": TAG,
+        "body": guard.source_marker(COMMIT),
+        "draft": True,
+        "assets": [],
+    }
+    state = {"lists": 0}
+
+    def api(_path, *, missing=False):
+        if missing:
+            return None
+        state["lists"] += 1
+        return [release] if state["lists"] >= 3 else []
+
+    monkeypatch.setattr(guard.time, "sleep", lambda _seconds: None)
+    assert guard.find_visible_release(api, TAG) == release
+    assert state["lists"] == 3
+
+
+def test_publish_files_waits_for_draft_visibility_then_resumes(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    folder = tmp_path / "assets"
+    folder.mkdir()
+    (tmp_path / "临时/发布").mkdir(parents=True)
+    for name in guard.expected_assets(TAG) - {"SHA256SUMS"}:
+        (folder / name).write_bytes(b"current build " + name.encode())
+    release = {
+        "id": 7,
+        "tag_name": TAG,
+        "body": guard.source_marker(COMMIT),
+        "draft": True,
+        "assets": [],
+    }
+    state = {"lists": 0}
+    commands = []
+
+    def api(path, *, missing=False):
+        if missing:
+            return None
+        if path.startswith("releases?"):
+            state["lists"] += 1
+            return [release] if state["lists"] >= 3 else []
+        return copy.deepcopy(release)
+
+    def run(args, **kwargs):
+        commands.append(args)
+        if args[2] == "upload":
+            path = Path(args[-1])
+            release["assets"].append(
+                {
+                    "name": path.name,
+                    "digest": "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest(),
+                }
+            )
+        elif args[2] == "edit":
+            release["draft"] = False
+        return SimpleNamespace(returncode=0, stdout="", stderr="")
+
+    monkeypatch.setattr(guard.subprocess, "run", run)
+    monkeypatch.setattr(guard.time, "sleep", lambda _seconds: None)
+    guard.publish_files(TAG, COMMIT, folder, api, None)
+    assert not release["draft"]
+    assert commands[-1] == ["gh", "release", "edit", TAG, "--draft=false"]
+    assert {a["name"] for a in release["assets"]} == guard.expected_assets(TAG)
+
