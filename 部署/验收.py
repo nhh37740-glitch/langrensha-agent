@@ -3,6 +3,7 @@
 import argparse
 import json
 import os
+import re
 import secrets
 import ssl
 import subprocess
@@ -155,6 +156,19 @@ def main():
             }
 
         try:
+            revision = run(
+                [
+                    "docker",
+                    "--host=unix:///var/run/docker.sock",
+                    "image",
+                    "inspect",
+                    args.image,
+                    "--format",
+                    '{{index .Config.Labels "org.opencontainers.image.revision"}}',
+                ],
+                capture=True,
+            ).strip()
+            report["image_revision"] = revision if re.fullmatch(r"[0-9a-f]{40}", revision) else None
             report["stage"] = "configuration"
             run(compose + ["config", "--quiet"])
             run(

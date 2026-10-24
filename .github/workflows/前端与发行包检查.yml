@@ -66,7 +66,7 @@ jobs:
       - name: 安装部署验收依赖
         run: python -m pip install -c requirements-dev.lock -e '.[dev,ai,web]'
       - name: 构建完整应用镜像
-        run: docker build -t mist-town:ci .
+        run: docker build --label "org.opencontainers.image.revision=$GITHUB_SHA" -t mist-town:ci .
       - name: 用非密钥测试配置验证启动和内置网页
         run: |
           docker run -d --name mist-ci -p 127.0.0.1:8000:8000 \

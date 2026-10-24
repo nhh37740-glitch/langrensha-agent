@@ -71,4 +71,4 @@ langrensha-ops restore --backup 备份.sqlite3 --database 全新恢复.sqlite3
 
 默认使用无模型调用的测试配置。显式加 `--real-env .env` 才读取该私密文件并运行两个真实 AI 窗口；加 `--full-game` 则最多 350 窗口，真人由弃权替身代替，直到胜负，产生 API 费用。结果保存在 `临时/部署验收/`；真实模式留存的数据库和配置均为私密资料。CI 仅运行离线模式，且只上传 `结果.json`。
 
-受管理代理的云环境，构建时传 `--secret id=proxy_ca,src=/etc/ssl/certs/ca-certificates.crt`；验收可传 `--ca-bundle /etc/ssl/certs/ca-certificates.crt`，只读挂载运行所需的合并信任根。保留平台代理，不把会话 CA 复制到镜像，不用关闭 TLS 校验修复联网问题。
+受管理代理的云环境，运维入口可加 `--ca-bundle /etc/ssl/certs/ca-certificates.crt`，构建和运行都使用只读的会话信任根。直接构建时传 `--secret id=proxy_ca,src=/etc/ssl/certs/ca-certificates.crt`；验收可传 `--ca-bundle /etc/ssl/certs/ca-certificates.crt`，只读挂载运行所需的合并信任根。保留平台代理，不把会话 CA 复制到镜像，不用关闭 TLS 校验修复联网问题。
