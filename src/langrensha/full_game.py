@@ -331,7 +331,7 @@ def _apply(state, actor, tool, payload, now):
             [actor]
             if private
             or tool in {"sheriff_vote", "exile_vote"}
-            or (tool == "abstain" and phase in VOTES)
+            or (tool == "abstain" and phase in VOTES | {"hunter", "idiot"})
             else None
         )
     )

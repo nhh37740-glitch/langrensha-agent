@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "ff2fabd2-927b-4c5f-9788-6fc66cdd9729",
+  "status": "current",
+  "command": "deliver",
+  "type": "architecture",
+  "input": "/workspace/langrensha-agent/文档/版本/v0.3.1/暗牌呈现架构.architecture.json",
+  "output": "/workspace/langrensha-agent/文档/版本/v0.3.1/暗牌呈现架构.html",
+  "specification": {
+    "sha256": "18b40d5f55531c585d65770fc2a706e371a1a3e9fa189ec596a1f14d37f6baf5",
+    "bytes": 5837
+  },
+  "artifact": {
+    "sha256": "9741d9f9ad52cf38e8eb4f76584ad9d59953d8de5bc14e597c46733226983bcc",
+    "bytes": 822450
+  }
+}
