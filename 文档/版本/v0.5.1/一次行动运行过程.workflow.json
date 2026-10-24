@@ -24,8 +24,7 @@
   "phases": [
     { "id": "intake", "label": "请求进入", "fromCol": 0, "toCol": 1 },
     { "id": "identity", "label": "确认操作者", "fromCol": 2, "toCol": 2, "variant": "security" },
-    { "id": "transaction", "label": "同一个数据库事务", "fromCol": 3, "toCol": 5, "variant": "emphasis" },
-    { "id": "respond", "label": "返回受限视图", "fromCol": 5, "toCol": 5 }
+    { "id": "transaction", "label": "同一个数据库事务", "fromCol": 3, "toCol": 5, "variant": "emphasis" }
   ],
   "groups": [
     {
@@ -53,8 +52,7 @@
     "load",
     "reduce",
     "save",
-    "response",
-    "page-update"
+    "response"
   ],
   "nodes": [
     {
@@ -63,8 +61,8 @@
       "col": 0,
       "type": "frontend",
       "label": "① 选择行动并提交",
-      "sublabel": "main.js:260-290 · request_id / phase_id / expected_version / tool / payload",
-      "width": 190,
+      "sublabel": "main.js:260-290 · 提交字段与版本",
+      "width": 200,
       "sources": [{ "path": "前端/src/main.js", "line": 260, "end_line": 290 }]
     },
     {
@@ -73,8 +71,8 @@
       "col": 1,
       "type": "security",
       "label": "② 同源、口令与会话检查",
-      "sublabel": "web.py:23-77 · 用 cookie 摘要查出固定 game/seat",
-      "width": 190,
+      "sublabel": "web.py:23-77 · 换固定 game/seat",
+      "width": 200,
       "sources": [{ "path": "src/langrensha/web.py", "line": 23, "end_line": 77 }]
     },
     {
@@ -83,8 +81,8 @@
       "col": 2,
       "type": "security",
       "label": "③ 绑定操作者",
-      "sublabel": "service.py:121-142 · PlayerSession 固定 actor，不从参数取",
-      "width": 190,
+      "sublabel": "service.py:121-142 · 固定操作者",
+      "width": 200,
       "sources": [{ "path": "src/langrensha/service.py", "line": 121, "end_line": 142 }]
     },
     {
@@ -93,8 +91,8 @@
       "col": 3,
       "type": "backend",
       "label": "③b 进入应用服务",
-      "sublabel": "service.py:101-118 · 事务内调用 reducer；拒绝时写审计",
-      "width": 190,
+      "sublabel": "service.py:101-118 · 事务内提交",
+      "width": 200,
       "sources": [{ "path": "src/langrensha/service.py", "line": 101, "end_line": 118 }]
     },
     {
@@ -103,8 +101,8 @@
       "col": 3,
       "type": "database",
       "label": "④ 加载对局快照",
-      "sublabel": "store.py:28-45 · BEGIN IMMEDIATE 开始事务",
-      "width": 190,
+      "sublabel": "store.py:28-45 · BEGIN IMMEDIATE",
+      "width": 200,
       "sources": [{ "path": "src/langrensha/store.py", "line": 28, "end_line": 45 }]
     },
     {
@@ -113,8 +111,8 @@
       "col": 4,
       "type": "backend",
       "label": "⑤ 规则裁定（纯函数）",
-      "sublabel": "full_game.py:406-457 · 校验阶段、版本、工具、目标与回执",
-      "width": 190,
+      "sublabel": "full_game.py:406-457 · 五类校验",
+      "width": 200,
       "sources": [
         { "path": "src/langrensha/full_game.py", "line": 406, "end_line": 457 },
         { "path": "src/langrensha/rules.py", "line": 12, "end_line": 54 }
@@ -126,8 +124,8 @@
       "col": 5,
       "type": "database",
       "label": "⑥ 保存快照与回执",
-      "sublabel": "store.py:48-53 · version+1，同一事务提交",
-      "width": 190,
+      "sublabel": "store.py:48-53 · 同事务保存",
+      "width": 200,
       "sources": [{ "path": "src/langrensha/store.py", "line": 48, "end_line": 53 }]
     },
     {
@@ -135,33 +133,22 @@
       "lane": "response",
       "col": 5,
       "type": "security",
-      "label": "⑦ 读取受限视图并转页面数据",
-      "sublabel": "web.py:158-165 → player_view/full_game.py:460-515 → presentation.py:116-169",
-      "width": 190,
+      "label": "⑦ 受限视图转页面并更新",
+      "sublabel": "web.py:158-165 · main.js:122-130",
+      "width": 200,
       "sources": [
         { "path": "src/langrensha/web.py", "line": 158, "end_line": 165 },
-        { "path": "src/langrensha/full_game.py", "line": 460, "end_line": 515 },
-        { "path": "src/langrensha/presentation.py", "line": 116, "end_line": 169 }
+        { "path": "前端/src/main.js", "line": 122, "end_line": 130 }
       ]
-    },
-    {
-      "id": "page-update",
-      "lane": "page",
-      "col": 5,
-      "type": "frontend",
-      "label": "⑧ 页面与场景更新",
-      "sublabel": "main.js:122-130 · 只渲染服务器返回的受限视图",
-      "width": 190,
-      "sources": [{ "path": "前端/src/main.js", "line": 122, "end_line": 130 }]
     },
     {
       "id": "reject",
       "lane": "reject",
       "col": 5,
       "type": "security",
-      "label": "⑤a 拒绝：写拒绝审计",
-      "sublabel": "service.py:107-118 · 不保存快照、不增加版本，返回 409",
-      "width": 190,
+      "label": "⑤a 拒绝：写审计",
+      "sublabel": "service.py:107-118 · 仅写审计",
+      "width": 200,
       "sources": [{ "path": "src/langrensha/service.py", "line": 101, "end_line": 118 }]
     }
   ],
@@ -178,7 +165,7 @@
       "id": "http-bind",
       "from": "http-check",
       "to": "session-bind",
-      "label": "② 认证通过后绑定固定席位",
+      "label": "② 认证后绑定",
       "variant": "security",
       "role": "main"
     },
@@ -186,7 +173,7 @@
       "id": "bind-submit",
       "from": "session-bind",
       "to": "service-submit",
-      "label": "③ 补入已绑定操作者再提交",
+      "label": "③ 补入操作者",
       "variant": "security",
       "role": "main"
     },
@@ -194,7 +181,7 @@
       "id": "submit-load",
       "from": "service-submit",
       "to": "load",
-      "label": "④ 开始事务，加载快照",
+      "label": "④ 开始事务",
       "variant": "emphasis",
       "role": "main"
     },
@@ -202,7 +189,7 @@
       "id": "load-reduce",
       "from": "load",
       "to": "reduce",
-      "label": "⑤ 在事务内做纯函数裁定",
+      "label": "⑤ 事务内裁定",
       "variant": "emphasis",
       "role": "main"
     },
@@ -210,7 +197,7 @@
       "id": "reduce-save",
       "from": "reduce",
       "to": "save",
-      "label": "⑥ 校验通过：version+1 并保存",
+      "label": "⑥ 通过并保存",
       "variant": "emphasis",
       "role": "main"
     },
@@ -218,7 +205,7 @@
       "id": "reduce-reject",
       "from": "reduce",
       "to": "reject",
-      "label": "阶段/版本/工具/目标/回执不满足",
+      "label": "校验不通过",
       "variant": "security",
       "role": "error"
     },
@@ -226,23 +213,15 @@
       "id": "save-response",
       "from": "save",
       "to": "response",
-      "label": "提交事务后读取视图",
+      "label": "提交后取视图",
       "variant": "emphasis",
       "role": "main"
     },
     {
-      "id": "response-page",
-      "from": "response",
-      "to": "page-update",
-      "label": "⑦ 返回 JSON，页面更新",
-      "variant": "emphasis",
-      "role": "return"
-    },
-    {
-      "id": "reject-page",
+      "id": "reject-response",
       "from": "reject",
-      "to": "page-update",
-      "label": "⑤a 返回 409：版本与快照都没变",
+      "to": "response",
+      "label": "⑤a 返回 409",
       "variant": "dashed",
       "role": "error"
     }
