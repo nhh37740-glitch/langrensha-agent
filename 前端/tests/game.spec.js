@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+
 async function start(page, role = "wolf") {
   await page.goto("/");
   await expect(page.locator("#scene canvas")).toBeVisible();
@@ -21,18 +22,38 @@ test("入镇、私语、权限、札记、刷新与手机画面", async ({ page 
   page.on("pageerror", (e) => failures.push(e.message));
   await page.goto("/");
   await expect(page.locator("#scene canvas")).toBeVisible();
+  await expect(page.locator("html")).toHaveAttribute("data-mode", "entering");
+  await expect(page.locator("#intro")).toBeVisible();
   await page.screenshot({
     path: "../临时/完整可玩版/网页截图/入镇.png",
     fullPage: true,
   });
   await start(page);
+  await expect(page.locator("html")).toHaveAttribute("data-mode", "playing");
+  expect(["night", "day"]).toContain(
+    await page.locator("html").getAttribute("data-phase"),
+  );
+  await expect(page.locator("#phase-chip")).toBeVisible();
+  await expect(page.locator("#phase-label")).not.toHaveText("");
+  await expect(page.locator("#turn-badge")).toBeVisible();
+  await page.screenshot({
+    path: "../临时/完整可玩版/网页截图/行动可用.png",
+    fullPage: true,
+  });
   await page.locator("#choice").selectOption("wolf_chat");
-  await page.locator("#speech").fill("<img src=x onerror=alert(1)> 灯下等你。");
+  await page
+    .locator("#speech")
+    .fill("<img src=x onerror=alert(1)> 灯下等你。");
   await page.locator("#submit-action").click();
   await expect(page.locator("#story")).toContainText(
     "<img src=x onerror=alert(1)>",
   );
   await expect(page.locator("#story img")).toHaveCount(0);
+  await expect(page.locator("#story .entry.private").first()).toBeVisible();
+  await page.screenshot({
+    path: "../临时/完整可玩版/网页截图/私密记录.png",
+    fullPage: true,
+  });
   await page.locator("#assistant-toggle").click();
   await page.locator("#query-kind").selectOption("self_info");
   await page.getByRole("button", { name: "翻阅札记" }).click();
@@ -88,6 +109,7 @@ test("从网页开始完整局，行动至结局且展示复盘身份", async ({
   await page.reload();
   await expect(page.locator("#ending")).toBeVisible();
   await expect(page.locator("#action-form")).toBeHidden();
+  await expect(page.locator("html")).toHaveAttribute("data-mode", "ended");
   await page.screenshot({
     path: "../临时/完整可玩版/网页截图/结局.png",
     fullPage: true,
@@ -110,5 +132,33 @@ test("暗牌、可见目标与断线提示", async ({ page }) => {
   await page.route("**/api/action", (route) => route.abort());
   await page.locator("#submit-action").click();
   await expect(page.locator("#error")).toBeVisible();
+  await expect(page.locator("html")).toHaveAttribute("data-error", "network");
+  await page.screenshot({
+    path: "../临时/完整可玩版/网页截图/断线提示.png",
+    fullPage: true,
+  });
   await expect(page.locator("#submit-action")).toBeEnabled();
+});
+
+test.describe("减少动效模式", () => {
+  test.use({ reducedMotion: "reduce" });
+  test("系统偏好减少动效时仍可入镇、行动并恢复", async ({ page }) => {
+    const failures = [];
+    page.on("pageerror", (e) => failures.push(e.message));
+    await page.goto("/");
+    await expect(page.locator("html")).toHaveAttribute(
+      "data-motion",
+      "reduced",
+    );
+    await expect(page.locator("#scene canvas")).toBeVisible();
+    await start(page, "wolf");
+    await page.locator("#choice").selectOption("wolf_chat");
+    await page.locator("#speech").fill("雾里先听，不急着开口。");
+    await page.locator("#submit-action").click();
+    await expect(page.locator("#story")).toContainText("雾里先听");
+    await page.reload();
+    await expect(page.locator("#identity")).toBeVisible();
+    await expect(page.locator("#scene canvas")).toBeVisible();
+    expect(failures).toEqual([]);
+  });
 });

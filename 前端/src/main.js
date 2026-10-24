@@ -1,7 +1,10 @@
 import "./style.css";
 import { makeScene } from "./scene.js";
+
 const $ = (id) => document.getElementById(id);
-const scene = makeScene();
+const root = document.documentElement;
+const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+const scene = makeScene({ reducedMotion: motionQuery.matches });
 let view = null,
   auto = true,
   busy = false,
@@ -9,15 +12,68 @@ let view = null,
   lastHint = "",
   audio = null,
   sounded = 0;
+
+// 场景只画服务器给当前玩家的可见事实；动效偏好同时交给 CSS 与 Phaser。
+function syncMotionPreference() {
+  const reduced = motionQuery.matches;
+  root.dataset.motion = reduced ? "reduced" : "full";
+  if (typeof scene.setReducedMotion === "function")
+    scene.setReducedMotion(reduced);
+}
+syncMotionPreference();
+if (typeof motionQuery.addEventListener === "function")
+  motionQuery.addEventListener("change", syncMotionPreference);
+
 function node(tag, text, className) {
   const n = document.createElement(tag);
   if (text !== undefined) n.textContent = text;
   if (className) n.className = className;
   return n;
 }
-function error(message) {
-  $("error").textContent = message;
-  $("error").hidden = !message;
+function error(message, kind = "") {
+  const box = $("error");
+  box.textContent = message;
+  box.hidden = !message;
+  box.classList.toggle("is-network", Boolean(message) && kind === "network");
+  if (message) root.dataset.error = kind || "app";
+  else delete root.dataset.error;
+}
+function setBusy(value) {
+  busy = value;
+  root.dataset.busy = value ? "yes" : "no";
+  $("submit-action").disabled = value;
+}
+function applyUiState(state) {
+  const badge = $("turn-badge");
+  const waiting = $("waiting");
+  if (!state) {
+    root.dataset.mode = "entering";
+    delete root.dataset.phase;
+    delete root.dataset.turn;
+    delete root.dataset.alive;
+    delete root.dataset.round;
+    badge.hidden = true;
+    waiting.hidden = true;
+    $("phase-chip").hidden = true;
+    $("ending").hidden = true;
+    return;
+  }
+  root.dataset.mode = state.winner ? "ended" : "playing";
+  root.dataset.phase = state.night ? "night" : "day";
+  root.dataset.turn = state.choices.length ? "you" : "waiting";
+  root.dataset.alive = state.alive ? "yes" : "no";
+  root.dataset.round = String(state.round);
+  $("phase-chip").hidden = false;
+  $("phase-label").textContent = state.winner
+    ? "雾散时分"
+    : `${state.night ? "雾夜" : "白昼"} · 第 ${state.round} 日`;
+  badge.hidden = Boolean(state.winner) || !state.choices.length;
+  badge.textContent = state.night ? "轮到你 · 夜色之下" : "轮到你 · 从容选择";
+  waiting.hidden =
+    Boolean(state.winner) || state.choices.length > 0 || !auto || busy;
+  $("ending").hidden = !state.winner;
+  if (state.winner)
+    $("ending").textContent = state.story.at(-1)?.text || "故事结束。";
 }
 async function api(path, data) {
   const options =
@@ -68,8 +124,7 @@ function render(state) {
   );
   $("chapter").textContent = state.chapter;
   $("story-title").textContent = state.chapter;
-  $("day").textContent =
-    `第 ${state.round} 日 · ${state.night ? "夜雾" : "晨光"}`;
+  $("day").textContent = `第 ${state.round} 日 · ${state.night ? "夜雾" : "晨光"}`;
   $("role-title").textContent = `${state.identity} · ${state.seat}号`;
   $("role-note").textContent =
     state.note ||
@@ -79,8 +134,9 @@ function render(state) {
   $("resources").textContent = Object.entries(state.resources)
     .map(([k, v]) => `${k} ${v ? "●" : "○"}`)
     .join(" / ");
-  $("alive-count").textContent =
-    `${state.players.filter((p) => p.alive).length} 位仍在场`;
+  $("alive-count").textContent = `${
+    state.players.filter((p) => p.alive).length
+  } 位仍在场`;
   $("roster").replaceChildren(
     ...state.players.map((p) => {
       const n = node(
@@ -94,10 +150,11 @@ function render(state) {
       portrait.style.setProperty("--person", p.color);
       n.append(
         portrait,
-        node("span", `${String(p.seat).padStart(2, "0")} ${p.name}`),
+        node("span", `${String(p.seat).padStart(2, "0")} ${p.name}`, "person__name"),
         node(
           "small",
           p.sheriff ? "执铃人" : p.role || (p.alive ? "身份未明" : "已离场"),
+          "person__state",
         ),
       );
       n.title = p.description;
@@ -146,9 +203,6 @@ function render(state) {
       : auto
         ? "旅人在雾中思索，请稍候……"
         : "旅人暂歇。你仍可翻阅札记。";
-  $("ending").hidden = !state.winner;
-  if (state.winner)
-    $("ending").textContent = state.story.at(-1)?.text || "故事结束。";
   const chosenSeat = $("query-seat").value;
   $("query-seat").replaceChildren(
     ...state.players.map((p) => {
@@ -162,10 +216,11 @@ function render(state) {
     sounded = state.round;
     bell();
   }
+  applyUiState(state);
 }
 function choiceChanged() {
   const c = view?.choices.find((c) => c.tool === $("choice").value);
-  $("speech").hidden = !c?.text;
+  $("speech-wrap").hidden = !c?.text;
   $("target-wrap").hidden = !c?.targets;
   const selected = $("target").value;
   $("target").replaceChildren(
@@ -191,8 +246,8 @@ $("enter-form").addEventListener("submit", async (e) => {
     $("auto").textContent = "暂停旅人";
     render(await api("game", { role: $("role-select").value || null }));
     $("password").value = "";
-  } catch (e) {
-    error(e.message);
+  } catch (err) {
+    error(err.message, err.status ? "app" : "network");
   } finally {
     entering = false;
   }
@@ -214,20 +269,20 @@ $("action-form").addEventListener("submit", async (e) => {
     tool: c.tool,
     payload,
   };
-  busy = true;
+  setBusy(true);
   error("");
   try {
     render(await api("action", command));
     $("speech").value = "";
-  } catch (e) {
-    error(e.message);
+  } catch (err) {
+    error(err.message, err.status ? "app" : "network");
     try {
       render(await api("state"));
     } catch {
       /* Keep current draft if offline. */
     }
   } finally {
-    busy = false;
+    setBusy(false);
     choiceChanged();
   }
 });
@@ -256,6 +311,8 @@ $("reset").addEventListener("click", () => {
     "reset",
   ].forEach((id) => ($(id).hidden = true));
   $("status").textContent = "";
+  error("");
+  applyUiState(null);
 });
 $("assistant-toggle").addEventListener("click", () => {
   const hidden = !$("assistant-body").hidden;
@@ -301,8 +358,8 @@ $("query-form").addEventListener("submit", async (e) => {
     );
     lastHint = name === "speech_hint" ? result.answer : "";
     $("use-hint").hidden = !lastHint;
-  } catch (e) {
-    error(e.message);
+  } catch (err) {
+    error(err.message, err.status ? "app" : "network");
   }
 });
 $("use-hint").addEventListener("click", () => {
@@ -336,25 +393,33 @@ async function advance() {
     view.choices.some((c) => c.tool !== "explode")
   )
     return;
-  busy = true;
+  setBusy(true);
   try {
     render(await api("advance", {}));
     error("");
-  } catch (e) {
-    error(e.message);
-    if (e.status !== 409) {
+  } catch (err) {
+    error(err.message, err.status ? "app" : "network");
+    if (err.status !== 409) {
       auto = false;
       $("auto").textContent = "继续旅人";
       $("auto").setAttribute("aria-pressed", "false");
     }
   } finally {
-    busy = false;
+    setBusy(false);
     choiceChanged();
   }
 }
+window.addEventListener("offline", () =>
+  error("与钟楼的联系中断了。网络恢复后会自动重试。", "network"),
+);
+window.addEventListener("online", () => error(""));
 setInterval(advance, 1200);
+root.dataset.mode = "entering";
+root.dataset.busy = "no";
+applyUiState(null);
 api("state")
   .then(render)
-  .catch((e) => {
-    if (![401, 404].includes(e.status)) error(e.message);
+  .catch((err) => {
+    if (![401, 404].includes(err.status))
+      error(err.message, err.status ? "app" : "network");
   });
