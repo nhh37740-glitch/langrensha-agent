@@ -57,6 +57,12 @@ def test_inline_link_syntax_inside_code_does_not_eat_following_text():
     assert not length.check_comment(text)["ok"]
 
 
+def test_link_does_not_cross_inline_code_boundary():
+    text = "https://example.com`code`" + "汉" * 301
+    assert length.count_hanzi(text) == 301
+    assert not length.check_comment(text)["ok"]
+
+
 def test_unsplittable_link_is_blocked_instead_of_broken():
     text = "[" + "汉" * 301 + "](https://example.com)"
     result = length.check_comment(text)
