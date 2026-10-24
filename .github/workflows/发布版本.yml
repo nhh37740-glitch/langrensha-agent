@@ -1,0 +1,92 @@
+name: 自动发布已验证版本
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 已通过主线检查的版本标签
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  checks: read
+
+concurrency:
+  group: release-${{ inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: 核对并发布完整安装包
+    runs-on: ubuntu-latest
+    env:
+      RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: 核对主线、版本、检查与已有发布
+        id: verify
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python .github/scripts/发布前核对.py --tag "$RELEASE_TAG"
+      - name: 获取已核定的标签源码
+        if: steps.verify.outputs.plan != 'sealed'
+        env:
+          RELEASE_COMMIT: ${{ steps.verify.outputs.commit }}
+        run: git checkout --detach "$RELEASE_COMMIT"
+      - uses: actions/setup-node@v4
+        if: steps.verify.outputs.plan != 'sealed'
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: 前端/package-lock.json
+      - name: 构建带网页的完整分发包
+        if: steps.verify.outputs.plan != 'sealed'
+        run: |
+          python -m pip install -c requirements-dev.lock -e '.[dev,ai,web]'
+          npm ci --prefix 前端
+          npm run build --prefix 前端
+          python -m build
+          python -m venv 临时/发行验证/venv
+          release_wheel=$(python -c "from pathlib import Path; print(next(Path('dist').glob('*.whl')))")
+          临时/发行验证/venv/bin/python -m pip install -c requirements-dev.lock "${release_wheel}[ai,web]"
+          python .github/scripts/校验发行包运行.py 临时/发行验证/venv/bin/python
+      - name: 准备附件与校验和
+        if: steps.verify.outputs.plan != 'sealed'
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import hashlib, shutil
+          out=Path('临时/发布/附件');out.mkdir(parents=True, exist_ok=True)
+          for file in Path('dist').iterdir():
+              if file.suffix in {'.whl','.gz'}:shutil.copyfile(file,out/file.name)
+          shutil.copyfile('requirements-dev.lock',out/'requirements-dev.lock')
+          shutil.copyfile('.env.example',out/'env.example')
+          checks=[hashlib.sha256(p.read_bytes()).hexdigest()+'  '+p.name for p in sorted(out.iterdir())]
+          (out/'SHA256SUMS').write_text('\n'.join(checks)+'\n')
+          PY
+      - name: 创建可接续的草稿
+        if: steps.verify.outputs.plan == 'create_draft'
+        env:
+          RELEASE_COMMIT: ${{ steps.verify.outputs.commit }}
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$RELEASE_TAG" --verify-tag --draft --target "$RELEASE_COMMIT" --title "$RELEASE_TAG 雾钟镇" --notes-file 临时/发布/发布说明.md
+      - name: 补齐草稿附件、核对校验和并公开
+        if: steps.verify.outputs.plan != 'sealed'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python .github/scripts/发布前核对.py --tag "$RELEASE_TAG" --publish-files 临时/发布/附件
+      - name: 保留已发布的同源完整版本
+        if: steps.verify.outputs.plan == 'sealed'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release view "$RELEASE_TAG" --json url --jq .url

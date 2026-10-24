@@ -1,0 +1,274 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "v0.4.0 HTTPS 访问与一致性恢复",
+    "locale": "zh-CN",
+    "output": "文档/版本/v0.4.0/HTTPS与恢复架构.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/nhh37740-glitch/langrensha-agent.git",
+      "revision": "32fdfcc831b3feb4ff047a3577a567bfaed9da9e",
+      "provider": "github"
+    }
+  },
+  "components": [
+    {
+      "id": "secure-browser",
+      "type": "frontend",
+      "label": "玩家网页",
+      "sublabel": "同源请求与私密会话",
+      "pos": [
+        40,
+        40
+      ],
+      "size": [
+        190,
+        90
+      ],
+      "sources": [
+        {
+          "path": "前端/src/main.js",
+          "line": 22,
+          "end_line": 47
+        }
+      ]
+    },
+    {
+      "id": "caddy-entry",
+      "type": "security",
+      "label": "Caddy HTTPS 入口",
+      "sublabel": "仅反代发布 80 / 443",
+      "pos": [
+        410,
+        40
+      ],
+      "size": [
+        250,
+        90
+      ],
+      "sources": [
+        {
+          "path": "部署/Caddyfile",
+          "line": 1,
+          "end_line": 5
+        },
+        {
+          "path": "部署/compose.yaml",
+          "line": 32,
+          "end_line": 51
+        }
+      ]
+    },
+    {
+      "id": "game-runtime",
+      "type": "backend",
+      "label": "雾钟镇应用容器",
+      "sublabel": "单 worker · 固定反代信任",
+      "pos": [
+        850,
+        40
+      ],
+      "size": [
+        250,
+        90
+      ],
+      "sources": [
+        {
+          "path": "部署/compose.yaml",
+          "line": 2,
+          "end_line": 21
+        },
+        {
+          "path": "src/langrensha/web.py",
+          "line": 22,
+          "end_line": 132
+        },
+        {
+          "path": "src/langrensha/service.py",
+          "line": 97,
+          "end_line": 118
+        }
+      ]
+    },
+    {
+      "id": "trusted-operator",
+      "type": "external",
+      "label": "受信管理员",
+      "sublabel": "服务器 Docker 操作权限",
+      "pos": [
+        40,
+        360
+      ],
+      "size": [
+        190,
+        90
+      ],
+      "sources": [
+        {
+          "path": "部署/运行.sh",
+          "line": 25,
+          "end_line": 43
+        }
+      ]
+    },
+    {
+      "id": "maintenance-cli",
+      "type": "backend",
+      "label": "部署与运维 CLI",
+      "sublabel": "预检 · 一致快照 · 脱敏审计",
+      "pos": [
+        410,
+        360
+      ],
+      "size": [
+        250,
+        100
+      ],
+      "sources": [
+        {
+          "path": "src/langrensha/operations.py",
+          "line": 24,
+          "end_line": 100
+        },
+        {
+          "path": "src/langrensha/operations.py",
+          "line": 137,
+          "end_line": 231
+        },
+        {
+          "path": "部署/运行.sh",
+          "line": 35,
+          "end_line": 60
+        }
+      ]
+    },
+    {
+      "id": "selected-game-db",
+      "type": "database",
+      "label": "已选对局数据库",
+      "sublabel": "事件 · 回执 · 会话 · 审计",
+      "pos": [
+        850,
+        360
+      ],
+      "size": [
+        250,
+        100
+      ],
+      "sources": [
+        {
+          "path": "src/langrensha/store.py",
+          "line": 9,
+          "end_line": 53
+        },
+        {
+          "path": "部署/compose.yaml",
+          "line": 6,
+          "end_line": 19
+        },
+        {
+          "path": "src/langrensha/web.py",
+          "line": 25,
+          "end_line": 30
+        }
+      ]
+    },
+    {
+      "id": "private-snapshots",
+      "type": "database",
+      "label": "私密快照与恢复新库",
+      "sublabel": "0600 · 校验 · 拒绝覆盖",
+      "pos": [
+        410,
+        680
+      ],
+      "size": [
+        250,
+        100
+      ],
+      "sources": [
+        {
+          "path": "src/langrensha/operations.py",
+          "line": 137,
+          "end_line": 182
+        },
+        {
+          "path": "部署/运行.sh",
+          "line": 44,
+          "end_line": 58
+        }
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "player-tls",
+      "from": "secure-browser",
+      "to": "caddy-entry",
+      "label": "HTTPS",
+      "variant": "emphasis"
+    },
+    {
+      "id": "trusted-private-http",
+      "from": "caddy-entry",
+      "to": "game-runtime",
+      "label": "受信内网 HTTP",
+      "variant": "security"
+    },
+    {
+      "id": "transaction-persistence",
+      "from": "game-runtime",
+      "to": "selected-game-db",
+      "label": "事务读写"
+    },
+    {
+      "id": "operator-command",
+      "from": "trusted-operator",
+      "to": "maintenance-cli",
+      "label": "运维命令"
+    },
+    {
+      "id": "online-read-source",
+      "from": "maintenance-cli",
+      "to": "selected-game-db",
+      "label": "只读一致性源库"
+    },
+    {
+      "id": "deliver-fresh-copy",
+      "from": "maintenance-cli",
+      "to": "private-snapshots",
+      "label": "校验并交付新文件",
+      "variant": "security"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "入口与凭据",
+      "items": [
+        "应用没有宿主机公开端口，只信任固定反代地址",
+        "Caddy 只接收站点地址，不接收游戏密钥或口令",
+        "可只读挂载合并 CA，保留受管理环境代理"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "恢复控制",
+      "items": [
+        "SQLite backup API 产生事务一致快照",
+        "目标和残留 sidecar 已存在时拒绝恢复",
+        "恢复新库经明确选择 MIST_DATABASE 后成为已选库，原库保留"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "验收范围",
+      "items": [
+        "本机真实 TLS、两个会话与请求回执恢复已验收",
+        "图聚焦部署入口与数据恢复，AI/游戏沿用先前结构",
+        "用户服务器仍待连接信息，本图是可运行的部署模板"
+      ]
+    }
+  ]
+}

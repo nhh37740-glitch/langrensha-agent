@@ -1,0 +1,205 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "v0.4.0 已验证标签的完整安装包发布",
+    "locale": "zh-CN",
+    "output": "文档/版本/v0.4.0/自动发布架构.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/nhh37740-glitch/langrensha-agent.git",
+      "revision": "32fdfcc831b3feb4ff047a3577a567bfaed9da9e",
+      "provider": "github"
+    }
+  },
+  "components": [
+    {
+      "id": "release-trigger",
+      "type": "external",
+      "label": "版本发布入口",
+      "sublabel": "标签推送或手动指定",
+      "pos": [
+        40,
+        40
+      ],
+      "size": [
+        250,
+        100
+      ],
+      "sources": [
+        {
+          "path": ".github/workflows/发布版本.yml",
+          "line": 3,
+          "end_line": 11
+        }
+      ]
+    },
+    {
+      "id": "release-preflight",
+      "type": "security",
+      "label": "来源与检查门禁",
+      "sublabel": "主线 · 版本 · 五项成功",
+      "pos": [
+        480,
+        40
+      ],
+      "size": [
+        250,
+        100
+      ],
+      "sources": [
+        {
+          "path": ".github/scripts/发布前核对.py",
+          "line": 13,
+          "end_line": 66
+        },
+        {
+          "path": ".github/scripts/发布前核对.py",
+          "line": 155,
+          "end_line": 184
+        },
+        {
+          "path": ".github/workflows/发布版本.yml",
+          "line": 28,
+          "end_line": 45
+        }
+      ]
+    },
+    {
+      "id": "release-build",
+      "type": "backend",
+      "label": "完整安装包构建",
+      "sublabel": "网页构建与独立安装验证",
+      "pos": [
+        920,
+        40
+      ],
+      "size": [
+        250,
+        100
+      ],
+      "sources": [
+        {
+          "path": ".github/workflows/发布版本.yml",
+          "line": 46,
+          "end_line": 82
+        }
+      ]
+    },
+    {
+      "id": "draft-publisher",
+      "type": "security",
+      "label": "草稿附件发布器",
+      "sublabel": "补缺 · 校验 · 齐全后公开",
+      "pos": [
+        920,
+        360
+      ],
+      "size": [
+        250,
+        100
+      ],
+      "sources": [
+        {
+          "path": ".github/scripts/发布前核对.py",
+          "line": 97,
+          "end_line": 152
+        },
+        {
+          "path": ".github/workflows/发布版本.yml",
+          "line": 83,
+          "end_line": 87
+        }
+      ]
+    },
+    {
+      "id": "public-artifacts",
+      "type": "cloud",
+      "label": "GitHub Release",
+      "sublabel": "完整附件与 SHA256SUMS",
+      "pos": [
+        480,
+        360
+      ],
+      "size": [
+        250,
+        100
+      ],
+      "sources": [
+        {
+          "path": ".github/scripts/发布前核对.py",
+          "line": 69,
+          "end_line": 94
+        },
+        {
+          "path": ".github/scripts/发布前核对.py",
+          "line": 119,
+          "end_line": 152
+        },
+        {
+          "path": ".github/workflows/发布版本.yml",
+          "line": 88,
+          "end_line": 92
+        }
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "from": "release-trigger",
+      "to": "release-preflight",
+      "label": "版本标签"
+    },
+    {
+      "from": "release-preflight",
+      "to": "release-build",
+      "label": "未封存且检查通过",
+      "variant": "security"
+    },
+    {
+      "from": "release-build",
+      "to": "draft-publisher",
+      "label": "同源构建与草稿"
+    },
+    {
+      "from": "draft-publisher",
+      "to": "public-artifacts",
+      "label": "附件齐全后公开",
+      "variant": "security"
+    },
+    {
+      "from": "release-preflight",
+      "to": "public-artifacts",
+      "label": "已封存：只读保留"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "可安装的交付",
+      "items": [
+        "wheel 已包含网页与 Phaser，另附源码包",
+        "附依赖约束、配置示例和 SHA256SUMS",
+        "全新虚拟环境验证已安装包可启动"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "接续与覆盖控制",
+      "items": [
+        "只接续带同一来源提交标记的草稿",
+        "已上传附件不删除、不覆盖，校验和取远端实际摘要",
+        "附件缺失或清单冲突时拒绝公开"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "凭据与范围",
+      "items": [
+        "GITHUB_TOKEN 只提供给需要 GitHub API 的步骤",
+        "发布不读取应用密钥，不部署用户服务器",
+        "来源提交与真实上线验收分别记录"
+      ]
+    }
+  ]
+}

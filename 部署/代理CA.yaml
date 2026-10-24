@@ -1,0 +1,33 @@
+services:
+  town:
+    build:
+      secrets:
+        - proxy_ca
+    volumes:
+      - type: bind
+        source: ${MIST_CA_BUNDLE:?请设置只读合并 CA 文件路径}
+        target: /run/mist-ca.pem
+        read_only: true
+    environment:
+      SSL_CERT_FILE: /run/mist-ca.pem
+      REQUESTS_CA_BUNDLE: /run/mist-ca.pem
+  ops:
+    volumes:
+      - type: bind
+        source: ${MIST_CA_BUNDLE:?请设置只读合并 CA 文件路径}
+        target: /run/mist-ca.pem
+        read_only: true
+    environment:
+      SSL_CERT_FILE: /run/mist-ca.pem
+      REQUESTS_CA_BUNDLE: /run/mist-ca.pem
+  proxy:
+    volumes:
+      - type: bind
+        source: ${MIST_CA_BUNDLE:?请设置只读合并 CA 文件路径}
+        target: /run/mist-ca.pem
+        read_only: true
+    environment:
+      SSL_CERT_FILE: /run/mist-ca.pem
+secrets:
+  proxy_ca:
+    file: ${MIST_CA_BUNDLE:?请设置只读合并 CA 文件路径}

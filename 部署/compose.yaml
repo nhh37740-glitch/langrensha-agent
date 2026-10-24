@@ -1,0 +1,60 @@
+services:
+  town:
+    image: ${LANGRENSHA_IMAGE:-langrensha-agent:local}
+    build:
+      context: ..
+    env_file: ${MIST_ENV_FILE:-../.env}
+    environment: &application-environment
+      MIST_PROXY_SUBNET: ${MIST_PROXY_SUBNET:-172.30.91.0/24}
+      MIST_PROXY_ADDRESS: ${MIST_PROXY_ADDRESS:-172.30.91.2}
+      MIST_APPLICATION_ADDRESS: ${MIST_APPLICATION_ADDRESS:-172.30.91.3}
+      LANGRENSHA_DATABASE: ${MIST_DATABASE:-/data/对局.sqlite3}
+      COOKIE_SECURE: "true"
+      FORWARDED_ALLOW_IPS: ${MIST_PROXY_ADDRESS:-172.30.91.2}
+      NO_PROXY: ${NO_PROXY:-},town,proxy,localhost,127.0.0.1
+    volumes:
+      - town-data:/data
+    networks:
+      private-proxy:
+        ipv4_address: ${MIST_APPLICATION_ADDRESS:-172.30.91.3}
+    restart: unless-stopped
+    stop_grace_period: 45s
+  ops:
+    image: ${LANGRENSHA_IMAGE:-langrensha-agent:local}
+    profiles: [operations]
+    command: [langrensha-ops, --help]
+    env_file: ${MIST_ENV_FILE:-../.env}
+    environment: *application-environment
+    volumes:
+      - town-data:/data
+    networks:
+      - private-proxy
+  proxy:
+    image: caddy:2.11.7-alpine
+    depends_on:
+      town:
+        condition: service_healthy
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:?请在私密配置中设置 SITE_ADDRESS}
+      NO_PROXY: ${NO_PROXY:-},town,proxy,localhost,127.0.0.1
+    ports:
+      - "${MIST_BIND_ADDRESS:-0.0.0.0}:${MIST_HTTP_PORT:-80}:80"
+      - "${MIST_BIND_ADDRESS:-0.0.0.0}:${MIST_HTTPS_PORT:-443}:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    networks:
+      private-proxy:
+        ipv4_address: ${MIST_PROXY_ADDRESS:-172.30.91.2}
+    restart: unless-stopped
+    stop_grace_period: 15s
+networks:
+  private-proxy:
+    ipam:
+      config:
+        - subnet: ${MIST_PROXY_SUBNET:-172.30.91.0/24}
+volumes:
+  town-data:
+  caddy-data:
+  caddy-config:
