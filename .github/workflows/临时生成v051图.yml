@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   generate:
-    name: 生成v0.5.1新手源码图与截图
+    name: 生成v0.5.1新手主图与截图
     runs-on: ubuntu-latest
     steps:
       - name: 获取仓库与证据提交
@@ -24,20 +24,8 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: 生成两张图并截图
+      - name: 生成默认主图并截图
         run: |
-          python .github/scripts/获取版本图源码.py \
-            "文档/版本/v0.5.1/系统分层总览.architecture.json" \
-            "refs/heads/evidence/archify-v0.5.1"
-          node .agents/skills/archify/bin/archify.mjs finalize architecture \
-            "文档/版本/v0.5.1/系统分层总览.architecture.json" \
-            "文档/版本/v0.5.1/系统分层总览.html" \
-            --repo-root . --quality showcase \
-            --out-dir "临时/版本图检查/v0.5.1-系统分层总览证据" --json
-          node .agents/skills/archify/bin/archify.mjs visual-check \
-            "文档/版本/v0.5.1/系统分层总览.html" \
-            --require-provenance \
-            --out-dir "临时/版本图检查/v0.5.1-系统分层总览截图" --json
           python .github/scripts/获取版本图源码.py \
             "文档/版本/v0.5.1/一次行动运行过程.workflow.json" \
             "refs/heads/evidence/archify-v0.5.1"
