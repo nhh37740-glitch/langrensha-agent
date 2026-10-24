@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "a5153dca-0120-47ae-bc62-c398d30d3e5f",
+  "status": "current",
+  "command": "deliver",
+  "type": "architecture",
+  "input": "/workspace/langrensha-agent/文档/版本/v0.4.1/代码架构.architecture.json",
+  "output": "/workspace/langrensha-agent/文档/版本/v0.4.1/代码架构.html",
+  "specification": {
+    "sha256": "39cff1ddb24917ba00d50e9991ecc4acc158b8080600c92b2f71357ce707d0a6",
+    "bytes": 13856
+  },
+  "artifact": {
+    "sha256": "d899622fbfc395a227665310e52c9de718015a30547c5fccdab420ea4e584e61",
+    "bytes": 850352
+  }
+}

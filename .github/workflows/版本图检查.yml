@@ -27,7 +27,7 @@ jobs:
           python-version: '3.12'
       - name: 核对版本图及浏览器布局
         run: |
-          for diagram_name in 'v0.1.0/最小内核架构' 'v0.2.0/DeepSeek决策架构' 'v0.3.0/完整对局架构' 'v0.3.1/暗牌呈现架构' 'v0.4.0/HTTPS与恢复架构' 'v0.4.0/自动发布架构'; do
+          for diagram_name in 'v0.1.0/最小内核架构' 'v0.2.0/DeepSeek决策架构' 'v0.3.0/完整对局架构' 'v0.3.1/暗牌呈现架构' 'v0.4.0/HTTPS与恢复架构' 'v0.4.0/自动发布架构' 'v0.4.1/代码架构'; do
             diagram_version="${diagram_name%%/*}"
             python .github/scripts/获取版本图源码.py \
               "文档/版本/$diagram_name.architecture.json" \
