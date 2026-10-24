@@ -76,7 +76,7 @@ def query(view, name, payload):
         "self_info": (set(), set()),
         "speech_hint": (set(), {"focus"}),
     }
-    if name not in fields:
+    if not isinstance(name, str) or name not in fields:
         raise Rejected("tool_not_allowed")
     required, optional = fields[name]
     if not required <= payload.keys() or not payload.keys() <= required | optional:

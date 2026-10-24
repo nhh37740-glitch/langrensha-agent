@@ -79,7 +79,12 @@ def create_app(
         if not isinstance(data, dict) or set(data) != {"name", "payload"}:
             raise HTTPException(422, "请检查询问的内容。")
         try:
-            return player.query(data["name"], data["payload"])
+            retrieved = player.query(data["name"], data["payload"])
+            if runner is not None and getattr(runner, "model", None) is not None:
+                from .assistant import assist
+
+                return assist(runner.model, data["name"], data["payload"], retrieved)
+            return retrieved
         except Rejected as exc:
             raise HTTPException(422, "现有线索无法支持这次询问。") from exc
 
@@ -160,7 +165,11 @@ def create_app(
 
     @app.post("/api/query")
     async def ask(request: Request):
-        return safe_query(session(request), await request.json())
+        from starlette.concurrency import run_in_threadpool
+
+        player = session(request)
+        data = await request.json()
+        return await run_in_threadpool(safe_query, player, data)
 
     @app.post("/api/advance")
     def advance(request: Request):

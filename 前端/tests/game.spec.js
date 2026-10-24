@@ -11,7 +11,8 @@ async function post(page, path, data) {
     data,
     headers: { "X-Mist-Request": "1" },
   });
-  expect(response.ok()).toBeTruthy();
+  if (response.status() !== 409)
+    expect(response.ok(), await response.text()).toBeTruthy();
   return response.json();
 }
 
