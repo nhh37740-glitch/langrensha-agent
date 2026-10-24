@@ -1,17 +1,17 @@
 {
   "schemaVersion": 1,
-  "receiptId": "6e845391-b97f-4493-947f-85f70e2a435b",
+  "receiptId": "c5756528-eac6-40d3-9841-2e55fa605f1e",
   "status": "current",
   "command": "deliver",
   "type": "architecture",
   "input": "/workspace/langrensha-agent/文档/版本/v0.4.0/HTTPS与恢复架构.architecture.json",
   "output": "/workspace/langrensha-agent/文档/版本/v0.4.0/HTTPS与恢复架构.html",
   "specification": {
-    "sha256": "64249d7da077c645be3f5735dc843b01791a94159676f51f6ec09dc37ed2925a",
-    "bytes": 6008
+    "sha256": "be5d59fd6e434fa830352867c9feb9fc48547b66f121db8ed36d1efe644fdd54",
+    "bytes": 6009
   },
   "artifact": {
-    "sha256": "bc2ff1cbd12507242557329343e474025b5b0414676d203e57031775c0e52174",
+    "sha256": "8d9662a31e56680370e033d6d1821cb7b0917c8e5390255479761f17c3f742d0",
     "bytes": 823475
   }
 }

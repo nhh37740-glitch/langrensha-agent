@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "8d1ee061-1320-4e01-bc21-0abad3eb1fe9",
+  "status": "current",
+  "command": "deliver",
+  "type": "architecture",
+  "input": "/workspace/langrensha-agent/文档/版本/v0.4.0/自动发布架构.architecture.json",
+  "output": "/workspace/langrensha-agent/文档/版本/v0.4.0/自动发布架构.html",
+  "specification": {
+    "sha256": "2d2dc54b3b552c9531f310f907470d5d17ed5dfb0b82baebe53516821a4018d7",
+    "bytes": 4652
+  },
+  "artifact": {
+    "sha256": "86639c6dd26994f1dcc51e18badf4e03bde063e9b7ed896a0b4fa609fa3141b9",
+    "bytes": 818459
+  }
+}
