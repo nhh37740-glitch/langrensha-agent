@@ -24,7 +24,7 @@
   "phases": [
     { "id": "intake", "label": "请求进入", "fromCol": 0, "toCol": 1 },
     { "id": "identity", "label": "确认操作者", "fromCol": 2, "toCol": 2, "variant": "security" },
-    { "id": "transaction", "label": "同一个数据库事务", "fromCol": 3, "toCol": 5, "variant": "emphasis" }
+    { "id": "transaction", "label": "同一个数据库事务", "fromCol": 3, "toCol": 4, "variant": "emphasis" }
   ],
   "groups": [
     {
@@ -32,15 +32,15 @@
       "label": "加载→裁定→保存 在同一个 BEGIN IMMEDIATE 事务里",
       "lane": "domain",
       "fromCol": 3,
-      "toCol": 5,
+      "toCol": 4,
       "variant": "emphasis"
     },
     {
       "id": "reject_path",
       "label": "拒绝只写审计，不保存快照、不增加版本",
       "lane": "reject",
-      "fromCol": 4,
-      "toCol": 5,
+      "fromCol": 3,
+      "toCol": 4,
       "variant": "security"
     }
   ],
@@ -49,7 +49,6 @@
     "http-check",
     "session-bind",
     "service-submit",
-    "load",
     "reduce",
     "save",
     "response"
@@ -61,8 +60,8 @@
       "col": 0,
       "type": "frontend",
       "label": "① 选择行动并提交",
-      "sublabel": "main.js:260-290 · 提交字段与版本",
-      "width": 200,
+      "sublabel": "main.js:260-290 · 提交字段",
+      "width": 180,
       "sources": [{ "path": "前端/src/main.js", "line": 260, "end_line": 290 }]
     },
     {
@@ -71,8 +70,8 @@
       "col": 1,
       "type": "security",
       "label": "② 同源、口令与会话检查",
-      "sublabel": "web.py:23-77 · 换固定 game/seat",
-      "width": 200,
+      "sublabel": "web.py:23-77 · 固定 game/seat",
+      "width": 180,
       "sources": [{ "path": "src/langrensha/web.py", "line": 23, "end_line": 77 }]
     },
     {
@@ -82,7 +81,7 @@
       "type": "security",
       "label": "③ 绑定操作者",
       "sublabel": "service.py:121-142 · 固定操作者",
-      "width": 200,
+      "width": 180,
       "sources": [{ "path": "src/langrensha/service.py", "line": 121, "end_line": 142 }]
     },
     {
@@ -92,28 +91,19 @@
       "type": "backend",
       "label": "③b 进入应用服务",
       "sublabel": "service.py:101-118 · 事务内提交",
-      "width": 200,
+      "width": 180,
       "sources": [{ "path": "src/langrensha/service.py", "line": 101, "end_line": 118 }]
-    },
-    {
-      "id": "load",
-      "lane": "domain",
-      "col": 3,
-      "type": "database",
-      "label": "④ 加载对局快照",
-      "sublabel": "store.py:28-45 · BEGIN IMMEDIATE",
-      "width": 200,
-      "sources": [{ "path": "src/langrensha/store.py", "line": 28, "end_line": 45 }]
     },
     {
       "id": "reduce",
       "lane": "domain",
-      "col": 4,
+      "col": 3,
       "type": "backend",
-      "label": "⑤ 规则裁定（纯函数）",
-      "sublabel": "full_game.py:406-457 · 五类校验",
-      "width": 200,
+      "label": "④ 加载快照并在事务内裁定",
+      "sublabel": "store.py:28-45 + full_game.py:406-457",
+      "width": 180,
       "sources": [
+        { "path": "src/langrensha/store.py", "line": 28, "end_line": 45 },
         { "path": "src/langrensha/full_game.py", "line": 406, "end_line": 457 },
         { "path": "src/langrensha/rules.py", "line": 12, "end_line": 54 }
       ]
@@ -121,21 +111,21 @@
     {
       "id": "save",
       "lane": "domain",
-      "col": 5,
+      "col": 4,
       "type": "database",
-      "label": "⑥ 保存快照与回执",
+      "label": "⑤ 保存快照与回执",
       "sublabel": "store.py:48-53 · 同事务保存",
-      "width": 200,
+      "width": 180,
       "sources": [{ "path": "src/langrensha/store.py", "line": 48, "end_line": 53 }]
     },
     {
       "id": "response",
       "lane": "response",
-      "col": 5,
+      "col": 4,
       "type": "security",
-      "label": "⑦ 受限视图转页面并更新",
+      "label": "⑥ 受限视图转页面并更新",
       "sublabel": "web.py:158-165 · main.js:122-130",
-      "width": 200,
+      "width": 180,
       "sources": [
         { "path": "src/langrensha/web.py", "line": 158, "end_line": 165 },
         { "path": "前端/src/main.js", "line": 122, "end_line": 130 }
@@ -144,11 +134,11 @@
     {
       "id": "reject",
       "lane": "reject",
-      "col": 5,
+      "col": 4,
       "type": "security",
       "label": "⑤a 拒绝：写审计",
       "sublabel": "service.py:107-118 · 仅写审计",
-      "width": 200,
+      "width": 180,
       "sources": [{ "path": "src/langrensha/service.py", "line": 101, "end_line": 118 }]
     }
   ],
@@ -157,7 +147,7 @@
       "id": "submit-http",
       "from": "page-submit",
       "to": "http-check",
-      "label": "① 同源 POST /api/action",
+      "label": "① 同源 POST",
       "variant": "emphasis",
       "role": "main"
     },
@@ -178,18 +168,10 @@
       "role": "main"
     },
     {
-      "id": "submit-load",
+      "id": "submit-reduce",
       "from": "service-submit",
-      "to": "load",
-      "label": "④ 开始事务",
-      "variant": "emphasis",
-      "role": "main"
-    },
-    {
-      "id": "load-reduce",
-      "from": "load",
       "to": "reduce",
-      "label": "⑤ 事务内裁定",
+      "label": "④ 开始事务并裁定",
       "variant": "emphasis",
       "role": "main"
     },
@@ -197,7 +179,7 @@
       "id": "reduce-save",
       "from": "reduce",
       "to": "save",
-      "label": "⑥ 通过并保存",
+      "label": "⑤ 通过并保存",
       "variant": "emphasis",
       "role": "main"
     },
