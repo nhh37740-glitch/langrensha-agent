@@ -42,10 +42,16 @@ function setBusy(value) {
   busy = value;
   root.dataset.busy = value ? "yes" : "no";
   $("submit-action").disabled = value;
+  syncWaiting();
+}
+// 等待指示跟随「自动推进中且没有轮到我」，不因请求忙而隐藏；忙碌结束后再同步一次。
+function syncWaiting() {
+  const waiting = $("waiting");
+  const pendingAdvance = Boolean(view) && !view.winner && view.choices.length === 0;
+  waiting.hidden = !(auto && pendingAdvance);
 }
 function applyUiState(state) {
   const badge = $("turn-badge");
-  const waiting = $("waiting");
   if (!state) {
     root.dataset.mode = "entering";
     delete root.dataset.phase;
@@ -53,7 +59,7 @@ function applyUiState(state) {
     delete root.dataset.alive;
     delete root.dataset.round;
     badge.hidden = true;
-    waiting.hidden = true;
+    $("waiting").hidden = true;
     $("phase-chip").hidden = true;
     $("ending").hidden = true;
     return;
@@ -69,8 +75,7 @@ function applyUiState(state) {
     : `${state.night ? "雾夜" : "白昼"} · 第 ${state.round} 日`;
   badge.hidden = Boolean(state.winner) || !state.choices.length;
   badge.textContent = state.night ? "轮到你 · 夜色之下" : "轮到你 · 从容选择";
-  waiting.hidden =
-    Boolean(state.winner) || state.choices.length > 0 || !auto || busy;
+  syncWaiting();
   $("ending").hidden = !state.winner;
   if (state.winner)
     $("ending").textContent = state.story.at(-1)?.text || "故事结束。";
