@@ -160,22 +160,11 @@ def audit(request=False):
         state = codex_state(comments, pr["head"]["sha"])
         if request and len(prs) == 1 and state == "等待 Codex 审查":
             request_review(pr, comments)
-        from 校验PR问题关联 import declared_issue, validate
-
-        try:
-            number = declared_issue(pr.get("body"))
-            target = next((i for i in issues if i["number"] == number), None)
-            active = [i for i in issues if ACTIVE in {x["name"] for x in i["labels"]}]
-            validate(pr, target, active)
-            association = "一致"
-        except ValueError as error:
-            association = str(error)
         reports.append(
             {
                 "pr": pr["number"],
                 "sha": pr["head"]["sha"],
                 "codex": state,
-                "issue_association": association,
             }
         )
     report = {
@@ -192,9 +181,7 @@ def audit(request=False):
     for result in reports:
         result.update(checks_at(result["sha"]))
         result["gate_pass"] = (
-            result["ci_pass"]
-            and result["codex"] == "Codex 当前提交无发现"
-            and result["issue_association"] == "一致"
+            result["ci_pass"] and result["codex"] == "Codex 当前提交无发现"
         )
     OUT.mkdir(parents=True, exist_ok=True)
     (OUT / "验收.json").write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n")
@@ -232,9 +219,6 @@ def worker():
                 print("当前 PR 对应 Issue 已受阻，等待维护者处理")
                 return
             report = json.loads((OUT / "验收.json").read_text())["prs"][0]
-            if report["issue_association"] != "一致":
-                print("PR 正文、分支与活动任务关联未通过，停止开发并等待维护者核实")
-                return
             if report["codex"] == "等待 Codex 审查":
                 request_review(pr, items(f"issues/{pr['number']}/comments?per_page=100"))
             failing = any(

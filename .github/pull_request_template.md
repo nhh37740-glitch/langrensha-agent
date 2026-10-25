@@ -2,7 +2,9 @@
 
 Issue: #编号
 
-Closes #编号
+Refs #编号
+
+仅解决上述唯一 Issue；完整交付并核实后，才将 `Refs` 改为 `Closes #编号`。
 
 ## 本次范围与正式依据
 

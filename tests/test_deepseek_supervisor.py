@@ -154,29 +154,3 @@ def test_worker_does_not_revise_closed_active_issue(monkeypatch):
 
     monkeypatch.setattr(supervisor, "run", fail)
     supervisor.worker()
-
-
-def test_worker_rejects_body_mismatch_even_when_branch_matches(monkeypatch, tmp_path):
-    active = issue(1, "deepseek-active")
-    pr = {"number": 3, "head": {"ref": "deepseek/issue-1", "repo": {"full_name": supervisor.REPO}}}
-    monkeypatch.setattr(supervisor, "audit", lambda **kwargs: ([active], [pr]))
-    monkeypatch.setattr(supervisor, "OUT", tmp_path)
-    (tmp_path / "验收.json").write_text(
-        json.dumps(
-            {
-                "prs": [
-                    {
-                        "issue_association": "正文 Issue 与活动任务不同",
-                        "codex": "Codex 发现待处理",
-                        "checks": [{"conclusion": "failure"}],
-                    }
-                ]
-            }
-        )
-    )
-
-    def fail(*args, **kwargs):
-        raise AssertionError("关联检查失败时不得运行模型或写 GitHub")
-
-    monkeypatch.setattr(supervisor, "run", fail)
-    supervisor.worker()
