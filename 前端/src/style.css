@@ -962,6 +962,7 @@ textarea::placeholder {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(148px, 100%), 1fr));
   gap: 7px;
+  width: 100%;
   margin: 0 0 12px;
   min-width: 0;
 }

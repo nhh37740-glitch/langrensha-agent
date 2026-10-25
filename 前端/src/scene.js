@@ -1,5 +1,4 @@
 import Phaser from "phaser";
-import tidalArchiveBackground from "./assets/ai/tidal-archive-lowtide.webp";
 import frameHyperion from "./assets/kenney/frame-hyperion.webp";
 import frameMist from "./assets/kenney/frame-mist.webp";
 import frameThreebody from "./assets/kenney/frame-threebody.webp";
@@ -34,6 +33,9 @@ const TEXTURE_WORLD_LIMIT = 2;
 const SCENE_FADE_MS = 900;
 const EFFECT_FRAME_MS = 80;
 const EFFECT_DISPLAY = 104;
+// 席位容器深度约为 10+486/8≈71；效果层必须在其上，否则会被头像框整个盖住。
+const FX_DEPTH = 76;
+const VEIL_DEPTH = 92;
 const ATLAS_PARTS = Object.freeze({
   personas: ATLAS.personas,
   icons: ATLAS.icons,
@@ -51,7 +53,7 @@ const SKY_KEYS = {
   mist: "sky-mist",
   hyperion: "sky-hyperion",
   threebody: "sky-threebody",
-  tidal_archive: "bg-tidal",
+  tidal_archive: "sky-tidal",
 };
 const FRAME_KEYS = {
   mist: "frame-mist",
@@ -64,7 +66,6 @@ const TEXTURE_URLS = {
   "sky-hyperion": skyHyperion,
   "sky-threebody": skyThreebody,
   "sky-tidal": skyTidal,
-  "bg-tidal": tidalArchiveBackground,
   "frame-mist": frameMist,
   "frame-hyperion": frameHyperion,
   "frame-threebody": frameThreebody,
@@ -383,7 +384,7 @@ class WorldScene extends Phaser.Scene {
     this.groundG = this.add.graphics().setDepth(6);
     this.detailG = this.add.graphics().setDepth(7);
     this.ambient = this.add.container(0, 0).setDepth(8);
-    this.fx = this.add.container(0, 0).setDepth(30);
+    this.fx = this.add.container(0, 0).setDepth(FX_DEPTH);
     this.worldTag = this.add
       .text(WIDTH - 20, 40, "", {
         fontFamily: '"Songti SC", "Noto Serif CJK SC", serif',
@@ -401,7 +402,7 @@ class WorldScene extends Phaser.Scene {
       .setVisible(false);
     this.veil = this.add
       .rectangle(WIDTH / 2, HEIGHT / 2, WIDTH, HEIGHT, 0x000000, 0)
-      .setDepth(40);
+      .setDepth(VEIL_DEPTH);
   }
 
   buildPeople() {
@@ -595,12 +596,7 @@ class WorldScene extends Phaser.Scene {
   updateSkyImage(night) {
     if (!this.skyImage) return;
     const key = SKY_KEYS[this.worldId];
-    const fallbackKey = this.worldId === "tidal_archive" ? "sky-tidal" : null;
-    const visibleKey = this.hasTexture(key)
-      ? key
-      : fallbackKey && this.hasTexture(fallbackKey)
-        ? fallbackKey
-        : null;
+    const visibleKey = this.hasTexture(key) ? key : null;
     if (!visibleKey) {
       this.skyImage.setVisible(false);
       return;
@@ -1627,15 +1623,10 @@ class WorldScene extends Phaser.Scene {
     if (night) g.fillGradientStyle(0x041616, 0x071d1e, 0x123a37, 0x1f4a50, 1);
     else g.fillGradientStyle(0x2f6b65, 0x46877d, 0x8fb6a6, 0xa9c8b8, 1);
     g.fillRect(0, 0, WIDTH, HEIGHT);
-    const photo = this.hasTexture("bg-tidal");
-    if (photo) {
-      this.tintG.fillStyle(night ? 0x041a1c : 0xffefd0, night ? 0.18 : 0.06);
-      this.tintG.fillRect(0, 0, WIDTH, HEIGHT);
-    }
     this.drawStars(34, night ? 0.55 : 0.04, 17);
-    this.drawTidalMoon(night, photo);
-    if (!photo) this.drawTidalFallback(night);
-    this.drawTidalWater(night, photo);
+    this.drawTidalMoon(night, false);
+    this.drawTidalFallback(night);
+    this.drawTidalWater(night, false);
     this.drawTidalForeground(night);
   }
 

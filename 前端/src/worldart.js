@@ -1,5 +1,4 @@
 import "./themes.css";
-import tidalArchiveBackground from "./assets/ai/tidal-archive-lowtide.webp";
 import frameHyperion from "./assets/kenney/frame-hyperion.webp";
 import frameMist from "./assets/kenney/frame-mist.webp";
 import frameThreebody from "./assets/kenney/frame-threebody.webp";
@@ -7,6 +6,7 @@ import frameTidal from "./assets/kenney/frame-tidal.webp";
 import skyHyperion from "./assets/kenney/sky-hyperion.webp";
 import skyMist from "./assets/kenney/sky-mist.webp";
 import skyThreebody from "./assets/kenney/sky-threebody.webp";
+import skyTidal from "./assets/kenney/sky-tidal.webp";
 import { ATLAS, iconFrame, worldAsset } from "./worlds/assets.js";
 import { personaSlot, publicPersonas } from "./worlds/personas.js";
 
@@ -169,7 +169,7 @@ const SKY = {
   mist: skyMist,
   hyperion: skyHyperion,
   threebody: skyThreebody,
-  tidal_archive: tidalArchiveBackground,
+  tidal_archive: skyTidal,
 };
 const FRAME = {
   mist: frameMist,

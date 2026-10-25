@@ -165,9 +165,14 @@ def test_atlas_frames_match_actual_layout():
                 errors.append(f"{world}/{kind} 文件缺失，无法核对图集")
                 continue
             width, height, _alpha = _webp_info(path)
-            if width % columns or height % rows:
+            # 图集允许最多 3px 的透明余量（运行时 floor 切片，不重采样）；
+            # 余量更大或单元格与总尺寸对不上都视为错位。
+            remainder_x = width - (width // columns) * columns
+            remainder_y = height - (height // rows) * rows
+            if remainder_x > 3 or remainder_y > 3:
                 errors.append(
-                    f"{world}/{kind} 实际 {width}×{height} 不能被 {columns}×{rows} 整除"
+                    f"{world}/{kind} 实际 {width}×{height} 对 {columns}×{rows} "
+                    f"的余量为 {remainder_x}/{remainder_y}px，超过 3px"
                 )
             frames = record.get("frames") or {}
             if (frames.get("columns"), frames.get("rows")) != (columns, rows):
@@ -181,11 +186,30 @@ def test_atlas_frames_match_actual_layout():
             cell_height = frames.get("cell_height")
             if not cell_width or not cell_height:
                 errors.append(f"{world}/{kind} 缺少 cell_width/cell_height")
-            elif (cell_width * columns, cell_height * rows) != (width, height):
-                errors.append(
-                    f"{world}/{kind} 单元格与总尺寸不符："
-                    f"{cell_width}×{cell_height} × {columns}×{rows}"
-                )
+            else:
+                if (
+                    cell_width != width // columns or cell_height != height // rows
+                ):
+                    errors.append(
+                        f"{world}/{kind} 单元格应为 floor 切片 "
+                        f"{width // columns}×{height // rows}，"
+                        f"实际 {cell_width}×{cell_height}"
+                    )
+                declared_x = int(frames.get("remainder_x") or 0)
+                declared_y = int(frames.get("remainder_y") or 0)
+                if declared_x != remainder_x or declared_y != remainder_y:
+                    errors.append(
+                        f"{world}/{kind} 清单余量 {declared_x}/{declared_y}px "
+                        f"与实际 {remainder_x}/{remainder_y}px 不一致"
+                    )
+                if (
+                    cell_width * columns + declared_x != width
+                    or cell_height * rows + declared_y != height
+                ):
+                    errors.append(
+                        f"{world}/{kind} 单元格/余量与总尺寸不符："
+                        f"{cell_width}×{cell_height} × {columns}×{rows}"
+                    )
             slots = frames.get("slots") or []
             if slots != list(range(frame_count)):
                 errors.append(

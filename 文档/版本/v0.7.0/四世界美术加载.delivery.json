@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "219c13ab-befb-4faf-bfbd-01a43f802743",
+  "status": "current",
+  "command": "deliver",
+  "type": "architecture",
+  "input": "/workspace/langrensha-agent/临时/DSH团队/issue-67/文档/版本/v0.7.0/四世界美术加载.architecture.json",
+  "output": "/workspace/langrensha-agent/临时/DSH团队/issue-67/文档/版本/v0.7.0/四世界美术加载.html",
+  "specification": {
+    "sha256": "b7aa5c30bd1b5547f3cf3d23725986bc4c53663ae63c0dcf1108f36aea383be9",
+    "bytes": 8062
+  },
+  "artifact": {
+    "sha256": "69243441cc1783671b0bfcf5970cecef2f7ea9660acc5a27f1dae8ef4800a6a8",
+    "bytes": 828809
+  }
+}

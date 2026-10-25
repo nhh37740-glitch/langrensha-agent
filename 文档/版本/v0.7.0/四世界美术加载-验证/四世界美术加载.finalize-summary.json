@@ -1,0 +1,67 @@
+{
+  "schemaVersion": 1,
+  "ok": false,
+  "command": "finalize",
+  "status": "fail",
+  "type": "architecture",
+  "quality": "showcase",
+  "specification": {
+    "path": "/workspace/langrensha-agent/临时/DSH团队/issue-67/文档/版本/v0.7.0/四世界美术加载.architecture.json",
+    "sha256": "b7aa5c30bd1b5547f3cf3d23725986bc4c53663ae63c0dcf1108f36aea383be9",
+    "bytes": 8062
+  },
+  "artifact": {
+    "path": "/workspace/langrensha-agent/临时/DSH团队/issue-67/文档/版本/v0.7.0/四世界美术加载.html",
+    "sha256": "69243441cc1783671b0bfcf5970cecef2f7ea9660acc5a27f1dae8ef4800a6a8",
+    "bytes": 828809
+  },
+  "gates": {
+    "validate": "pass",
+    "deliver": "pass",
+    "check": "pass",
+    "browser-check": "fail"
+  },
+  "failedStage": "browser-check",
+  "diagnostics": [
+    {
+      "code": "viewer/browser-check-runtime",
+      "severity": "error",
+      "message": "browser-check could not complete its Chrome inspection.",
+      "subject": {
+        "artifact": "/workspace/langrensha-agent/临时/DSH团队/issue-67/文档/版本/v0.7.0/四世界美术加载.html"
+      },
+      "evidence": {
+        "reason": "Chrome navigation failed: net::ERR_BLOCKED_BY_ADMINISTRATOR"
+      },
+      "supportedFixes": [
+        "resolve the reported Chrome inspection error, then rerun browser-check"
+      ]
+    }
+  ],
+  "diagnosticSummary": {
+    "total": 1,
+    "shown": 1,
+    "truncated": false
+  },
+  "evidence": {
+    "receipt": "/workspace/langrensha-agent/临时/DSH团队/issue-67/文档/版本/v0.7.0/四世界美术加载-验证/四世界美术加载.finalize.json",
+    "summaryReceipt": "/workspace/langrensha-agent/临时/DSH团队/issue-67/文档/版本/v0.7.0/四世界美术加载-验证/四世界美术加载.finalize-summary.json",
+    "browserCheckReceipt": "/workspace/langrensha-agent/临时/DSH团队/issue-67/文档/版本/v0.7.0/四世界美术加载-验证/四世界美术加载.browser-check.json"
+  },
+  "update": {
+    "status": "current",
+    "installedVersion": "3.2.0",
+    "availableVersion": "3.2.0",
+    "releaseNotes": null,
+    "checkedAt": "2026-10-25T05:35:41.655Z",
+    "source": "cache",
+    "noticeRequired": false,
+    "noticeText": null
+  },
+  "visualReview": "not-requested",
+  "durationMs": 1249,
+  "browserCheck": {
+    "requested": true,
+    "ran": false
+  }
+}

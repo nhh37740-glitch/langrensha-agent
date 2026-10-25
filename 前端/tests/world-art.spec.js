@@ -93,15 +93,6 @@ async function enterWorld(page, worldId, role = "villager") {
   await expect(page.locator("#scene canvas")).toBeVisible();
 }
 
-async function resetToPicker(page) {
-  if (await page.locator("#world-picker").isVisible()) return;
-  page.once("dialog", (dialog) => dialog.accept());
-  await page.locator("#reset").click();
-  await expect(page.locator("#world-picker")).toBeVisible();
-  await expect(page.locator("#world-list .world-card")).toHaveCount(4);
-  await expect(page.locator("#world-list")).toHaveAttribute("aria-busy", "false");
-}
-
 async function post(page, path, data) {
   const response = await page.request.post("/api/" + path, {
     data,
@@ -243,22 +234,22 @@ test("四世界详情名册各有 12 名不同公开人物", async ({ page }) =>
   expect(failures).toEqual([]);
 });
 
-test("四世界进入对局：世界/昼夜/场景/技能图标与动效可观察", async ({
-  page,
-}) => {
-  const failures = [];
-  page.on("pageerror", (error) => failures.push(error.message));
-  const assets = assetResponses(page);
-  await openEntry(page);
-
-  for (const world of WORLDS) {
+for (const world of WORLDS) {
+  test(`进入对局：${world.name}（${world.id}）的昼夜、场景与图标`, async ({
+    page,
+  }) => {
+    const failures = [];
+    page.on("pageerror", (error) => failures.push(error.message));
+    const assets = assetResponses(page);
+    await openEntry(page);
     await enterWorld(page, world.id);
+
     await expect(page.locator("html")).toHaveAttribute(
       "data-phase",
       /night|day/,
     );
     await expect(page.locator("#phase-label")).not.toHaveText("");
-    await expect(page.locator("#day")).toContainText(/白昼|夜|昼/);
+    await expect(page.locator("#day")).toContainText(/白昼|夜/);
     const state = await (await page.request.get("/api/state")).json();
     expect(state.worldbook).toBe(world.id);
     expect(["night", "day"]).toContain(
@@ -274,43 +265,63 @@ test("四世界进入对局：世界/昼夜/场景/技能图标与动效可观�
       .evaluateAll((nodes) => nodes.map((node) => node.dataset.icon));
     iconKeys.forEach((key) => expect(ICON_KEYS).toContain(key));
 
+    // 进入对局时按需加载当前世界的全部真实资源。
+    for (const pattern of [
+      /scene-day/i,
+      /scene-night/i,
+      /personas/i,
+      /icons/i,
+      /effects/i,
+    ]) {
+      await expect
+        .poll(() => assets.some((url) => pattern.test(url)), {
+          message: `${world.name} 应请求 ${pattern}`,
+        })
+        .toBe(true);
+    }
+
     await page.screenshot({
       path: `${SHOTS}/世界美术-${world.id}-对局-桌面.png`,
       fullPage: true,
     });
-    await resetToPicker(page);
-  }
+    expect(failures).toEqual([]);
+  });
+}
 
-  expect(assets.some((url) => /personas/i.test(url))).toBe(true);
-  expect(
-    assets.some((url) => /scene-(day|night)/i.test(url)),
-  ).toBe(true);
-  expect(assets.some((url) => /icons/i.test(url))).toBe(true);
-
-  // 查验动效：以观星者入镇，推进到可查验，提交后等待真实动效图集。
+test("减少动效下查验：effects 图集静态帧可观察", async ({ page }) => {
+  const failures = [];
+  page.on("pageerror", (error) => failures.push(error.message));
+  const assets = assetResponses(page);
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await openEntry(page);
   await enterWorld(page, "mist", "seer");
-  page.on("dialog", (dialog) => dialog.accept());
-  for (let i = 0; i < 12; i += 1) {
+  // 入镇默认自动推进；先暂停，改为手动推进到可查验回合。
+  await page.locator("#auto").click();
+  for (let i = 0; i < 20; i += 1) {
     const state = await post(page, "advance", {});
-    if (state.choices.some((choice) => choice.tool === "inspect")) break;
+    if (state.choices?.some((choice) => choice.tool === "inspect")) break;
   }
   await page.reload();
   await expect(page.locator("#identity")).toBeVisible();
   await page.locator("#choice").selectOption("inspect");
   const target = page.locator("#target");
-  if (await target.isVisible()) {
-    const value = await target.locator("option").first().getAttribute("value");
-    if (value) await target.selectOption(value);
-  }
+  const targets = await target
+    .locator("option")
+    .evaluateAll((nodes) => nodes.map((node) => node.value).filter(Boolean));
+  if (targets.length) await target.selectOption(targets[0]);
   await page.locator("#submit-action").click();
+  // 等私密记录出现，说明行动已提交、场景已重绘，再抓动效帧。
+  await expect(page.locator("#story")).toContainText("将目光投向");
   await expect
     .poll(() => assets.some((url) => /effects/i.test(url)), {
       message: "查验后应加载动效图集",
     })
     .toBe(true);
-  await page.screenshot({
-    path: `${SHOTS}/世界美术-查验动效-桌面.png`,
-    fullPage: true,
+  await expect(page.locator("html")).toHaveAttribute("data-motion", "reduced");
+  // 只截场景画布：右侧私密记录含本人查验结果，不能作为公开验收图。
+  await page.waitForTimeout(120);
+  await page.locator("#scene canvas").screenshot({
+    path: `${SHOTS}/世界美术-查验动效-场景.png`,
   });
   expect(failures).toEqual([]);
 });

@@ -1221,7 +1221,10 @@ function ensureChoiceGrid() {
   grid.id = "choice-grid";
   grid.setAttribute("role", "group");
   grid.setAttribute("aria-label", "技能与动作");
-  select.after(grid);
+  // 插到 .action-top 之后而不是 select 之后，避免成为 flex 行里的窄列。
+  const top = select.closest(".action-top");
+  if (top) top.after(grid);
+  else select.after(grid);
   // 原生 select 仍是表单取值与既有测试的稳定来源，仅视觉隐藏；
   // 可见选项由带图标的按钮承担，键盘可用 Tab/Enter 操作。
   select.classList.add("choice-native");
