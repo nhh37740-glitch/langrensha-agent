@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "b240e0f4-88fb-4848-9e5f-95f99d4a40ba",
+  "status": "current",
+  "command": "deliver",
+  "type": "workflow",
+  "input": "/workspace/langrensha-agent/文档/版本/v0.6.0/RAG语义检索流程.workflow.json",
+  "output": "/workspace/langrensha-agent/文档/版本/v0.6.0/RAG语义检索流程.html",
+  "specification": {
+    "sha256": "b9334a93ab0a144fb1168c6c6b707846ace0ffef2ca95009e8c77b5ecf462e23",
+    "bytes": 6378
+  },
+  "artifact": {
+    "sha256": "e00f12c9e3924b74496be82633a89578dbebae8d94b7402dca22c95f013e8a15",
+    "bytes": 827788
+  }
+}
