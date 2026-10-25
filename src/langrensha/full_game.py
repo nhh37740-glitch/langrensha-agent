@@ -37,8 +37,14 @@ def alive(state):
     return [p["seat"] for p in state["players"] if p["alive"]]
 
 
-def create_full_game(*, now, human_seat=1, human_role=None, rng=None):
-    state = create_game(now=now, human_seat=human_seat, human_role=human_role, rng=rng)
+def create_full_game(*, now, human_seat=1, human_role=None, rng=None, worldbook="mist"):
+    state = create_game(
+        now=now,
+        human_seat=human_seat,
+        human_role=human_role,
+        rng=rng,
+        worldbook=worldbook,
+    )
     state.update(
         mode="full_game",
         rules="mist-v1",
@@ -483,6 +489,7 @@ def player_view(state, actor):
         {
             "game_id": state["id"],
             "mode": state["mode"],
+            "worldbook": state["worldbook"],
             "rules": state["rules"],
             "seat": actor,
             "role": p["role"],

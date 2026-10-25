@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "28c43a43-166f-47cd-8d3f-903f3b42b536",
+  "status": "current",
+  "command": "deliver",
+  "type": "architecture",
+  "input": "/workspace/langrensha-agent/临时/DSH团队/issue-63/文档/版本/v0.7.0/世界书选择与主题.architecture.json",
+  "output": "/workspace/langrensha-agent/临时/DSH团队/issue-63/文档/版本/v0.7.0/世界书选择与主题.html",
+  "specification": {
+    "sha256": "076e1857a1513860f22314224f67dd33ac006b97d6080e7d823b2fc5450864cb",
+    "bytes": 9706
+  },
+  "artifact": {
+    "sha256": "200de533fc85343c453e8ffa592587713274693647af93da982dcb44765d7fb7",
+    "bytes": 840241
+  }
+}

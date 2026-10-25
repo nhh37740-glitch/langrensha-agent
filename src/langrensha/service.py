@@ -10,6 +10,7 @@ from .rules import create_game, seat_number
 from .rules import player_view as rehearsal_view
 from .rules import reduce_action as rehearsal_action
 from .store import Store
+from .worldbooks import get_worldbook
 
 
 def player_view(state, actor):
@@ -31,9 +32,19 @@ class GameService:
     def __init__(self, database):
         self.store = Store(database)
 
-    def create(self, *, human_seat=1, human_role=None, rng=None, full=False):
+    def create(self, *, human_seat=1, human_role=None, rng=None, full=False, worldbook="mist"):
+        try:
+            get_worldbook(worldbook)
+        except KeyError:
+            raise Rejected("unknown_worldbook") from None
         factory = full_game.create_full_game if full else create_game
-        state = factory(human_seat=human_seat, human_role=human_role, now=utc_now(), rng=rng)
+        state = factory(
+            human_seat=human_seat,
+            human_role=human_role,
+            now=utc_now(),
+            rng=rng,
+            worldbook=worldbook,
+        )
         with self.store.transaction() as db:
             self.store.save(db, state, create=True)
         return state["id"]

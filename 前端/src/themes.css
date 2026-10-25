@@ -1,0 +1,1034 @@
+/* 世界书主题层：由 worldart.js 随模块加载。
+   四套 token 来自各自世界的材料与光线，而不是同一套深色 UI 换色：
+   雾钟镇=雾蓝/旧金，海伯利安=沙金/锈红，三体=冷蓝/警戒红，潮汐档案馆=海青/纸白/铜绿。
+   本文件只提供主题变量、页面底色、封面构件与封面动效；布局与信息仍由页面组件决定。 */
+
+/* ---------- 四套 token ---------- */
+html[data-world="mist"] {
+  --ink-0: #081014;
+  --ink-1: #0e1a24;
+  --ink-2: #14252b;
+  --ink-3: #1b3034;
+  --ink-4: #243c3e;
+  --line: #2d4544;
+  --line-soft: #223635;
+  --line-strong: #46615a;
+  --paper: #e9dfc6;
+  --paper-strong: #f4ecd7;
+  --text: #cfd8ca;
+  --text-dim: #a4b5a9;
+  --muted: #84988d;
+  --muted-deep: #67806f;
+  --gold: #d8bd85;
+  --gold-strong: #f0d79b;
+  --gold-soft: rgba(216, 189, 133, 0.16);
+  --copper: #b98d5f;
+  --private: #cbbd8a;
+  --danger: #e0a284;
+  --danger-bg: rgba(96, 52, 46, 0.42);
+  --night-sky: #0a151f;
+  --night-glow: rgba(133, 178, 184, 0.16);
+  --day-glow: rgba(214, 225, 195, 0.2);
+  --signal-red: #e08c6a;
+  --world-display: "Songti SC", "Noto Serif CJK SC", "Source Han Serif SC",
+    "STSong", serif;
+  --world-body: "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+  --panel-a: rgba(23, 41, 44, 0.95);
+  --panel-b: rgba(15, 29, 33, 0.98);
+  --card-a: rgba(30, 48, 48, 0.72);
+  --card-b: rgba(19, 33, 36, 0.86);
+  --card-line: rgba(70, 97, 90, 0.72);
+  --cover-sky-a: #08151c;
+  --cover-sky-b: #2f4a45;
+  --cover-wash: rgba(8, 18, 22, 0.78);
+  --cover-paper: #f0e6cb;
+  --cover-text: #c8d2c2;
+  --cover-accent: #dcbf86;
+  --cover-motif: #07151a;
+  --cover-motif-deep: #0e2428;
+  --cover-line: rgba(220, 191, 134, 0.34);
+  --cover-glow: rgba(220, 191, 134, 0.38);
+  --cover-photo-opacity: 0.74;
+  --card-surface: #122328;
+  --card-border: #364f49;
+  --card-accent: #d8bd85;
+}
+
+html[data-world="hyperion"] {
+  --ink-0: #120b07;
+  --ink-1: #1b110c;
+  --ink-2: #261711;
+  --ink-3: #332017;
+  --ink-4: #432b1e;
+  --line: #5a3826;
+  --line-soft: #3d2519;
+  --line-strong: #80502f;
+  --paper: #f0dfbd;
+  --paper-strong: #f7ecd2;
+  --text: #ddc7a8;
+  --text-dim: #c0a17c;
+  --muted: #9e7f5f;
+  --muted-deep: #7d6046;
+  --gold: #d9a05b;
+  --gold-strong: #f2c987;
+  --gold-soft: rgba(217, 160, 91, 0.18);
+  --copper: #b56a3c;
+  --private: #c9a274;
+  --danger: #e07a54;
+  --danger-bg: rgba(100, 38, 24, 0.5);
+  --night-sky: #1a0f0a;
+  --night-glow: rgba(196, 123, 70, 0.18);
+  --day-glow: rgba(232, 190, 125, 0.22);
+  --signal-red: #d96b40;
+  --world-display: "Kaiti SC", "STKaiti", "KaiTi", "Noto Serif CJK SC", serif;
+  --world-body: "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+  --panel-a: rgba(48, 28, 18, 0.95);
+  --panel-b: rgba(27, 17, 12, 0.98);
+  --card-a: rgba(61, 35, 22, 0.72);
+  --card-b: rgba(35, 21, 14, 0.9);
+  --card-line: rgba(128, 80, 47, 0.75);
+  --cover-sky-a: #1a0d08;
+  --cover-sky-b: #8a4a26;
+  --cover-wash: rgba(26, 13, 8, 0.72);
+  --cover-paper: #f4e3c1;
+  --cover-text: #d8bd96;
+  --cover-accent: #e0a45e;
+  --cover-motif: #1b0c07;
+  --cover-motif-deep: #3b1d11;
+  --cover-line: rgba(224, 164, 94, 0.38);
+  --cover-glow: rgba(224, 120, 66, 0.42);
+  --cover-photo-opacity: 0.7;
+  --card-surface: #2b1a11;
+  --card-border: #6d4329;
+  --card-accent: #d9a05b;
+}
+
+html[data-world="threebody"] {
+  --ink-0: #03070d;
+  --ink-1: #07111c;
+  --ink-2: #0b1a2a;
+  --ink-3: #112638;
+  --ink-4: #173247;
+  --line: #243f55;
+  --line-soft: #172d40;
+  --line-strong: #3c5e78;
+  --paper: #e8f0f6;
+  --paper-strong: #f4f8fb;
+  --text: #c2d1dc;
+  --text-dim: #93a9b8;
+  --muted: #6f8798;
+  --muted-deep: #526b7d;
+  --gold: #b9cfdf;
+  --gold-strong: #e8f0f6;
+  --gold-soft: rgba(185, 207, 223, 0.16);
+  --copper: #6f8fa6;
+  --private: #a7bdcd;
+  --danger: #e2574c;
+  --danger-bg: rgba(90, 28, 28, 0.55);
+  --night-sky: #040a12;
+  --night-glow: rgba(84, 132, 170, 0.2);
+  --day-glow: rgba(200, 220, 235, 0.2);
+  --signal-red: #e2574c;
+  --world-display: "PingFang SC", "Noto Sans CJK SC", "Microsoft YaHei",
+    sans-serif;
+  --world-body: "PingFang SC", "Noto Sans CJK SC", "Microsoft YaHei", sans-serif;
+  --panel-a: rgba(12, 28, 44, 0.96);
+  --panel-b: rgba(5, 14, 24, 0.98);
+  --card-a: rgba(17, 38, 56, 0.76);
+  --card-b: rgba(8, 21, 34, 0.9);
+  --card-line: rgba(60, 94, 120, 0.78);
+  --cover-sky-a: #02060c;
+  --cover-sky-b: #173a55;
+  --cover-wash: rgba(2, 7, 13, 0.8);
+  --cover-paper: #edf5fa;
+  --cover-text: #b6c9d8;
+  --cover-accent: #e2574c;
+  --cover-motif: #03080f;
+  --cover-motif-deep: #0c1e2c;
+  --cover-line: rgba(180, 214, 236, 0.32);
+  --cover-glow: rgba(226, 87, 76, 0.45);
+  --cover-photo-opacity: 0.66;
+  --card-surface: #0a1b2a;
+  --card-border: #294b66;
+  --card-accent: #e2574c;
+}
+
+html[data-world="tidal_archive"] {
+  --ink-0: #041312;
+  --ink-1: #071d1e;
+  --ink-2: #0b2928;
+  --ink-3: #103633;
+  --ink-4: #164541;
+  --line: #2a5b54;
+  --line-soft: #1b403c;
+  --line-strong: #3f766c;
+  --paper: #f0eadb;
+  --paper-strong: #f7f2e6;
+  --text: #c9d8d0;
+  --text-dim: #a7c0b6;
+  --muted: #7fa298;
+  --muted-deep: #5f847a;
+  --gold: #c98f5a;
+  --gold-strong: #e3b782;
+  --gold-soft: rgba(201, 143, 90, 0.18);
+  --copper: #5f8f7d;
+  --private: #b6cbb7;
+  --danger: #d98068;
+  --danger-bg: rgba(86, 38, 30, 0.45);
+  --night-sky: #06191a;
+  --night-glow: rgba(84, 150, 136, 0.18);
+  --day-glow: rgba(214, 232, 218, 0.2);
+  --signal-red: #d98068;
+  --world-display: "Songti SC", "Noto Serif CJK SC", "Source Han Serif SC",
+    "STSong", serif;
+  --world-body: "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+  --panel-a: rgba(16, 50, 47, 0.95);
+  --panel-b: rgba(7, 25, 26, 0.98);
+  --card-a: rgba(22, 64, 59, 0.72);
+  --card-b: rgba(8, 31, 31, 0.9);
+  --card-line: rgba(63, 118, 108, 0.75);
+  --cover-sky-a: #041616;
+  --cover-sky-b: #2e6b60;
+  --cover-wash: rgba(4, 20, 20, 0.68);
+  --cover-paper: #f2ecdc;
+  --cover-text: #c4d6cd;
+  --cover-accent: #ce9560;
+  --cover-motif: #041716;
+  --cover-motif-deep: #0e302c;
+  --cover-line: rgba(206, 149, 96, 0.36);
+  --cover-glow: rgba(126, 196, 176, 0.38);
+  --cover-photo-opacity: 0.72;
+  --card-surface: #0d302d;
+  --card-border: #376e63;
+  --card-accent: #ce9560;
+}
+
+/* 字体与页面底色跟随世界切换；token 已在四套块中给出。 */
+html[data-world] body {
+  font-family: var(--world-body);
+  transition:
+    background-color 320ms ease,
+    color 320ms ease;
+}
+html[data-world] .brand,
+html[data-world] h1,
+html[data-world] .scene-title,
+html[data-world] .story-header h2,
+html[data-world] .identity-card strong,
+html[data-world] .world-footer {
+  font-family: var(--world-display);
+}
+html[data-world] body {
+  background-attachment: fixed;
+}
+html[data-world="mist"] body {
+  background:
+    radial-gradient(ellipse at 18% -10%, rgba(76, 111, 106, 0.4), transparent 56%),
+    radial-gradient(ellipse at 84% 6%, rgba(140, 126, 84, 0.16), transparent 46%),
+    radial-gradient(ellipse at 50% 108%, rgba(65, 95, 88, 0.25), transparent 62%),
+    linear-gradient(180deg, #0c171d 0%, #0a1318 44%, #081014 100%);
+}
+html[data-world="mist"] body::before {
+  background:
+    radial-gradient(ellipse at 50% 118%, rgba(126, 158, 140, 0.16), transparent 62%),
+    radial-gradient(ellipse at 50% -20%, rgba(9, 17, 22, 0.9), transparent 70%);
+}
+html[data-world="hyperion"] body {
+  background:
+    radial-gradient(ellipse at 88% -8%, rgba(190, 104, 52, 0.34), transparent 48%),
+    radial-gradient(ellipse at 12% 8%, rgba(120, 64, 34, 0.3), transparent 42%),
+    radial-gradient(ellipse at 50% 112%, rgba(120, 67, 34, 0.3), transparent 64%),
+    linear-gradient(165deg, #24130c 0%, #170e0a 42%, #120b07 100%);
+}
+html[data-world="hyperion"] body::before {
+  background:
+    repeating-linear-gradient(
+      112deg,
+      rgba(222, 160, 94, 0.035) 0 2px,
+      transparent 2px 46px
+    ),
+    radial-gradient(ellipse at 50% -20%, rgba(17, 8, 5, 0.9), transparent 68%);
+}
+html[data-world="hyperion"] body::after {
+  opacity: 0.22;
+  background-image: repeating-linear-gradient(
+    112deg,
+    rgba(255, 221, 173, 0.03) 0 1px,
+    transparent 1px 8px
+  );
+}
+html[data-world="threebody"] body {
+  background:
+    radial-gradient(ellipse at 76% -12%, rgba(44, 92, 128, 0.34), transparent 48%),
+    radial-gradient(ellipse at 12% 30%, rgba(28, 62, 90, 0.18), transparent 46%),
+    linear-gradient(180deg, #06101b 0%, #040b13 46%, #03070d 100%);
+}
+html[data-world="threebody"] body::before {
+  background:
+    radial-gradient(ellipse at 50% -18%, rgba(132, 178, 210, 0.12), transparent 52%),
+    linear-gradient(180deg, transparent 66%, rgba(226, 87, 76, 0.06) 100%);
+}
+html[data-world="threebody"] body::after {
+  opacity: 0.5;
+  background-image: repeating-linear-gradient(
+    0deg,
+    rgba(190, 220, 240, 0.035) 0 1px,
+    transparent 1px 4px
+  );
+}
+html[data-world="tidal_archive"] body {
+  background:
+    radial-gradient(ellipse at 18% -8%, rgba(76, 141, 126, 0.3), transparent 50%),
+    radial-gradient(ellipse at 86% 12%, rgba(206, 149, 96, 0.13), transparent 44%),
+    radial-gradient(ellipse at 50% 108%, rgba(82, 154, 138, 0.18), transparent 62%),
+    linear-gradient(180deg, #0a2424 0%, #061a1b 44%, #041312 100%);
+}
+html[data-world="tidal_archive"] body::before {
+  background:
+    repeating-radial-gradient(
+      ellipse at 50% 112%,
+      transparent 0 42px,
+      rgba(126, 196, 176, 0.035) 43px 44px,
+      transparent 45px 86px
+    ),
+    radial-gradient(ellipse at 50% -20%, rgba(3, 16, 16, 0.9), transparent 70%);
+}
+html[data-world="tidal_archive"] body::after {
+  opacity: 0.2;
+  background-image: repeating-linear-gradient(
+    90deg,
+    rgba(230, 245, 237, 0.025) 0 1px,
+    transparent 1px 5px
+  );
+}
+
+/* 现有面板与卡片使用的 token 化表面。具体尺寸、间距仍由各组件 CSS 负责。 */
+html[data-world] .scene-wrap {
+  background: var(--night-sky);
+  border-color: var(--line);
+}
+html[data-world] .story-panel {
+  background: linear-gradient(180deg, var(--panel-a), var(--panel-b));
+  border-color: var(--line);
+}
+html[data-world] .person {
+  background: linear-gradient(160deg, var(--card-a), var(--card-b));
+  border-color: var(--line-soft);
+}
+html[data-world] .identity-card {
+  border-color: var(--line-strong);
+  background: linear-gradient(110deg, var(--card-a), var(--panel-b));
+}
+html[data-world] .world-card,
+html[data-world] .worldbook-card {
+  background: linear-gradient(165deg, var(--card-a), var(--card-b));
+  border-color: var(--card-line);
+  box-shadow: 0 16px 38px rgba(2, 7, 8, 0.32);
+}
+html[data-world] .quiet,
+html[data-world] input,
+html[data-world] select,
+html[data-world] textarea {
+  border-color: var(--line);
+  background-color: var(--ink-2);
+}
+html[data-world] .story-panel::before {
+  background: radial-gradient(
+    ellipse at 50% 0,
+    color-mix(in srgb, var(--gold) 12%, transparent),
+    transparent 70%
+  );
+}
+
+/* ---------- 封面容器 ---------- */
+.world-cover {
+  --cover-radius: 3px;
+  position: relative;
+  isolation: isolate;
+  container-type: inline-size;
+  overflow: hidden;
+  margin: 0;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  min-height: 188px;
+  border: 1px solid var(--cover-line);
+  border-radius: var(--cover-radius);
+  background:
+    radial-gradient(ellipse at 72% 18%, var(--cover-sky-b), transparent 58%),
+    linear-gradient(155deg, var(--cover-sky-a) 0%, var(--cover-sky-b) 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.035),
+    0 12px 30px rgba(2, 7, 8, 0.34);
+  color: var(--cover-paper);
+  font-family: var(--world-body);
+  transition:
+    border-color 240ms ease,
+    box-shadow 240ms ease;
+}
+.world-cover[data-motif="tombs"] {
+  --cover-radius: 1px 1px 14px 1px;
+}
+.world-cover[data-motif="signal"] {
+  --cover-radius: 0;
+}
+.world-cover[data-motif="tide"] {
+  --cover-radius: 8px 2px 8px 2px;
+}
+.world-cover:focus-within {
+  border-color: var(--cover-accent);
+  box-shadow:
+    inset 0 0 0 1px var(--cover-line),
+    0 0 0 2px color-mix(in srgb, var(--cover-accent) 30%, transparent),
+    0 12px 30px rgba(2, 7, 8, 0.34);
+}
+.world-cover__scene,
+.world-cover__grain,
+.world-cover__wash,
+.world-cover__photo,
+.world-cover__orb,
+.world-cover__weather {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.world-cover__photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: var(--cover-photo-opacity);
+  filter: saturate(0.92) contrast(1.04);
+  transform: scale(1.02);
+}
+.world-cover__photo.is-missing,
+.world-cover__frame.is-missing {
+  display: none;
+}
+.world-cover__wash {
+  background:
+    linear-gradient(180deg, transparent 18%, var(--cover-wash) 100%),
+    radial-gradient(ellipse at 50% 108%, var(--cover-wash) 0%, transparent 62%),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.16), transparent 36%, transparent 70%, rgba(0, 0, 0, 0.2));
+}
+.world-cover__grain {
+  opacity: 0.24;
+  mix-blend-mode: overlay;
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      rgba(255, 255, 255, 0.045) 0 1px,
+      transparent 1px 3px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgba(0, 0, 0, 0.06) 0 1px,
+      transparent 1px 4px
+    );
+}
+.world-cover__motif {
+  position: absolute;
+  inset: auto 0 0;
+  width: 100%;
+  height: 64%;
+  overflow: visible;
+}
+.world-cover__motif .motif-fill {
+  fill: var(--cover-motif);
+}
+.world-cover__motif .motif-deep {
+  fill: var(--cover-motif-deep);
+}
+.world-cover__motif .motif-line {
+  fill: none;
+  stroke: var(--cover-accent);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+.world-cover__motif .motif-accent {
+  fill: var(--cover-accent);
+}
+.world-cover__motif .motif-paper {
+  fill: var(--cover-paper);
+}
+
+/* 天体：雾月的柔光、海伯利安的环、三体的三颗太阳、潮汐的湿月 */
+.world-cover__orb {
+  inset: auto;
+  border-radius: 50%;
+  pointer-events: none;
+}
+.world-cover__orb::before,
+.world-cover__orb::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+}
+.world-cover[data-motif="bell"] .world-cover__orb {
+  width: 15%;
+  aspect-ratio: 1;
+  right: 19%;
+  top: 10%;
+  background: radial-gradient(circle at 36% 32%, #fff8df, #d8bd85 48%, transparent 72%);
+  box-shadow:
+    0 0 26px var(--cover-glow),
+    0 0 64px color-mix(in srgb, var(--cover-glow) 70%, transparent);
+  opacity: 0.9;
+}
+.world-cover[data-motif="bell"] .world-cover__orb::after {
+  inset: -38%;
+  border: 1px solid var(--cover-line);
+  border-radius: 50%;
+  opacity: 0.45;
+}
+.world-cover[data-motif="tombs"] .world-cover__orb {
+  width: 19%;
+  aspect-ratio: 1;
+  right: 12%;
+  top: 8%;
+  background:
+    radial-gradient(circle at 34% 30%, #f4d9a2, #c97f48 45%, #7f3b20 74%, #421b0e 100%);
+  box-shadow: 0 0 30px var(--cover-glow);
+}
+.world-cover[data-motif="tombs"] .world-cover__orb::after {
+  width: 172%;
+  height: 32%;
+  left: -36%;
+  top: 34%;
+  border: 1px solid var(--cover-accent);
+  border-radius: 50%;
+  transform: rotate(-17deg);
+  opacity: 0.5;
+}
+.world-cover[data-motif="signal"] .world-cover__orb {
+  width: 10%;
+  aspect-ratio: 1;
+  right: 19%;
+  top: 9%;
+  background: radial-gradient(circle at 40% 38%, #ffd4c6, #e2574c 55%, #7f241e 100%);
+  box-shadow: 0 0 22px var(--cover-glow);
+}
+.world-cover[data-motif="signal"] .world-cover__orb::before {
+  width: 120%;
+  height: 120%;
+  left: -138%;
+  top: 34%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 38%, #f4f9fc, #b9cfdf 58%, #54748d 100%);
+  box-shadow: 0 0 18px rgba(190, 220, 240, 0.4);
+}
+.world-cover[data-motif="signal"] .world-cover__orb::after {
+  width: 76%;
+  height: 76%;
+  left: 148%;
+  top: 12%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 38%, #e8f2f9, #7fa3bd 60%, #2b4e68 100%);
+  opacity: 0.85;
+}
+.world-cover[data-motif="tide"] .world-cover__orb {
+  width: 13%;
+  aspect-ratio: 1;
+  left: 13%;
+  top: 10%;
+  background: radial-gradient(circle at 38% 34%, #fffdf2, #d8d5bd 54%, transparent 74%);
+  box-shadow:
+    0 0 24px var(--cover-glow),
+    0 0 54px color-mix(in srgb, var(--cover-glow) 60%, transparent);
+}
+.world-cover[data-motif="tide"] .world-cover__orb::after {
+  width: 150%;
+  height: 60%;
+  left: -25%;
+  top: 130%;
+  border-radius: 50%;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--cover-accent) 18%, transparent), transparent);
+  filter: blur(4px);
+}
+
+/* 天气/环境层：雾带、时间波纹、扫描束、潮线与漂页 */
+.world-cover__weather {
+  inset: auto;
+  pointer-events: none;
+}
+.world-cover[data-motif="bell"] .world-cover__weather--a {
+  left: -24%;
+  top: 38%;
+  width: 148%;
+  height: 25%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(205, 219, 207, 0.3), transparent 68%);
+  filter: blur(9px);
+  animation: cover-fog-drift 32s ease-in-out infinite alternate;
+}
+.world-cover[data-motif="bell"] .world-cover__weather--b {
+  left: -16%;
+  top: 55%;
+  width: 132%;
+  height: 18%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(178, 198, 185, 0.22), transparent 70%);
+  filter: blur(11px);
+  animation: cover-fog-drift 24s ease-in-out infinite alternate-reverse;
+}
+.world-cover[data-motif="tombs"] .world-cover__weather--a {
+  right: 4%;
+  top: 18%;
+  width: 34%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: repeating-radial-gradient(
+    circle,
+    transparent 0 13px,
+    color-mix(in srgb, var(--cover-accent) 30%, transparent) 14px,
+    transparent 15px 27px
+  );
+  opacity: 0.5;
+  animation: cover-time-ripple 9s ease-out infinite;
+}
+.world-cover[data-motif="tombs"] .world-cover__weather--b {
+  inset: 0;
+  background-image:
+    radial-gradient(circle at 18% 24%, var(--cover-accent) 0 0.7px, transparent 1.2px),
+    radial-gradient(circle at 72% 38%, var(--cover-paper) 0 0.6px, transparent 1.1px),
+    radial-gradient(circle at 44% 12%, var(--cover-accent) 0 0.5px, transparent 1px);
+  background-size: 92px 84px, 118px 96px, 76px 70px;
+  opacity: 0.5;
+  animation: cover-dust 26s linear infinite;
+}
+.world-cover[data-motif="signal"] .world-cover__weather--a {
+  inset: 0 auto 0 0;
+  width: 30%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--cover-accent) 20%, transparent) 58%,
+    transparent
+  );
+  mix-blend-mode: screen;
+  animation: cover-scan 6.5s linear infinite;
+}
+.world-cover[data-motif="signal"] .world-cover__weather--b {
+  right: 17%;
+  top: 18%;
+  width: 27%;
+  aspect-ratio: 1;
+  border: 1px solid color-mix(in srgb, var(--cover-accent) 55%, transparent);
+  border-radius: 50%;
+  opacity: 0.55;
+  animation: cover-ping 3.8s ease-out infinite;
+}
+.world-cover[data-motif="signal"] .world-cover__weather--b::after {
+  content: "";
+  position: absolute;
+  inset: -32%;
+  border: 1px solid color-mix(in srgb, var(--cover-accent) 38%, transparent);
+  border-radius: 50%;
+  animation: cover-ping 3.8s 1.9s ease-out infinite;
+}
+.world-cover[data-motif="tide"] .world-cover__weather--a {
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 42%;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent 0 13px,
+    color-mix(in srgb, var(--cover-accent) 22%, transparent) 14px,
+    transparent 15px 27px
+  );
+  mask-image: linear-gradient(180deg, transparent, #000 44%);
+  animation: cover-tide-lines 12s ease-in-out infinite alternate;
+}
+.world-cover[data-motif="tide"] .world-cover__weather--b {
+  inset: 0;
+  background: linear-gradient(
+    115deg,
+    transparent 28%,
+    color-mix(in srgb, var(--cover-accent) 12%, transparent) 48%,
+    transparent 66%
+  );
+  opacity: 0.5;
+  animation: cover-sheen 14s ease-in-out infinite alternate;
+}
+.world-cover__page {
+  position: absolute;
+  z-index: 2;
+  left: var(--page-x, 20%);
+  bottom: -14%;
+  width: 12px;
+  height: 16px;
+  border: 1px solid color-mix(in srgb, var(--cover-paper) 45%, transparent);
+  background:
+    linear-gradient(135deg, var(--cover-paper), color-mix(in srgb, var(--cover-paper) 55%, var(--cover-accent)));
+  opacity: 0;
+  transform: rotate(-12deg);
+  animation: cover-page-drift 17s var(--page-delay, 0s) linear infinite;
+  pointer-events: none;
+}
+.world-cover__page:nth-of-type(2) {
+  width: 9px;
+  height: 12px;
+}
+.world-cover__page:nth-of-type(3) {
+  width: 14px;
+  height: 18px;
+}
+
+/* 头像框：Kenney 面板边框的透明中心版本，兼作封面徽记与场景头像框 */
+.world-cover__seal {
+  position: absolute;
+  z-index: 3;
+  width: clamp(44px, 17%, 62px);
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  padding: 7%;
+  border: 1px solid var(--cover-line);
+  background:
+    radial-gradient(circle at 50% 44%, color-mix(in srgb, var(--cover-accent) 15%, transparent), transparent 68%),
+    color-mix(in srgb, var(--cover-sky-a) 55%, transparent);
+  pointer-events: none;
+}
+.world-cover__frame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
+}
+.world-cover__glyph {
+  position: relative;
+  z-index: 1;
+  font-family: var(--world-display);
+  font-size: clamp(18px, 5.4vw, 26px);
+  font-size: clamp(18px, 5.4cqw, 26px);
+  line-height: 1;
+  color: var(--cover-paper);
+  text-shadow: 0 0 12px var(--cover-glow);
+}
+.world-cover[data-motif="bell"] .world-cover__seal {
+  top: 10%;
+  right: 6%;
+}
+.world-cover[data-motif="tombs"] .world-cover__seal {
+  right: 6%;
+  bottom: 8%;
+}
+.world-cover[data-motif="signal"] .world-cover__seal {
+  top: 9%;
+  right: 6%;
+  border-radius: 50%;
+}
+.world-cover[data-motif="tide"] .world-cover__seal {
+  right: 6%;
+  bottom: 8%;
+  border-radius: 50%;
+}
+
+/* 文案版式：每套的落点、字距与分隔方式不同 */
+.world-cover__plate {
+  position: absolute;
+  z-index: 3;
+  left: 16px;
+  right: 16px;
+  bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  pointer-events: none;
+}
+.world-cover__volume {
+  font-size: 8px;
+  letter-spacing: 0.16em;
+  line-height: 1.4;
+  color: var(--cover-accent);
+  opacity: 0.92;
+}
+.world-cover__name {
+  display: block;
+  margin: 0;
+  font-family: var(--world-display);
+  font-size: clamp(25px, 8.2vw, 38px);
+  font-size: clamp(25px, 8.2cqw, 38px);
+  font-weight: 400;
+  line-height: 1.12;
+  letter-spacing: 0.12em;
+  color: var(--cover-paper);
+  text-shadow: 0 2px 18px rgba(2, 6, 7, 0.6);
+}
+.world-cover__tagline {
+  display: block;
+  max-width: 68%;
+  font-size: 10px;
+  line-height: 1.7;
+  letter-spacing: 0.06em;
+  color: var(--cover-text);
+  text-shadow: 0 1px 10px rgba(2, 6, 7, 0.7);
+}
+.world-cover__foot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 2px;
+}
+.world-cover__caption {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 8px;
+  letter-spacing: 0.12em;
+  color: var(--cover-text);
+}
+.world-cover__dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--cover-accent);
+  box-shadow: 0 0 8px var(--cover-glow);
+}
+.world-cover__count {
+  font-size: 7px;
+  letter-spacing: 0.1em;
+  color: color-mix(in srgb, var(--cover-text) 66%, transparent);
+}
+.world-cover[data-motif="bell"] .world-cover__plate {
+  bottom: 11px;
+  right: 24%;
+}
+.world-cover[data-motif="tombs"] .world-cover__plate {
+  top: 12px;
+  bottom: auto;
+  right: 30%;
+}
+.world-cover[data-motif="tombs"] .world-cover__name {
+  letter-spacing: 0.2em;
+}
+.world-cover[data-motif="tombs"] .world-cover__tagline {
+  max-width: 100%;
+}
+.world-cover[data-motif="signal"] .world-cover__plate {
+  top: 12px;
+  bottom: auto;
+  right: 26%;
+}
+.world-cover[data-motif="signal"] .world-cover__name {
+  font-size: clamp(23px, 7.4vw, 34px);
+  font-size: clamp(23px, 7.4cqw, 34px);
+  letter-spacing: 0.26em;
+}
+.world-cover[data-motif="signal"] .world-cover__tagline {
+  max-width: 100%;
+  font-size: 9px;
+}
+.world-cover[data-motif="signal"] .world-cover__volume {
+  color: color-mix(in srgb, var(--cover-text) 80%, transparent);
+}
+.world-cover[data-motif="tide"] .world-cover__plate {
+  top: 13px;
+  bottom: auto;
+  align-items: center;
+  text-align: center;
+}
+.world-cover[data-motif="tide"] .world-cover__name {
+  letter-spacing: 0.22em;
+}
+.world-cover[data-motif="tide"] .world-cover__tagline {
+  max-width: 82%;
+}
+.world-cover[data-motif="tide"] .world-cover__foot {
+  justify-content: center;
+}
+
+/* 动效：只在主题内部做低频环境运动；减少动效时全部停住。 */
+@keyframes cover-fog-drift {
+  from {
+    transform: translate3d(-3%, 1%, 0) scale(1);
+  }
+  to {
+    transform: translate3d(5%, -2%, 0) scale(1.08);
+  }
+}
+@keyframes cover-time-ripple {
+  0% {
+    transform: scale(0.72);
+    opacity: 0.16;
+  }
+  45% {
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(1.28);
+    opacity: 0;
+  }
+}
+@keyframes cover-dust {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-18px, 12px, 0);
+  }
+}
+@keyframes cover-scan {
+  0% {
+    transform: translateX(-110%);
+    opacity: 0;
+  }
+  18% {
+    opacity: 0.85;
+  }
+  82% {
+    opacity: 0.85;
+  }
+  100% {
+    transform: translateX(340%);
+    opacity: 0;
+  }
+}
+@keyframes cover-ping {
+  0% {
+    transform: scale(0.7);
+    opacity: 0.65;
+  }
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+@keyframes cover-tide-lines {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-7px);
+  }
+}
+@keyframes cover-sheen {
+  from {
+    opacity: 0.26;
+    transform: translateX(-3%);
+  }
+  to {
+    opacity: 0.55;
+    transform: translateX(4%);
+  }
+}
+@keyframes cover-page-drift {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(-14deg);
+    opacity: 0;
+  }
+  14% {
+    opacity: 0.62;
+  }
+  82% {
+    opacity: 0.45;
+  }
+  100% {
+    transform: translate3d(20px, -260px, 0) rotate(22deg);
+    opacity: 0;
+  }
+}
+
+/* 页面已有 [data-motion="reduced"] 开关；封面自身也接受参数。 */
+html[data-motion="reduced"] .world-cover *,
+.world-cover[data-motion="reduced"] * {
+  animation: none !important;
+  transition: none !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  .world-cover *,
+  .world-cover *::before,
+  .world-cover *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* 窄屏封面：先保证名称与说明不互相压住，再收小徽记。 */
+@media (max-width: 520px) {
+  .world-cover {
+    min-height: 176px;
+  }
+  .world-cover__plate {
+    left: 13px;
+    right: 13px;
+    bottom: 10px;
+  }
+  .world-cover__tagline {
+    max-width: 74%;
+    font-size: 9px;
+  }
+  .world-cover__seal {
+    width: 42px;
+  }
+  .world-cover__count {
+    display: none;
+  }
+  .world-cover[data-motif="tombs"] .world-cover__plate,
+  .world-cover[data-motif="signal"] .world-cover__plate {
+    top: 10px;
+  }
+  .world-cover[data-motif="tide"] .world-cover__tagline {
+    max-width: 92%;
+  }
+}
+
+/* 潮汐封面使用 AI 低潮背景时，隐藏 SVG 里重复的档案馆轮廓，只保留潮线与漂页；
+   图片失败时这些轮廓重新出现，继续与渐变一起兜底。 */
+.world-cover[data-motif="tide"] .world-cover__photo:not(.is-missing) ~ .world-cover__motif .motif-archive {
+  display: none;
+}
+.world-cover[data-motif="tide"] .world-cover__wash {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(4, 20, 20, 0.9) 0%,
+      rgba(4, 20, 20, 0.58) 22%,
+      transparent 46%
+    ),
+    linear-gradient(180deg, transparent 58%, var(--cover-wash) 100%),
+    radial-gradient(ellipse at 50% 108%, var(--cover-wash) 0%, transparent 62%);
+}
+
+/* 潮汐场景标题压在 AI 低潮天空与铜绿屋顶上，加一层局部暗色 scrim；
+   三体只加强文字阴影，保持冷蓝画面的干净。 */
+html[data-world="tidal_archive"] .scene-title,
+html[data-world="threebody"] .scene-title {
+  isolation: isolate;
+}
+html[data-world="tidal_archive"] .scene-title::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: -28px -46px -26px -26px;
+  border-radius: 22px;
+  background:
+    radial-gradient(
+      ellipse at 22% 44%,
+      rgba(4, 20, 20, 0.82) 0%,
+      rgba(4, 20, 20, 0.48) 46%,
+      transparent 74%
+    ),
+    linear-gradient(
+      100deg,
+      rgba(4, 20, 20, 0.4) 0%,
+      rgba(4, 20, 20, 0.16) 52%,
+      transparent 82%
+    );
+  filter: blur(12px);
+  pointer-events: none;
+}
+html[data-world="tidal_archive"] .scene-title h1,
+html[data-world="tidal_archive"] .scene-title p,
+html[data-world="tidal_archive"] .scene-title .eyebrow,
+html[data-world="threebody"] .scene-title h1,
+html[data-world="threebody"] .scene-title p,
+html[data-world="threebody"] .scene-title .eyebrow {
+  text-shadow:
+    0 1px 2px rgba(2, 7, 9, 0.85),
+    0 4px 18px rgba(2, 7, 9, 0.72);
+}
