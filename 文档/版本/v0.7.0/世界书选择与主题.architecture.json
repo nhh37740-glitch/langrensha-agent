@@ -9,11 +9,11 @@
     "quality_profile": "showcase",
     "repository": {
       "url": "https://github.com/nhh37740-glitch/langrensha-agent.git",
-      "revision": "a569ae3a6a48d72c5660a9a0dbefd1a8d6514bd9",
+      "revision": "5f7431be4ac16214181fd916bd03bd9352caf8e8",
       "provider": "github"
     },
     "viewBox": [
-      1120,
+      1100,
       720
     ]
   },
@@ -193,7 +193,7 @@
       "id": "registry",
       "type": "backend",
       "label": "worldbooks 注册表",
-      "sublabel": "mist / hyperion / threebody / tidal",
+      "sublabel": "四本世界自动注册",
       "pos": [
         890,
         150
@@ -398,15 +398,6 @@
       "to": "ai",
       "label": "advance / 决策",
       "variant": "dashed",
-      "fromSide": "right",
-      "toSide": "bottom"
-    },
-    {
-      "id": "retrieval-registry",
-      "from": "retrieval",
-      "to": "registry",
-      "label": "可见条目",
-      "variant": "security",
       "fromSide": "right",
       "toSide": "bottom"
     },
