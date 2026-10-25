@@ -21,11 +21,19 @@ from langrensha.worldbooks import personas_for, worldbook_ids
 
 ROOT = Path(__file__).resolve().parents[1]
 RUNTIME = ROOT / "前端/src/worlds/personas.json"
-HANDOFF_CANDIDATES = (
-    ROOT / "临时/世界书视觉Issue/完整美术包/人物映射.json",
-    # 团队 worktree 的 临时/ 独立于主 checkout，交接目录留在主仓库根下。
-    ROOT.parents[2] / "临时/世界书视觉Issue/完整美术包/人物映射.json",
-)
+def _handoff_candidates():
+    """可选交接路径不能因仓库 checkout 深度不同而阻断测试收集。"""
+    candidates = [ROOT / "临时/世界书视觉Issue/完整美术包/人物映射.json"]
+    # 团队 worktree 的 临时/ 独立于主 checkout，交接目录留在主仓库根下；
+    # 仅当父目录足够时追加，避免 /workspace/langrensha-agent 这类浅路径 IndexError。
+    if len(ROOT.parents) > 2:
+        candidates.append(
+            ROOT.parents[2] / "临时/世界书视觉Issue/完整美术包/人物映射.json"
+        )
+    return tuple(candidates)
+
+
+HANDOFF_CANDIDATES = _handoff_candidates()
 WORLDS = ("mist", "hyperion", "threebody", "tidal_archive")
 # 运行时允许的公开字段；后续可加 row/col，仍不得出现身份类字段。
 PUBLIC_KEYS = {"seat", "slot", "row", "col", "name", "description", "color"}
