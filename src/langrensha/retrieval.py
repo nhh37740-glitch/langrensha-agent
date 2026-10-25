@@ -1,5 +1,6 @@
 """先取得受限视图，再做语义/词项检索和有出处的摘要；权限过滤先于索引。"""
 
+import logging
 import math
 import re
 from collections import Counter
@@ -15,6 +16,7 @@ CHUNK_CHARS = 300
 # 该固定模型在中文短文本上的实测分界；低于此值视为无命中，避免无意义查询返回资料。
 SEMANTIC_THRESHOLD = 0.40
 RESULT_LIMIT = 12
+_LOG = logging.getLogger(__name__)
 
 
 def _tokens(text):
@@ -171,7 +173,9 @@ def _rank(documents, question, *, view):
     try:
         matches = index.search(question)
     except semantic.EmbeddingUnavailable as exc:
-        return _lexical_rank(documents, question), "lexical_fallback", str(exc)
+        _LOG.warning("语义检索不可用，回退词项检索：%s", exc)
+        matches = _lexical_rank(documents, question)
+        return matches, "lexical_fallback", "语义模型不可用，已回退词项检索。"
     return matches, "semantic_retrieval", None
 
 
@@ -308,5 +312,5 @@ def query(view, name, payload):
         )
     result = {"answer": answer, "sources": matches, "method": method}
     if warning:
-        result["warning"] = f"语义模型不可用，已回退词项检索：{warning}"
+        result["warning"] = warning
     return result

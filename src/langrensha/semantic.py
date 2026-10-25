@@ -152,6 +152,7 @@ def _load_runtime() -> _Runtime:
 
 
 def _embed_batch(runtime: _Runtime, texts: list[str]):
+    """BGE 的查询指令在本项目中文短查询实测会降低同义召回，故查询与文本统一不加前缀。"""
     import numpy as np
 
     encodings = [runtime.tokenizer.encode(text) for text in texts]

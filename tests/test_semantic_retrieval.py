@@ -8,7 +8,7 @@ from uuid import uuid4
 
 from langrensha import semantic
 from langrensha.full_game import pending
-from langrensha.retrieval import build_chunks, query, split_text
+from langrensha.retrieval import _tokens, build_chunks, query, split_text
 from langrensha.service import GameService
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -30,14 +30,19 @@ def event(number, actor, text, *, kind="action", round_number=1, **data):
 
 
 def test_synonym_recall_without_shared_characters():
-    current = view(
-        events=[
-            event(1, 2, "我觉得铁匠昨晚的证词有问题，他一直在回避关键时间。"),
-            event(2, 3, "我当时在钟楼附近，听见有人匆匆下楼。"),
-            event(3, 4, "我昨夜看见三号身上有暗影。", kind="vision", alignment="wolves", target=3),
-        ]
-    )
-    result = query(current, "search_history", {"query": "谁认为那个手艺人不太对劲"})
+    events = [
+        event(1, 2, "我觉得铁匠昨晚的证词有问题，他一直在回避关键时间。"),
+        event(2, 3, "我当时在钟楼附近，听见有人匆匆下楼。"),
+        event(3, 4, "我昨夜看见三号身上有暗影。", kind="vision", alignment="wolves", target=3),
+    ]
+    events += [
+        event(number, 5, f"第{number}位旅人谈论广场上的灯火与天气。")
+        for number in range(4, 12)
+    ]
+    current = view(events=events)
+    question = "谁认为那个手艺人不太对劲"
+    assert not (set(_tokens(question)) & set(_tokens(events[0]["data"]["text"])))
+    result = query(current, "search_history", {"query": question})
     assert result["method"] == "semantic_retrieval"
     assert result["sources"][0]["source"] == "event:1"
     assert "语义模型不可用" not in result
