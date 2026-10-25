@@ -10,7 +10,7 @@
 
 云环境内的进程随环境生命周期停止；跨休眠执行必须依赖宿主提供的定时器，当前没有可用的云端定时器。2026-10-25 监督者已手动停用 GitHub Actions 工作流 `DeepSeek 每小时验收与串行开发`（ID 395627924，状态 `disabled_manually`），本项 GitHub 调度已撤销，不得重新启用。它原本只做状态验收，且不表示聊天助手每小时重新上线或已完成人工业务验收。
 
-Codex 原生 Scheduled tasks 目前只能由 ChatGPT 桌面应用创建和管理；桌面应用可在本地项目目录中按小时运行，但要求电脑保持开机且应用运行。CLI 与 IDE 不提供 Scheduled 管理界面。当前云环境没有桌面应用或显示会话，Codex CLI 的 `codex exec` 又因登录令牌 401 无法运行；app-server 协议只在插件详情中出现 `ScheduledTaskSummary`，未发现创建或运行定时任务的方法。因此本环境不能创建或运行原生定时任务；仅写 `automation.toml` 不构成创建或运行证据。详见“调度现状与限制”。
+Codex 原生定时任务：当前会话没有 Automations 创建接口，独立 CLI 调用返回 401；本环境未创建或运行 Codex 原生定时任务。GitHub 调度已按上文撤销；仅写 `automation.toml` 不构成创建或运行证据。详见“调度现状与限制”。
 
 ## 安装与本机入口
 
@@ -32,16 +32,13 @@ python .github/scripts/启动DeepSeek.py --profile headless '读取项目规范�
 | 项目 | 事实 |
 | --- | --- |
 | GitHub Actions | 工作流 ID 395627924 为 `disabled_manually`；调度已由监督者撤销，不得重新启用。 |
-| GitHub Secrets | 调度停用后不再需要维护 Actions Secrets；不要把“已配置密钥”当作定时任务可用的证据。 |
-| Codex 原生 Scheduled | 官方文档说明 CLI/IDE 不提供 Scheduled 管理；需 ChatGPT 桌面应用，且电脑开机、应用运行、项目在磁盘可用。 |
-| 当前云环境 | 无桌面应用和显示会话；`codex exec` 返回 401，令牌无法刷新；app-server 协议只有插件 `ScheduledTaskSummary` 字段，未发现创建/运行方法。不能创建或运行原生定时任务。 |
+| GitHub Secrets | 调度停用后不再需要维护 Actions Secrets；不要把“已配置密钥”当作 GitHub 调度可用的证据。 |
+| Codex 原生定时 | 当前会话无 Automations 创建接口；独立 CLI 调用返回 401；未创建或运行 Codex 原生定时任务。 |
 | DSH 本地服务 | Web 服务监听 `127.0.0.1:3080`，在线但空闲不等同于正在开发；headless 只在被赋予一次性任务时运行。 |
 
-官方依据：[Scheduled tasks](https://learn.chatgpt.com/docs/automations)（其中明确 CLI 不提供 Scheduled 管理界面）。本环境不另写替代定时平台，也不通过代理、重登或读取认证文件绕过限制。
+官方文档入口：[Automations](https://learn.chatgpt.com/docs/automations?surface=app)。本环境不另写替代定时平台，也不通过代理、重登或读取认证文件绕过限制。
 
-用户完成原生定时任务所需的最少操作：在一台保持开机、且本地能访问该仓库目录的电脑上打开 ChatGPT 桌面应用并登录，选择该项目目录，创建每小时运行的 Scheduled task，确认首轮实际运行。若项目只存在于当前云环境、或没有该桌面应用，则没有官方支持的原生本地定时方案，应如实保留阻塞。
-
-原先为 Actions 准备的 Secrets 表和历史调度说明不再代表当前状态；只有维护者另行明确授权并重新启用工作流时才需要重新核对。任何情况下都不得把“仅创建 automation.toml”或“Web 服务在线”报告为定时任务已创建或已运行。
+原先为 Actions 准备的 Secrets 表和历史调度说明不再代表当前状态。不得把“仅创建 automation.toml”或“Web 服务在线”报告为定时任务已创建或已运行。
 
 ## 本机运行事实（2026-10-25 核实）
 

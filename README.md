@@ -27,7 +27,7 @@ chmod 600 .env
 
 ## 正式依据
 
-开发自动化：[DeepSeek 无人值守开发与调度现状](文档/开发/DeepSeek无人值守开发与验收.md)。GitHub Actions 调度已于 2026-10-25 停用且不得重新启用；Codex 原生 Scheduled 需 ChatGPT 桌面应用，当前云环境不可用。串行执行、PR 与 Codex review 规则仍见文档。
+开发自动化：[DeepSeek 无人值守开发与调度现状](文档/开发/DeepSeek无人值守开发与验收.md)。GitHub Actions 调度已于 2026-10-25 停用且不得重新启用；当前会话没有 Automations 创建接口，独立 CLI 调用返回 401，未创建或运行 Codex 原生定时任务。串行执行、PR 与 Codex review 规则仍见文档。
 
 - [项目状态](项目说明.md) / [需求基线](文档/需求/需求分析.md)
 - [完整版本实施规格与规则裁定](文档/详细设计/首个可玩版本/完整可玩版实施规格.md)
