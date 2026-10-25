@@ -72,6 +72,8 @@ def test_roles_guidance_and_personas_are_complete():
     assert set(WORLDBOOK["roles"]) == set(ROLE_KEYS)
     assert set(WORLDBOOK["guidance"]) == set(ROLE_KEYS)
     assert len(set(WORLDBOOK["roles"].values())) == len(ROLE_KEYS)
+    default_names = {"狼人", "村民", "预言家", "女巫", "猎人", "白痴"}
+    assert not default_names & set(WORLDBOOK["roles"].values())
     for role in ROLE_KEYS:
         assert isinstance(WORLDBOOK["roles"][role], str)
         assert WORLDBOOK["roles"][role].strip()
@@ -84,6 +86,12 @@ def test_roles_guidance_and_personas_are_complete():
     for name, description, color in personas:
         assert name.strip() and description.strip()
         assert re.fullmatch(r"#[0-9a-f]{6}", color)
+
+
+def test_entries_use_in_world_language():
+    joined = "".join(entry["text"] for entry in WORLDBOOK["entries"])
+    for term in ("查杀", "跳预言家", "金水", "银水", "警徽", "狼刀", "狼人", "预言家", "女巫"):
+        assert term not in joined
 
 
 def test_every_role_has_at_least_one_secret_entry():
