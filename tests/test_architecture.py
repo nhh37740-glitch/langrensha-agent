@@ -25,8 +25,16 @@ def test_real_contracts_reject_reversed_dependencies_and_unclassified_modules(
 ):
     package = tmp_path / "src/langrensha"
     package.mkdir(parents=True)
-    for path in (ROOT / "src/langrensha").glob("*.py"):
-        shutil.copyfile(path, package / path.name)
+    for path in (ROOT / "src/langrensha").iterdir():
+        if path.is_dir():
+            if path.name not in {"__pycache__", "static"}:
+                shutil.copytree(
+                    path,
+                    package / path.name,
+                    ignore=shutil.ignore_patterns("__pycache__"),
+                )
+        elif path.suffix == ".py":
+            shutil.copyfile(path, package / path.name)
     shutil.copyfile(ROOT / "pyproject.toml", tmp_path / "pyproject.toml")
     target = package / f"{module}.py"
     target.write_text((target.read_text() if target.exists() else "") + addition)
