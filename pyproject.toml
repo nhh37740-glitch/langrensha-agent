@@ -53,13 +53,14 @@ layers = [
     "web : __main__ : ai_demo : full_demo : operations",
     "ai | assistant | presentation | service",
     "retrieval | store | full_game",
+    "worldbooks",
     "semantic | content | rules",
 ]
 
 [[tool.importlinter.contracts]]
 name = "规则与只读查询不依赖外部框架"
 type = "forbidden"
-source_modules = ["langrensha.full_game", "langrensha.rules", "langrensha.content", "langrensha.retrieval", "langrensha.presentation"]
+source_modules = ["langrensha.full_game", "langrensha.rules", "langrensha.content", "langrensha.retrieval", "langrensha.presentation", "langrensha.worldbooks"]
 forbidden_modules = ["fastapi", "uvicorn", "langchain_core", "langchain_deepseek", "langgraph", "langsmith"]
 
 [[tool.importlinter.contracts]]

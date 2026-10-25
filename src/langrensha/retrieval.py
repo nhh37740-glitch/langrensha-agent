@@ -7,16 +7,28 @@ from collections import Counter
 from dataclasses import dataclass, field
 
 from . import semantic
-from .content import GUIDANCE, ROLE_NAMES, WORLD
 from .rules import Rejected, seat_number
+from .worldbooks import (
+    DEFAULT_WORLD_ID,
+    get_worldbook,
+    guidance_for,
+    role_name,
+    visible_entries,
+)
 
 QUERY_TOOLS = {"ask_world", "search_history", "summarize_player", "self_info"}
-WORLD_NAME = "雾钟镇"
 CHUNK_CHARS = 300
 # 该固定模型在中文短文本上的实测分界；低于此值视为无命中，避免无意义查询返回资料。
 SEMANTIC_THRESHOLD = 0.40
 RESULT_LIMIT = 12
 _LOG = logging.getLogger(__name__)
+
+
+def _worldbook_for(view):
+    try:
+        return get_worldbook(view.get("worldbook", DEFAULT_WORLD_ID))
+    except KeyError as exc:
+        raise Rejected("unknown_worldbook") from exc
 
 
 def _tokens(text):
@@ -103,6 +115,7 @@ class Chunk:
 
 def build_chunks(documents, *, view):
     """只对已过滤的可见文档切块，并保留追溯所需的元数据。"""
+    world = _worldbook_for(view)["name"]
     chunks = []
     for document in documents:
         if not isinstance(document, dict):
@@ -116,7 +129,7 @@ def build_chunks(documents, *, view):
                     source=source,
                     text=piece,
                     category=document.get("category", "world"),
-                    world=WORLD_NAME,
+                    world=world,
                     game=view["game_id"],
                     actor=document.get("actor"),
                     round=document.get("round"),
@@ -219,6 +232,7 @@ def _bounded_text(value, *, optional=False):
 def query(view, name, payload):
     if not isinstance(payload, dict):
         raise Rejected("invalid_payload")
+    book = _worldbook_for(view)
     fields = {
         "ask_world": ({"question"}, set()),
         "search_history": ({"query"}, {"seat", "from_round", "to_round"}),
@@ -242,11 +256,11 @@ def query(view, name, payload):
     if lower > upper:
         raise Rejected("invalid_round")
     if name == "self_info":
-        title = ROLE_NAMES[view["role"]]
+        title = role_name(book, view["role"])
         facts = [d for d in history_documents(view) if d["category"] == "vision"]
         return {
-            "answer": f"你坐在{view['seat']}号位置，身份是{title}。{GUIDANCE[view['role']]}"
-            + "".join(d["text"] for d in facts),
+            "answer": f"你坐在{view['seat']}号位置，身份是{title}。"
+            f"{guidance_for(book, view['role'])}" + "".join(d["text"] for d in facts),
             "sources": [{"source": "self:identity", "text": title}, *facts],
             "method": "fact",
         }
@@ -254,12 +268,12 @@ def query(view, name, payload):
         question = _bounded_text(payload["question"])
         docs = [
             {"source": w["id"], "text": w["text"], "title": w["title"], "category": "world"}
-            for w in WORLD
+            for w in visible_entries(book, view["role"])
         ]
         docs.append(
             {
                 "source": "self:guide",
-                "text": GUIDANCE[view["role"]],
+                "text": guidance_for(book, view["role"]),
                 "title": "身份指导",
                 "category": "guide",
             }
