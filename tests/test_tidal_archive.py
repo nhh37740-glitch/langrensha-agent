@@ -5,6 +5,7 @@ import re
 import pytest
 
 from langrensha.content import ROLE_NAMES, WORLD
+from langrensha.retrieval import split_text
 from langrensha.worldbooks.tidal_archive import WORLDBOOK
 
 ROLE_KEYS = tuple(ROLE_NAMES)
@@ -53,6 +54,14 @@ def test_worldbook_metadata_and_entry_contract():
         assert entry["title"].strip()
         assert entry["text"].strip()
         assert len(entry["text"]) <= 300
+
+
+def test_entries_fit_existing_chunker_without_losing_text():
+    for entry in WORLDBOOK["entries"]:
+        chunks = split_text(entry["text"])
+        assert chunks
+        assert all(len(chunk) <= 300 for chunk in chunks)
+        assert "".join(chunks) == entry["text"]
 
 
 def test_visibility_values_are_public_or_known_roles():
