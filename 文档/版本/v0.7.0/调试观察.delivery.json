@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "146b1bc5-2639-4a18-8ba6-6b68cb0424df",
+  "status": "current",
+  "command": "deliver",
+  "type": "workflow",
+  "input": "/workspace/langrensha-agent/临时/DSH团队/issue-64/文档/版本/v0.7.0/调试观察.workflow.json",
+  "output": "/workspace/langrensha-agent/临时/DSH团队/issue-64/文档/版本/v0.7.0/调试观察.html",
+  "specification": {
+    "sha256": "47d3f7cc2cb484103382ec6599556edbfcb620f75e27047cd1be8411e6027262",
+    "bytes": 5977
+  },
+  "artifact": {
+    "sha256": "b781b26ceeea47809ed778dbfa7802eecc6864d50c6da910707605c994344023",
+    "bytes": 825495
+  }
+}
