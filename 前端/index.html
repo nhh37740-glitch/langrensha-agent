@@ -25,6 +25,16 @@
             ><span id="phase-label">雾夜初临</span></span
           ><button id="sound" class="quiet" aria-pressed="false">
             开启钟声</button
+          ><button
+            id="debug-toggle"
+            class="quiet debug-toggle"
+            aria-pressed="true"
+            aria-label="调试观察"
+            title="调试观察（仅 Web 可见）"
+          >
+            <span class="debug-toggle__dot" aria-hidden="true"></span
+            ><span class="debug-toggle__label">调试</span
+            ><span id="debug-toggle-state" class="debug-toggle__state">开</span></button
           ><button id="reset" class="quiet" hidden>重新启程</button>
         </div>
       </header>
@@ -228,6 +238,59 @@
           <div id="ending" class="ending" role="status" hidden></div>
         </section>
       </main>
+      <section
+        id="debug-panel"
+        class="debug-panel"
+        aria-labelledby="debug-panel-title"
+        hidden
+      >
+        <div class="debug-panel__header">
+          <div class="debug-panel__heading">
+            <span class="debug-badge">DEBUG</span>
+            <div>
+              <h2 id="debug-panel-title">调试观察</h2>
+              <p class="debug-panel__hint">
+                仅 Web 可见 · 展示模型显式说明、工具调用与真实狼队对话 ·
+                不向 AI 玩家注入其他玩家秘密
+              </p>
+            </div>
+          </div>
+          <div class="debug-panel__meta">
+            <span
+              id="debug-status"
+              class="debug-status"
+              role="status"
+              aria-live="polite"
+              >等待入镇</span
+            >
+            <span id="debug-updated" class="debug-updated"></span>
+          </div>
+        </div>
+        <p id="debug-notice" class="debug-notice" role="status" hidden></p>
+        <div id="debug-body" class="debug-body">
+          <div
+            id="debug-rounds"
+            class="debug-rounds"
+            aria-label="按轮次、阶段与玩家的调试记录"
+          ></div>
+          <div class="debug-side">
+            <section class="debug-section" aria-labelledby="debug-wolf-title">
+              <div class="debug-section__head">
+                <h3 id="debug-wolf-title">狼队内部对话</h3>
+                <span class="debug-scope">真实事件</span>
+              </div>
+              <div id="debug-wolf-chat" class="debug-chat"></div>
+            </section>
+            <section class="debug-section" aria-labelledby="debug-missing-title">
+              <div class="debug-section__head">
+                <h3 id="debug-missing-title">缺失说明</h3>
+                <span class="debug-scope">不补写</span>
+              </div>
+              <div id="debug-missing" class="debug-missing"></div>
+            </section>
+          </div>
+        </div>
+      </section>
       <aside id="assistant" class="assistant" hidden>
         <button
           id="assistant-toggle"

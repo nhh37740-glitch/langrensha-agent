@@ -1,0 +1,280 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Web 调试观察：从模型显式说明到按轮次面板",
+    "subtitle": "Issue #64 实际路径：只存 AIMessage 可见内容与真实工具事件；关闭开关后接口不再返回审计。",
+    "locale": "zh-CN",
+    "output": "文档/版本/v0.7.0/调试观察.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/nhh37740-glitch/langrensha-agent.git",
+      "revision": "8631c5228db992d5d598150f6ace4358363c0a22",
+      "provider": "github"
+    }
+  },
+  "lanes": [
+    {
+      "id": "web",
+      "label": "Web 观察者"
+    },
+    {
+      "id": "agent",
+      "label": "AI 决策"
+    },
+    {
+      "id": "audit",
+      "label": "受信审计"
+    },
+    {
+      "id": "api",
+      "label": "调试接口与面板"
+    }
+  ],
+  "phases": [
+    {
+      "id": "open",
+      "label": "默认开启",
+      "fromCol": 0,
+      "toCol": 0
+    },
+    {
+      "id": "decide",
+      "label": "模型行动",
+      "fromCol": 1,
+      "toCol": 2,
+      "variant": "emphasis"
+    },
+    {
+      "id": "store",
+      "label": "记录审计",
+      "fromCol": 3,
+      "toCol": 3
+    },
+    {
+      "id": "read",
+      "label": "按轮次读取",
+      "fromCol": 4,
+      "toCol": 5,
+      "variant": "dashed"
+    }
+  ],
+  "mainPath": [
+    "toggle",
+    "runner",
+    "model",
+    "report",
+    "decisions",
+    "api",
+    "timeline",
+    "panel"
+  ],
+  "nodes": [
+    {
+      "id": "toggle",
+      "lane": "web",
+      "col": 0,
+      "type": "frontend",
+      "label": "调试开关",
+      "sublabel": "默认开启 · 仅 Web",
+      "sources": [
+        {
+          "path": "前端/index.html"
+        },
+        {
+          "path": "前端/src/main.js"
+        }
+      ],
+      "width": 140
+    },
+    {
+      "id": "panel",
+      "lane": "web",
+      "col": 5,
+      "type": "frontend",
+      "label": "调试面板",
+      "sublabel": "轮次 / 阶段 / 玩家",
+      "sources": [
+        {
+          "path": "前端/src/debug.css"
+        },
+        {
+          "path": "前端/src/main.js"
+        }
+      ],
+      "width": 140
+    },
+    {
+      "id": "runner",
+      "lane": "agent",
+      "col": 1,
+      "type": "backend",
+      "label": "DecisionRunner",
+      "sublabel": "受限玩家视图",
+      "sources": [
+        {
+          "path": "src/langrensha/ai.py"
+        }
+      ],
+      "width": 140
+    },
+    {
+      "id": "model",
+      "lane": "agent",
+      "col": 2,
+      "type": "external",
+      "label": "DeepSeek 模型",
+      "sublabel": "AIMessage content + tool_calls",
+      "sources": [
+        {
+          "path": "src/langrensha/ai.py"
+        }
+      ],
+      "width": 150
+    },
+    {
+      "id": "report",
+      "lane": "audit",
+      "col": 3,
+      "type": "database",
+      "label": "回合 report",
+      "sublabel": "round / phase / thinking",
+      "sources": [
+        {
+          "path": "src/langrensha/ai.py"
+        }
+      ],
+      "width": 140
+    },
+    {
+      "id": "decisions",
+      "lane": "audit",
+      "col": 4,
+      "type": "database",
+      "label": "ai_decisions",
+      "sublabel": "只存可见内容与工具审计",
+      "sources": [
+        {
+          "path": "src/langrensha/service.py"
+        }
+      ],
+      "width": 150
+    },
+    {
+      "id": "api",
+      "lane": "api",
+      "col": 4,
+      "type": "backend",
+      "label": "GET /api/debug",
+      "sublabel": "仅当前 session 的对局",
+      "sources": [
+        {
+          "path": "src/langrensha/web.py"
+        }
+      ],
+      "width": 150
+    },
+    {
+      "id": "timeline",
+      "lane": "api",
+      "col": 5,
+      "type": "backend",
+      "label": "debug_timeline",
+      "sublabel": "分组 / 缺失 / 真实狼队密语",
+      "sources": [
+        {
+          "path": "src/langrensha/presentation.py"
+        }
+      ],
+      "width": 150
+    }
+  ],
+  "edges": [
+    {
+      "id": "toggle-runner",
+      "from": "toggle",
+      "to": "runner",
+      "label": "观察对局",
+      "variant": "emphasis"
+    },
+    {
+      "id": "runner-model",
+      "from": "runner",
+      "to": "model",
+      "label": "调用模型",
+      "variant": "default"
+    },
+    {
+      "id": "model-report",
+      "from": "model",
+      "to": "report",
+      "label": "显式说明 + 工具",
+      "variant": "emphasis"
+    },
+    {
+      "id": "report-decisions",
+      "from": "report",
+      "to": "decisions",
+      "label": "写审计",
+      "variant": "default"
+    },
+    {
+      "id": "decisions-api",
+      "from": "decisions",
+      "to": "api",
+      "label": "读取当前对局",
+      "variant": "security"
+    },
+    {
+      "id": "api-timeline",
+      "from": "api",
+      "to": "timeline",
+      "label": "整理轮次",
+      "variant": "default"
+    },
+    {
+      "id": "timeline-panel",
+      "from": "timeline",
+      "to": "panel",
+      "label": "渲染面板",
+      "variant": "emphasis"
+    },
+    {
+      "id": "toggle-close",
+      "from": "toggle",
+      "to": "api",
+      "label": "关闭：空审计",
+      "variant": "security",
+      "role": "branch"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "只展示实际发生",
+      "items": [
+        "thinking 只存 AIMessage.content 的可见文本",
+        "空内容 has_content=false，不补写",
+        "狼队对话只来自真实 wolf_chat 事件"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "权限边界",
+      "items": [
+        "/api/state 与玩家视图不含调试字段",
+        "调试只读当前 web session 绑定对局",
+        "关闭后 GET 立即返回空审计"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "测试",
+      "items": [
+        "后端 274 项 pytest（本地不含语义模型用例）",
+        "前端 11 项 Playwright：默认/关闭/缺失/390px",
+        "真实 DeepSeek 一局显式说明与密语已留证据"
+      ]
+    }
+  ]
+}

@@ -70,6 +70,15 @@ def test_native_tool_call_reaches_rules_and_private_audit(game):
     model = Model(reply("wolf_vote", {"target": 1}))
     result = DecisionRunner(model).run(session(game))
     assert result["rounds"] == 1 and result["reason"] == "acted"
+    assert result["round"] == 1 and result["phase"] == "night_votes"
+    assert result["thinking"] == [
+        {
+            "step": 1,
+            "content": "",
+            "has_content": False,
+            "tool_calls": [{"name": "wolf_vote", "args": {"target": 1}}],
+        }
+    ]
     report = game[0].host_decisions(game[1])[0]
     assert report["calls"][0]["result"]["accepted"] is True
     assert game[0].host_snapshot(game[1])["completed"] == {str(game[2][0]): 1}
@@ -82,6 +91,8 @@ def test_plain_text_is_not_action_and_round_limit_abstains(game):
     result = DecisionRunner(model).run(session(game))
     assert len(model.requests) == 3
     assert result["reason"] == "thinking_rounds_exhausted"
+    assert [step["content"] for step in result["thinking"]] == ["我仍在观察。"] * 3
+    assert all(step["has_content"] for step in result["thinking"])
     actions = [e for e in game[0].host_snapshot(game[1])["events"] if e["kind"] == "action"]
     assert len(actions) == 1
     assert actions[0]["data"] == {"tool": "abstain"}
@@ -129,6 +140,7 @@ def test_provider_failure_is_redacted_and_has_distinct_fallback(game):
     result = DecisionRunner(model).run(session(game))
     audit = game[0].host_decisions(game[1])
     assert result["rounds"] == 1 and result["reason"] == "model_unavailable"
+    assert result["thinking"] == []
     assert "private-provider-secret" not in json.dumps(audit)
     assert audit[0]["calls"][0]["automatic_reason"] == "model_unavailable"
 
@@ -137,6 +149,7 @@ def test_no_action_window_does_not_call_model(game):
     model = Model()
     result = DecisionRunner(model).run(session(game, 1))
     assert result["rounds"] == 0 and result["reason"] == "window_closed"
+    assert result["thinking"] == []
     assert model.requests == []
 
 

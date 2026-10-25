@@ -70,7 +70,14 @@ THEMES = {
             "footer": "雾钟镇 · 第一卷",
             "intro": "雾封住了出镇的路。十一位旅人已经等在广场，今夜，你会带着怎样的秘密入座？",
         },
-        "chapters": {**PHASE_NAMES, "night": "灯火熄灭之后", "default": "雾中的等待"},
+        "chapters": {
+            **PHASE_NAMES,
+            "night": "灯火熄灭之后",
+            "night_wolves": "夜裔密谈",
+            "night_witch": "药师用药",
+            "night_seer": "观星询问",
+            "default": "雾中的等待",
+        },
         "labels": dict(LABELS),
         "endings": {
             "village": "夜裔尽散，镇上的灯火终于安稳。",
@@ -138,6 +145,9 @@ THEMES = {
             "badge": "灯盏的去向",
             "ended": "冢门开启时分",
             "night": "营火熄灭之后",
+            "night_wolves": "使徒夜谈",
+            "night_witch": "医官用药",
+            "night_seer": "时隙观测",
             "default": "冢影中的等待",
         },
         "labels": {
@@ -223,6 +233,9 @@ THEMES = {
             "badge": "执剑权限的去向",
             "ended": "静默降临",
             "night": "监听站熄灯之后",
+            "night_wolves": "潜伏者密语",
+            "night_witch": "面壁者预案",
+            "night_seer": "监听员推演",
             "default": "噪声中的等待",
         },
         "labels": {
@@ -308,6 +321,9 @@ THEMES = {
             "badge": "潮钟钥匙的去向",
             "ended": "潮水合拢时分",
             "night": "潮钟停摆之后",
+            "night_wolves": "噬名者刻名",
+            "night_witch": "盐药师取盐",
+            "night_seer": "验潮员照影",
             "default": "盐雾中的等待",
         },
         "labels": {
@@ -553,3 +569,176 @@ def present(view):
         ],
         "story": [line for e in view["events"] if (line := _line(e, theme, personas))],
     }
+
+
+def _debug_thinking(value):
+    """调试面板只复原 DecisionRunner 已存的可见说明与工具调用。"""
+    thinking = []
+    for item in value if isinstance(value, list) else []:
+        if not isinstance(item, dict):
+            continue
+        content = item.get("content")
+        content = content if isinstance(content, str) else ""
+        calls = []
+        for call in item.get("tool_calls") if isinstance(item.get("tool_calls"), list) else []:
+            if isinstance(call, dict) and isinstance(call.get("name"), str):
+                args = call.get("args")
+                calls.append({"name": call["name"], "args": args if isinstance(args, dict) else {}})
+        thinking.append(
+            {
+                "step": len(thinking) + 1,
+                "content": content,
+                "has_content": bool(content.strip()),
+                "tool_calls": calls,
+            }
+        )
+    return thinking
+
+
+def _debug_missing(thinking, reason):
+    """模型没有返回可见说明时给出准确标记；不补写任何内容。"""
+    if reason == "model_unavailable":
+        return [{"reason": "model_unavailable", "label": "模型不可用，未返回显式说明"}]
+    if not thinking:
+        label = (
+            "本回合未调用模型，无显式说明"
+            if reason == "window_closed"
+            else "未取得模型显式说明"
+        )
+        return [{"reason": reason or "no_thinking", "label": label}]
+    if not any(item["has_content"] for item in thinking):
+        return [{"reason": "no_content", "label": "模型未返回显式说明"}]
+    return []
+
+
+def debug_timeline(state, decisions):
+    """把主持快照与真实决策审计整理为调试时间线；只读，不生成内容。"""
+    theme = _theme_for(state.get("worldbook", DEFAULT_WORLD))
+    personas = _personas(theme["id"])
+    players = {
+        item["seat"]: item
+        for item in state.get("players", [])
+        if isinstance(item, dict) and isinstance(item.get("seat"), int)
+    }
+    phase_by_id = {}
+    event_rounds = {}
+    for event in state.get("events", []):
+        if not isinstance(event, dict):
+            continue
+        phase_id = event.get("phase_id")
+        round_number = event.get("round")
+        if isinstance(phase_id, str) and type(round_number) is int:
+            event_rounds.setdefault(phase_id, round_number)
+    groups = {}
+    order = []
+    missing = []
+    for decision in decisions if isinstance(decisions, list) else []:
+        if not isinstance(decision, dict):
+            continue
+        seat = decision.get("actor")
+        if type(seat) is not int or not 1 <= seat <= len(personas):
+            continue
+        phase_id = decision.get("phase_id")
+        round_number = decision.get("round")
+        if type(round_number) is not int:
+            # 旧审计只有 phase_id；从快照事件恢复历史轮次，恢复不了就保持未知。
+            round_number = event_rounds.get(phase_id)
+        if type(round_number) is not int:
+            round_number = None
+        phase = decision.get("phase")
+        if not isinstance(phase, str) or not phase:
+            phase = phase_by_id.get(phase_id)
+        if not isinstance(phase, str) or not phase:
+            # 历史审计没有阶段名时不能用当前阶段冒充历史事实。
+            phase = "unknown"
+        if isinstance(phase_id, str) and phase != "unknown":
+            phase_by_id.setdefault(phase_id, phase)
+        key = (round_number, phase_id if isinstance(phase_id, str) else phase)
+        if key not in groups:
+            groups[key] = {
+                "round": round_number,
+                "phase": phase,
+                "phase_id": phase_id if isinstance(phase_id, str) else "",
+                "time": decision.get("time", ""),
+                "players": {},
+            }
+            order.append(key)
+        player = groups[key]["players"].setdefault(
+            seat,
+            {
+                "seat": seat,
+                "name": personas[seat - 1][0],
+                "role": theme["role_labels"].get(players.get(seat, {}).get("role")),
+                "alive": bool(players.get(seat, {}).get("alive", False)),
+                "decisions": [],
+            },
+        )
+        thinking = _debug_thinking(decision.get("thinking"))
+        markers = _debug_missing(thinking, decision.get("reason"))
+        calls = decision.get("calls")
+        player["decisions"].append(
+            {
+                "time": decision.get("time", ""),
+                "reason": decision.get("reason", ""),
+                "acted": bool(decision.get("acted")),
+                "thinking": thinking,
+                "calls": calls if isinstance(calls, list) else [],
+                "missing": markers,
+            }
+        )
+        missing.extend(
+            {"seat": seat, "round": round_number, "phase": phase, **marker}
+            for marker in markers
+        )
+
+    order.sort(
+        key=lambda key: (
+            groups[key]["round"] is None,
+            groups[key]["round"] or 0,
+            groups[key]["time"],
+        )
+    )
+    rounds = []
+    for key in order:
+        group = groups[key]
+        if not rounds or rounds[-1]["round"] != group["round"]:
+            rounds.append({"round": group["round"], "phases": []})
+        rounds[-1]["phases"].append(
+            {
+                "phase": group["phase"],
+                "phase_id": group["phase_id"],
+                "label": (
+                    theme["chapters"].get(group["phase"])
+                    or ("阶段未知（历史审计）" if group["phase"] == "unknown" else group["phase"])
+                ),
+                "players": [group["players"][seat] for seat in sorted(group["players"])],
+            }
+        )
+
+    wolf_chat = []
+    for event in state.get("events", []):
+        if not isinstance(event, dict) or event.get("kind") != "action":
+            continue
+        data = event.get("data")
+        if not isinstance(data, dict) or data.get("tool") != "wolf_chat":
+            continue
+        seat, text = event.get("actor"), data.get("text")
+        if type(seat) is not int or not 1 <= seat <= len(personas):
+            continue
+        if not isinstance(text, str) or not text:
+            continue
+        phase_id = event.get("phase_id")
+        phase = phase_by_id.get(phase_id) or "unknown"
+        wolf_chat.append(
+            {
+                "round": event.get("round", 1),
+                "phase": phase,
+                "seat": seat,
+                "name": personas[seat - 1][0],
+                "text": text,
+                "time": event.get("time", ""),
+            }
+        )
+    wolf_chat.sort(key=lambda item: (str(item["time"]), item["round"] or 0))
+
+    return {"rounds": rounds, "wolf_chat": wolf_chat, "missing": missing}
