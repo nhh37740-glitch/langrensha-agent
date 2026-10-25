@@ -15,6 +15,7 @@ BOT = "chatgpt-codex-connector[bot]"
 READY = "deepseek-ready"
 ACTIVE = "deepseek-active"
 BLOCKED = "deepseek-blocked"
+AWAITING = "deepseek-awaiting-acceptance"
 REQUIRED_CHECKS = {
     "Python 内核检查",
     "网页交互与完整发行包",
@@ -115,6 +116,8 @@ def choose(issues, prs):
             )
         if BLOCKED in {x["name"] for x in active[0]["labels"]}:
             return None, "当前 Issue 已受阻；维护者补齐依据后移除 deepseek-blocked 再继续"
+        if AWAITING in {x["name"] for x in active[0]["labels"]}:
+            return None, "当前任务已提交 PR，等待维护者验收、关闭 Issue 及确认所需发布"
         return active[0], "继续唯一活动 Issue"
     ready = [i for i in issues if READY in {x["name"] for x in i["labels"]}]
     return (
@@ -229,6 +232,9 @@ def worker():
                 print("当前 PR 对应 Issue 已受阻，等待维护者处理")
                 return
             report = json.loads((OUT / "验收.json").read_text())["prs"][0]
+            if report["issue_association"] != "一致":
+                print("PR 正文、分支与活动任务关联未通过，停止开发并等待维护者核实")
+                return
             if report["codex"] == "等待 Codex 审查":
                 request_review(pr, items(f"issues/{pr['number']}/comments?per_page=100"))
             failing = any(
@@ -328,7 +334,7 @@ def worker():
         if value := os.environ.get(name):
             evidence = evidence.replace(value, "[已脱敏]")
     body.write_text(
-        f"Issue: #{number}\n\nCloses #{number}\n\n本次范围：{issue['title']}。\n\n"
+        f"Issue: #{number}\n\nRefs #{number}\n\n本次范围：{issue['title']}。\n\n"
         "正式依据：根 AGENTS.md、项目说明.md、开发规范及关联 Issue 引用的正式需求与设计。\n\n"
         "由官方 DeepSeek Harness 串行执行。"
         "实现和验证证据见提交；必须核对 Issue 验收、CI 与当前提交的 Codex review。"
@@ -362,6 +368,7 @@ def worker():
             "--body-file",
             str(body),
         )
+    run("gh", "issue", "edit", str(number), "--repo", REPO, "--add-label", AWAITING)
     audit(request=True)
 
 

@@ -44,7 +44,7 @@ GitHub 凭据需要该仓库的 Contents、Issues、Pull requests 写权限及 A
 2. 只运行一个全局 `deepseek-serial` 工作流；存在任意开放 PR 时不领取下一项。`deepseek-active` 记录唯一当前 Issue；多个活动标签或多个 PR 时暂停。
 3. 从 `main` 建立 `deepseek/issue-编号` 分支。模型读取项目文档并修改、验证；监督脚本负责提交与 PR，模型子进程移除 GitHub token 环境变量。任务不能自动修改规范、自动化控制文件或执行合并、tag、Release、服务器部署。
 4. Harness 单次最多 30 分钟，完整工作流最多 45 分钟。异常或无改动时保留活动 Issue，不开启下一任务。无改动时还会标记 `deepseek-blocked`，停止重复花费模型预算；维护者补齐依据后移除此标签继续。临时日志不作为公开附件；任务范围过大或反复超时时需维护者缩小范围。
-5. PR 正文包含 `Closes #编号` 与模型验证报告；监督脚本对每个 head SHA 仅发送一次 `@codex review`。评论先经仓库 300 汉字限制校验。
+5. DSH 默认在 PR 正文用 `Refs #编号` 引用任务并附模型验证报告，不自行断言完整交付或添加关闭声明；维护者核实验收后再关闭 Issue。提交 PR 后给 Issue 添加 `deepseek-awaiting-acceptance`，合并或关闭 PR 后也不会重新实施同一任务。监督脚本对每个 head SHA 仅发送一次 `@codex review`。评论先经仓库 300 汉字限制校验。
    PR 还必须声明唯一 `Issue: #编号`，写清范围、实际正式依据与逐项验收证据。Python CI 的“核对唯一 Issue 与活动任务”步骤验证真实 Issue、活动标签、DSH 分支及关闭关系；PR 正文编辑也会触发重查。Codex 按根 AGENTS.md 的 Code review guidelines 进一步核查实际 diff 是否符合该 Issue。每小时验收独立重查关联，不能凭旧 CI 或 PR 自述跳过。
 6. 后续小时检查当前 PR；收到 Codex 发现或失败 CI 时只修订当前分支，推送后重新请求最新提交审查。其余等待状态不运行模型、不领取下一问题。
 7. 验收仅接受 `chatgpt-codex-connector[bot]` 发布的结构化审查状态，要求 SHA 与当前 PR head 一致、审查 completed 且无发现或未解决发现。旧提交结果、普通用户仿冒评论、仅有触发评论均不通过。所有已报告 CI 检查必须成功，且不得有失败的 commit status。
