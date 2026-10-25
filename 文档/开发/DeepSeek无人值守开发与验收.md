@@ -6,7 +6,7 @@
 
 使用官方 `deepseek-ai/deepseek-harness`，锁定 npm 包 `@deepseek-ai/dsh@0.2.1-rc.2` 及其依赖。模型为已实测的 `deepseek-flash`，采用 high 推理强度。开发工具配置与游戏自身的 DeepSeek 接入相互独立，不改变游戏业务功能。
 
-本机启动入口默认工作目录为 `/workspace`，自动化任务在 `/workspace/langrensha-agent` 执行。配置使用 `danger-full-access` 与 `approval.policy: never`，用于用户要求的无人值守云端开发；这是完整文件访问权限，不能作为文件隔离承诺。禁止子 Agent 与多 Issue 并行。关闭会话日志贡献和 OTel 上传；模型请求仍包含任务所需源码和工具结果。
+本机启动入口默认工作目录为 `/workspace`，自动化任务在 `/workspace/langrensha-agent` 执行。配置使用 `danger-full-access` 与 `approval.policy: never`，用于用户要求的无人值守云端开发；这是完整文件访问权限，不能作为文件隔离承诺。DSH 默认由 leader 带最多 3 名直接原生 subagent 队员并行处理独立 Issue；每个 Issue 使用独立 worktree、分支和 PR，通过 `cwd` 隔离工具工作区。关闭会话日志贡献和 OTel 上传；模型请求仍包含任务所需源码和工具结果。
 
 云环境内的进程随环境生命周期停止；跨休眠执行必须依赖宿主提供的定时器，当前没有可用的云端定时器。2026-10-25 监督者已手动停用 GitHub Actions 工作流 `DeepSeek 每小时验收与串行开发`（ID 395627924，状态 `disabled_manually`），本项 GitHub 调度已撤销，不得重新启用。它原本只做状态验收，且不表示聊天助手每小时重新上线或已完成人工业务验收。
 
@@ -48,24 +48,23 @@ python .github/scripts/启动DeepSeek.py --profile headless '读取项目规范�
 - 当前 headless 进程：只承载本次一次性核查任务，没有业务开发任务；进程结束即停止，不能据此声称“持续开发”。
 - 游戏本地服务：`127.0.0.1:8000` 返回 200，只是本地运行；游戏部署与线上验收由监督者进行，不在本项范围。
 
-## 串行执行与审查
+## 团队并行与审查（2026-10-25 用户授权）
 
-以下规则适用于维护者手动运行监督脚本，或未来另行获得明确授权的调度；当前没有自动调度触发它。
+用户已明确：DSH 改为 leader 带原生 subagent 团队，并行处理独立 Issue，各自一分支一 PR，审查通过后合并。该授权取代旧的全局串行、唯一活动 Issue 与禁止子 Agent 限制；其他无冲突规则继续有效。
 
-1. 维护者确认 Issue 的需求、正式设计、范围和验收口径，再加 `deepseek-ready` 标签。不把所有开放 Issue 视为已授权编码。用户服务器部署 #14 缺少连接信息，不自动标记。
-2. 同一时间只运行一个监督实例；存在任意开放 PR 时不领取下一项。`deepseek-active` 记录唯一当前 Issue；多个活动标签或多个 PR 时暂停。
-3. 从 `main` 建立 `deepseek/issue-编号` 分支。模型读取项目文档并修改、验证；监督脚本负责提交与 PR，模型子进程移除 GitHub token 环境变量。任务不能自动修改规范、自动化控制文件或执行合并、tag、Release、服务器部署。
-4. Harness 单次最多 30 分钟，单次监督最多 45 分钟。异常或无改动时保留活动 Issue，不开启下一任务。无改动时还会标记 `deepseek-blocked`，停止重复花费模型预算；维护者补齐依据后移除此标签继续。临时日志不作为公开附件；任务范围过大或反复超时时需维护者缩小范围。
-5. DSH 默认在 PR 正文用 `Refs #编号` 引用任务并附模型验证报告，不自行断言完整交付或添加关闭声明；维护者核实验收后再关闭 Issue。PR 还必须声明唯一 `Issue: #编号`，写清范围、实际正式依据与逐项验收证据。提交 PR 后给 Issue 添加 `deepseek-awaiting-acceptance`，合并或关闭 PR 后也不会重新实施同一任务。监督脚本对每个 head SHA 仅发送一次 `@codex review`。评论先经仓库 300 汉字限制校验。
-   Codex 按根 AGENTS.md 的 Code review guidelines 读取真实 Issue、正式依据、diff 与验收证据；仓库不另设 Issue 关联 CI。发送 review 请求本身不算通过。
-6. 后续人工触发检查当前 PR；收到 Codex 发现或失败 CI 时只修订当前分支，推送后重新请求最新提交审查。其余等待状态不运行模型、不领取下一问题。
-7. 验收仅接受 `chatgpt-codex-connector[bot]` 发布的结构化审查状态，要求 SHA 与当前 PR head 一致、审查 completed 且无发现或未解决发现。旧提交结果、普通用户仿冒评论、仅有触发评论均不通过。所有已报告 CI 检查必须成功，且不得有失败的 commit status。
-8. 不自动合并、关闭 Issue、打 tag 或发布。验收报告通过仅表示具备进入维护者验收的条件；维护者按项目规范完成实际验收和合并，功能版本的 tag/图仍按既有规范处理。`deepseek-active` 在 Issue 关闭后仍保留，持续阻挡下一任务；维护者确认主线检查及所需版本发布均完成（或本项无需发布）后，才移除此标签。监督脚本会查询已关闭的活动 Issue，不把自动关闭等同交付完成。
+1. 配置持久化在 `.github/deepseek-harness/无人值守.patch.yml`。Cordis 的 config 覆盖是整段替换，`tool-subagent` / `tool-subagent-fork` 必须完整声明 `provider`、`toolName`、`maxDepth`，否则委派工具不会激活。当前值：顶层 `subagent.maxActiveSubagents=3`、`maxDepth=1`；`tool-subagent` 为 `provider: spawn` / `toolName: subagent`，fork 为 `provider: fork` / `toolName: subagent_fork`；`tool-subagent-control`、`tool-subagent-list-agents` 启用。只改运行时临时覆盖或只写文档不构成持久化启用。
+2. 只有 leader 创建总 goal；队员是原生 subagent，不创建 goal、不再扩队。团队最多 3 名直接队员。leader 用 `list_agents` / `send_message` 管理真实子级，并记录子级 ID、Issue、cwd 与分支作为运行证据。
+3. 每个 Issue 一个独立 worktree、一个分支和一个 PR，PR 只交付自己的 Issue；可同时存在多个 `deepseek-active` Issue，不再要求全仓唯一 active。同一名队员同一时刻只做自己的 Issue，不混单、不夹带其他 Issue。共享接口和共享文件由 leader 指定负责人，避免多人抢改同一注册文件。
+4. 队员先读真实 Issue 正文/讨论、正式需求/设计/规范和 AGENTS，再调研实施。来源必须可追溯；原作事实、改编与项目原创分清；书源授权未核实时不得下载、转存或检索整本小说全文，不以未授权材料替代，不把仓库代码许可证当原作品授权。
+5. 每个 PR 正文唯一 `Issue: #编号`，写清范围、正式依据和逐项验收证据。完成必要自查后对最终 head 请求一次 `@codex review`；同 head 已有自动审查不重复。只接受官方 `chatgpt-codex-connector[bot]`、当前 head 且 completed、无未解决发现；修订出新 head 必须重审。running、超时或旧 head 结果不算通过。
+6. 5 项必需 CI 必须成功：Python 内核检查、容器构建与启动、文档阶段检查、版本图检查、网页交互与完整发行包。合并前核对主线已包含最新 `main`，PR 过期时同步、解决冲突并重验新 head。
+7. 满足审查与 Issue 条件后，用户已授权 leader 直接合并相应 PR、核对主线检查并关闭完成 Issue；监督者按大版本做最终验收与抽查，不需要用户逐个 PR 批准。不发布 tag/Release 或环境，不修改 GitHub 硬规则，不获取或输出凭据，不编辑 Wiki 或 Project。
+8. 旧的串行监督脚本（`.github/scripts/DeepSeek无人值守.py`）与工作流 395627924 作为历史机制保留，不再运行、不重新启用；其单实例、唯一活动 Issue、30/45 分钟与自动标签规则不再适用于团队模式。不另写团队调度平台或新门禁。
 
 ## 报告与停止
 
-监督脚本每次运行在标准输出和 `临时/DeepSeek运行/验收.json` 保存当前开放 Issue、PR、提交 SHA、CI、Codex 审查及门槛判定；该文件只含脱敏状态 JSON，不自动上传。当前 GitHub Actions 调度已停用，不再生成 Actions Summary 或 artifact。模型输出不是独立验证的事实，维护者仍须核查测试证据与 Issue 验收内容；状态检查不冒充线上验收。
+团队运行证据由 leader 维护：`临时/DSH团队/团队状态.md` 记录各原生子级 ID、Issue、cwd、分支、进度和 PR；子级完成通知与 `list_agents` 结果用于管理，不替代原生 goal 与 subagent。该文件只作脱敏运行记录，不上传为公开附件。当前 GitHub Actions 调度已停用，不再生成 Actions Summary 或 artifact。模型输出不是独立验证的事实，维护者与监督者仍须核查测试证据、研究来源与 Issue 验收内容；状态检查不冒充线上验收。
 
-暂停自动开发：移除 `deepseek-ready`/`deepseek-active` 标签，或停止手动运行监督脚本。已有 PR 会继续阻挡后续任务。完全停止 GitHub 调度：保持工作流 395627924 为 `disabled_manually`，不重新启用。本机 UI 可向启动进程发送 SIGTERM。凭据到期、预算不足、网络失败、Codex 未启用或审查未完成均如实显示阻塞，不能跳过审查。
+暂停团队任务：由 leader 停止派发并终止相应子级，保留活动 Issue 与分支供恢复。历史串行监督脚本的 `deepseek-ready`/`deepseek-active` 自动领取与“已有 PR 阻挡下一任务”行为不再适用于团队模式。完全停止 GitHub 调度：保持工作流 395627924 为 `disabled_manually`，不重新启用。本机 UI 可向启动进程发送 SIGTERM。凭据到期、预算不足、网络失败、Codex 未启用或审查未完成均如实显示阻塞，不能跳过审查。
 
 部署时的真实冒烟验证：Harness 使用 `deepseek-flash` 调用工具，读取 `/workspace/langrensha-agent/AGENTS.md` 第一行并确认工作目录 `/workspace`，退出码 0。该验证只证明 Harness 和工具链可运行，不代表后续业务 Issue 已验收。

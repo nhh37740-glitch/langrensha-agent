@@ -1,3 +1,6 @@
+# DSH 团队并行运行配置（2026-10-25 用户授权）。
+# Cordis 的 config 覆盖是整段替换：tool-subagent / tool-subagent-fork 必须完整声明
+# provider、toolName、maxDepth，否则委派工具不会激活（缺 provider 的旧配置曾导致启动失败）。
 - id: agent-default-model
   config:
     provider: deepseek-official
@@ -9,11 +12,25 @@
 - id: approval
   config:
     policy: never
+- id: subagent
+  config:
+    maxActiveSubagents: 3
+    maxDepth: 1
 - id: tool-subagent
-  disabled: true
+  disabled: false
+  config:
+    provider: spawn
+    toolName: subagent
+    maxDepth: 1
 - id: tool-subagent-fork
-  disabled: true
+  disabled: false
+  config:
+    provider: fork
+    toolName: subagent_fork
+    maxDepth: 1
 - id: tool-subagent-control
-  disabled: true
+  disabled: false
+- id: tool-subagent-list-agents
+  disabled: false
 - id: tool-workflow
   disabled: true
