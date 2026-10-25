@@ -523,6 +523,16 @@ h1 {
   color: var(--person);
   box-shadow: inset 0 -8px 14px rgba(4, 10, 12, 0.4);
 }
+/* personas 图集是 3×4 方帧；方形头像按 300% 400% 切帧才不变形。 */
+.portrait.has-atlas {
+  width: 33px;
+  height: 33px;
+  border-radius: 42% 42% 6px 6px;
+  background-color: color-mix(in srgb, var(--person) 12%, #0c191d);
+  background-repeat: no-repeat;
+  background-size: 300% 400%;
+  color: transparent;
+}
 .person__name {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -530,6 +540,10 @@ h1 {
   letter-spacing: 0.5px;
 }
 .person__state {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 3px;
   font-size: 8px;
   color: #82978b;
   margin-top: 4px;
@@ -931,6 +945,101 @@ textarea::placeholder {
 }
 .action-top select {
   padding: 8px;
+}
+/* 原生选择框保留为表单取值与无障碍/测试的稳定入口，视觉上让位给图标按钮。 */
+.choice-native {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+.choice-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(148px, 100%), 1fr));
+  gap: 7px;
+  margin: 0 0 12px;
+  min-width: 0;
+}
+.choice-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background:
+    linear-gradient(160deg, rgba(26, 44, 45, 0.82), rgba(15, 28, 32, 0.92));
+  color: var(--text);
+  text-align: left;
+  transition:
+    border-color var(--dur-base) var(--ease-out),
+    background var(--dur-base) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out);
+}
+.choice-chip:hover {
+  border-color: var(--line-strong);
+  background:
+    linear-gradient(160deg, rgba(34, 54, 52, 0.9), rgba(19, 34, 36, 0.96));
+}
+.choice-chip:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+.choice-chip[aria-pressed="true"] {
+  border-color: color-mix(in srgb, var(--gold) 72%, var(--line));
+  background:
+    linear-gradient(
+      160deg,
+      rgba(72, 66, 44, 0.62),
+      rgba(24, 40, 40, 0.96)
+    );
+  color: var(--paper-strong);
+  box-shadow: inset 0 0 0 1px rgba(216, 189, 133, 0.22);
+}
+.choice-chip:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+.choice-chip__icon {
+  width: 24px;
+  height: 24px;
+}
+.choice-chip__label {
+  min-width: 0;
+  font-size: 11px;
+  line-height: 1.45;
+  letter-spacing: 0.4px;
+  overflow-wrap: anywhere;
+}
+/* 技能/状态图集统一按 4×4 帧切片；缺失时元素隐藏，调用方退回纯文字。 */
+.world-icon {
+  display: inline-block;
+  flex: 0 0 auto;
+  background-repeat: no-repeat;
+  background-size: 400% 400%;
+  background-position: var(--icon-x, 0%) var(--icon-y, 0%);
+  border-radius: 3px;
+}
+.world-icon.is-missing {
+  display: none;
+}
+.day-icon {
+  width: 12px;
+  height: 12px;
+  margin-right: 5px;
+  vertical-align: -1px;
+}
+.person__icon {
+  width: 12px;
+  height: 12px;
 }
 .field {
   margin-top: 4px;

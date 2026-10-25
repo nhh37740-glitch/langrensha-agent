@@ -7,6 +7,8 @@ import frameTidal from "./assets/kenney/frame-tidal.webp";
 import skyHyperion from "./assets/kenney/sky-hyperion.webp";
 import skyMist from "./assets/kenney/sky-mist.webp";
 import skyThreebody from "./assets/kenney/sky-threebody.webp";
+import { ATLAS, iconFrame, worldAsset } from "./worlds/assets.js";
+import { personaSlot, publicPersonas } from "./worlds/personas.js";
 
 // 世界书封面与主题的唯一前端数据源。字段与 /api/worldbooks 的目录契约一致；
 // 目录接口失败时，入镇页仍可用这份内置数据展示并选择四个世界。
@@ -286,6 +288,196 @@ function soundlessImage(src, className) {
   });
   image.src = src;
   return image;
+}
+
+// 封面优先使用每世界独立 cover.webp；失败时退回既有 sky-* 主题封面。
+// 不用占位图冒充真实封面：两次都失败时只保留 CSS/SVG 兜底。
+function coverPhoto(src, fallback, figure) {
+  const image = el("img", "world-cover__photo");
+  image.alt = "";
+  image.decoding = "async";
+  image.loading = "lazy";
+  image.draggable = false;
+  let attempt = src ? "art" : "sky";
+  image.addEventListener("error", () => {
+    if (attempt === "art") {
+      attempt = "sky";
+      figure.dataset.cover = "fallback";
+      image.classList.remove("is-missing");
+      image.src = fallback;
+      return;
+    }
+    image.classList.add("is-missing");
+  });
+  image.src = src || fallback;
+  return image;
+}
+
+// 图集图片按 URL 只探测一次；透明 PNG 可能迟到或被截断，探测失败时
+// 调用方保留姓名首字/纯文字回退，不显示破图方块。
+const imageProbe = new Map();
+
+function probeImage(url, callback) {
+  const cached = imageProbe.get(url);
+  if (cached === true || cached === false) {
+    callback(cached);
+    return;
+  }
+  if (cached) {
+    cached.then(callback);
+    return;
+  }
+  const image = new Image();
+  const promise = new Promise((resolve) => {
+    image.onload = () =>
+      resolve(image.naturalWidth > 0 && image.naturalHeight > 0);
+    image.onerror = () => resolve(false);
+  });
+  image.decoding = "async";
+  image.src = url;
+  imageProbe.set(url, promise);
+  promise.then((ok) => {
+    imageProbe.set(url, ok);
+    callback(ok);
+  });
+}
+
+// 图集按列优先铺满元素；3×4 人物即 background-size:300% 400%。
+function atlasSlice(slot, atlas) {
+  const columns = Math.max(1, Number(atlas?.columns) || 1);
+  const rows = Math.max(1, Number(atlas?.rows) || 1);
+  const col = slot % columns;
+  const row = Math.floor(slot / columns);
+  return {
+    size: `${columns * 100}% ${rows * 100}%`,
+    position: `${columns > 1 ? (col / (columns - 1)) * 100 : 0}% ${
+      rows > 1 ? (row / (rows - 1)) * 100 : 0
+    }%`,
+  };
+}
+
+/**
+ * 给技能/状态元素贴 icons 图集帧。图集缺失或 key 未知返回 false，调用方
+ * 不创建图标元素，退回纯文字。图标异步解码失败时隐藏，不留空方块。
+ */
+export function paintWorldIcon(element, worldId, key) {
+  if (!element) return false;
+  const iconKey = typeof key === "string" ? key : "";
+  const frame = iconFrame(iconKey);
+  if (frame < 0) return false;
+  const icons = worldAsset(worldId).icons;
+  if (!icons) return false;
+  const slice = atlasSlice(frame, ATLAS.icons);
+  element.dataset.icon = iconKey;
+  element.dataset.iconToken = `${icons}|${frame}`;
+  element.classList.add("world-icon");
+  element.style.backgroundImage = `url("${icons}")`;
+  element.style.backgroundSize = slice.size;
+  element.style.backgroundPosition = slice.position;
+  probeImage(icons, (ok) => {
+    // 缓存命中时回调会同步执行，此时元素可能尚未 append；只比对 token，
+    // 不依赖 isConnected。回调闭包只改自己这一枚元素，不会误改新节点。
+    if (element.dataset.iconToken !== `${icons}|${frame}`) return;
+    if (ok) return;
+    element.hidden = true;
+    element.classList.add("is-missing");
+  });
+  return true;
+}
+
+/**
+ * 把公开席位/姓名绑定到 personas 图集 slot。未知姓名或图集缺失时显示
+ * 姓名首字色块；图集解码成功后才移除首字，避免破图或伪造画像。
+ */
+export function paintPersonaPortrait(
+  element,
+  worldId,
+  seat,
+  name,
+  { allowSeatOnly = false } = {},
+) {
+  if (!element) return false;
+  const atlas = worldAsset(worldId).personas;
+  const slot = personaSlot(worldId, seat, name, { allowSeatOnly });
+  const label =
+    typeof name === "string" && name.trim() ? name.trim().slice(0, 1) : "";
+  element.classList.remove("has-atlas");
+  element.classList.add("is-placeholder");
+  element.style.removeProperty("background-image");
+  element.style.removeProperty("background-size");
+  element.style.removeProperty("background-position");
+  element.textContent = label;
+  element.dataset.personaState = "missing";
+  if (!atlas || slot === null) return false;
+  const slice = atlasSlice(slot, ATLAS.personas);
+  const token = `${atlas}|${slot}`;
+  element.dataset.personaToken = token;
+  element.dataset.personaState = "loading";
+  element.style.backgroundImage = `url("${atlas}")`;
+  element.style.backgroundSize = slice.size;
+  element.style.backgroundPosition = slice.position;
+  probeImage(atlas, (ok) => {
+    // 图集缓存命中时回调同步执行，元素可能还在 fragment 中未 append；
+    // 因此只按 token 判断，不能要求 isConnected，否则会永远停在 loading。
+    if (element.dataset.personaToken !== token) return;
+    if (!ok) {
+      element.classList.remove("has-atlas");
+      element.classList.add("is-placeholder");
+      element.style.removeProperty("background-image");
+      element.style.removeProperty("background-size");
+      element.style.removeProperty("background-position");
+      element.textContent = label;
+      element.dataset.personaState = "missing";
+      return;
+    }
+    element.classList.remove("is-placeholder");
+    element.classList.add("has-atlas");
+    element.textContent = "";
+    element.dataset.personaState = "ready";
+  });
+  return true;
+}
+
+/**
+ * 详情页公开人物名册：只用 personas 数据里的 seat/slot/姓名/公开简介/色标，
+ * 不读取角色、阵营或暗牌字段。返回容器，便于调用方标记状态。
+ */
+export function renderPersonaRoster(container, worldId) {
+  if (!container || typeof container.replaceChildren !== "function")
+    return null;
+  const personas = publicPersonas(worldId);
+  container.dataset.world = worldId;
+  container.replaceChildren(
+    ...personas.map((persona) => {
+      const card = el("article", "world-persona");
+      card.dataset.slot = String(persona.slot);
+      card.dataset.seat = String(persona.seat);
+      card.style.setProperty(
+        "--persona-color",
+        persona.color || "#b9c8bf",
+      );
+      const portrait = el("span", "world-persona__portrait");
+      portrait.setAttribute("aria-hidden", "true");
+      paintPersonaPortrait(portrait, worldId, persona.seat, persona.name, {
+        allowSeatOnly: true,
+      });
+      const meta = el("span", "world-persona__meta");
+      const name = el("span", "world-persona__name", persona.name);
+      const seat = el("span", "world-persona__seat");
+      const dot = el("i", "world-persona__dot");
+      dot.setAttribute("aria-hidden", "true");
+      seat.append(dot, document.createTextNode(`${persona.seat}号`));
+      meta.append(name, seat);
+      const desc = el(
+        "p",
+        "world-persona__desc",
+        persona.description || "公开简介暂缺。",
+      );
+      card.append(portrait, meta, desc);
+      return card;
+    }),
+  );
+  return container;
 }
 
 function drawBell(svg) {
@@ -612,6 +804,8 @@ export function renderCover(container, book, { reducedMotion = false } = {}) {
   figure.dataset.world = data.id;
   figure.dataset.motif = data.motif;
   figure.dataset.motion = reducedMotion ? "reduced" : "full";
+  const cover = worldAsset(data.id).cover;
+  figure.dataset.cover = cover ? "art" : "fallback";
   figure.setAttribute(
     "aria-label",
     `${data.name}：${data.tagline}。${data.scene.caption}。`,
@@ -620,7 +814,7 @@ export function renderCover(container, book, { reducedMotion = false } = {}) {
   const sceneLayer = el("div", "world-cover__scene");
   sceneLayer.setAttribute("aria-hidden", "true");
   sceneLayer.append(
-    soundlessImage(SKY[data.id], "world-cover__photo"),
+    coverPhoto(cover, SKY[data.id], figure),
     el("span", "world-cover__wash"),
     el("span", "world-cover__orb"),
   );

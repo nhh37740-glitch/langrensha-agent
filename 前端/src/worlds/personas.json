@@ -1,0 +1,361 @@
+{
+  "说明": "公开 personas 的运行时绑定：仅席位、姓名、公开描述、色标；与服务器 worldbooks 同名同序。",
+  "worlds": {
+    "mist": {
+      "name": "雾钟镇",
+      "personas": [
+        {
+          "seat": 1,
+          "slot": 0,
+          "name": "归客",
+          "description": "远行归来，先听后说，以旅途见闻打比方。",
+          "color": "#d6ba87"
+        },
+        {
+          "seat": 2,
+          "slot": 1,
+          "name": "灯匠",
+          "description": "修理街灯，条理分明，习惯逐条核对证词。",
+          "color": "#f1c86d"
+        },
+        {
+          "seat": 3,
+          "slot": 2,
+          "name": "信使",
+          "description": "走遍巷道，爽快直言，记得谁在何时说过什么。",
+          "color": "#92cbd6"
+        },
+        {
+          "seat": 4,
+          "slot": 3,
+          "name": "钟师",
+          "description": "守护钟楼，谨慎少言，重视前后次序。",
+          "color": "#b3a4d8"
+        },
+        {
+          "seat": 5,
+          "slot": 4,
+          "name": "船娘",
+          "description": "熟悉雾河，温和坚韧，常用潮水作比。",
+          "color": "#80c3b5"
+        },
+        {
+          "seat": 6,
+          "slot": 5,
+          "name": "书商",
+          "description": "收藏旧书，追问证据出处，语气克制。",
+          "color": "#d7ad85"
+        },
+        {
+          "seat": 7,
+          "slot": 6,
+          "name": "石匠",
+          "description": "直率朴实，简短表达，不轻信空话。",
+          "color": "#9caec4"
+        },
+        {
+          "seat": 8,
+          "slot": 7,
+          "name": "乐师",
+          "description": "在广场演奏，敏感善察，以节奏表达怀疑。",
+          "color": "#d99ab2"
+        },
+        {
+          "seat": 9,
+          "slot": 8,
+          "name": "园丁",
+          "description": "照看白花，耐心倾听，区分事实和猜想。",
+          "color": "#a9c78b"
+        },
+        {
+          "seat": 10,
+          "slot": 9,
+          "name": "画师",
+          "description": "描绘镇民，重视细节，偶尔用颜色比喻心绪。",
+          "color": "#d6a0cf"
+        },
+        {
+          "seat": 11,
+          "slot": 10,
+          "name": "铁匠",
+          "description": "沉稳果断，愿解释自己的取舍。",
+          "color": "#c9907e"
+        },
+        {
+          "seat": 12,
+          "slot": 11,
+          "name": "茶主人",
+          "description": "善于倾听，含蓄提问，记得彼此承诺。",
+          "color": "#82b9b4"
+        }
+      ]
+    },
+    "hyperion": {
+      "name": "海伯利安",
+      "personas": [
+        {
+          "seat": 1,
+          "slot": 0,
+          "name": "领事随员",
+          "description": "熟悉外交通道，措辞谨慎，习惯先核对时间与航线。",
+          "color": "#c9b37e"
+        },
+        {
+          "seat": 2,
+          "slot": 1,
+          "name": "苦修者",
+          "description": "寡言，常引用誓词，对复活与赎罪的说法格外敏感。",
+          "color": "#9aa7c7"
+        },
+        {
+          "seat": 3,
+          "slot": 2,
+          "name": "退役军官",
+          "description": "说话直接，重视阵位与后勤，不喜欢空泛的推测。",
+          "color": "#b98b72"
+        },
+        {
+          "seat": 4,
+          "slot": 3,
+          "name": "行吟诗人",
+          "description": "以比喻和停顿组织发言，记得每个故事的出处。",
+          "color": "#c99ac0"
+        },
+        {
+          "seat": 5,
+          "slot": 4,
+          "name": "碑文译者",
+          "description": "逐字推敲证词，常指出前后矛盾的时间点。",
+          "color": "#8fb8a8"
+        },
+        {
+          "seat": 6,
+          "slot": 5,
+          "name": "调查员",
+          "description": "追问细节与动机，习惯把证词拆成可核对的小段。",
+          "color": "#d3a46f"
+        },
+        {
+          "seat": 7,
+          "slot": 6,
+          "name": "圣树船副手",
+          "description": "语气温和，关心营地生态与每个人的去留。",
+          "color": "#86b98d"
+        },
+        {
+          "seat": 8,
+          "slot": 7,
+          "name": "随队看护",
+          "description": "耐心听完所有人的话，优先照顾伤者与沉默者。",
+          "color": "#d6a8a0"
+        },
+        {
+          "seat": 9,
+          "slot": 8,
+          "name": "星图学徒",
+          "description": "用星位与航时打比方，承认自己仍在学习。",
+          "color": "#8fa9d6"
+        },
+        {
+          "seat": 10,
+          "slot": 9,
+          "name": "边地使节",
+          "description": "熟悉多方立场，善于把冲突改写成可谈的条件。",
+          "color": "#c2b48d"
+        },
+        {
+          "seat": 11,
+          "slot": 10,
+          "name": "遗迹工程师",
+          "description": "相信结构不会撒谎，常要求查看实物与记录。",
+          "color": "#a99a86"
+        },
+        {
+          "seat": 12,
+          "slot": 11,
+          "name": "营地厨子",
+          "description": "用日常琐事缓和气氛，却记得谁缺席了哪一餐。",
+          "color": "#b7c58e"
+        }
+      ]
+    },
+    "threebody": {
+      "name": "三体",
+      "personas": [
+        {
+          "seat": 1,
+          "slot": 0,
+          "name": "老监听员",
+          "description": "在红岸旧址守了半辈子设备，说话慢，习惯先报频率再下判断。",
+          "color": "#8fb8c9"
+        },
+        {
+          "seat": 2,
+          "slot": 1,
+          "name": "舰载工程师",
+          "description": "维护恒星际飞船的管路，务实寡言，喜欢用余量说明问题。",
+          "color": "#c9a66b"
+        },
+        {
+          "seat": 3,
+          "slot": 2,
+          "name": "生态农艺师",
+          "description": "在封闭舱里种麦子，温和耐心，常以生长周期比喻局势。",
+          "color": "#8fbf8f"
+        },
+        {
+          "seat": 4,
+          "slot": 3,
+          "name": "语言学家",
+          "description": "研究三体信号与人类语言的差异，措辞精确，爱纠正歧义。",
+          "color": "#b39ddb"
+        },
+        {
+          "seat": 5,
+          "slot": 4,
+          "name": "军医",
+          "description": "见过太多冻伤与辐射病，冷静克制，先问谁需要帮助。",
+          "color": "#d98f8f"
+        },
+        {
+          "seat": 6,
+          "slot": 5,
+          "name": "档案员",
+          "description": "保管危机纪元的纸本记录，谨慎，凡事要求出处。",
+          "color": "#b0a58a"
+        },
+        {
+          "seat": 7,
+          "slot": 6,
+          "name": "天体导航员",
+          "description": "计算轨道与窗口，直率急躁，讨厌含糊的时间表。",
+          "color": "#7fa8d9"
+        },
+        {
+          "seat": 8,
+          "slot": 7,
+          "name": "材料研究员",
+          "description": "做过纳米材料，好奇心重，喜欢从结构找破绽。",
+          "color": "#c2b280"
+        },
+        {
+          "seat": 9,
+          "slot": 8,
+          "name": "心理观测员",
+          "description": "负责长期航行者的情绪评估，善听，常追问动机。",
+          "color": "#d9a0c0"
+        },
+        {
+          "seat": 10,
+          "slot": 9,
+          "name": "信号分析师",
+          "description": "从噪声里找规律，敏感多疑，习惯给结论标置信度。",
+          "color": "#7fc4b8"
+        },
+        {
+          "seat": 11,
+          "slot": 10,
+          "name": "冬眠技师",
+          "description": "维护冬眠舱，话少而稳，常用“醒来再说”收尾。",
+          "color": "#9aa7c7"
+        },
+        {
+          "seat": 12,
+          "slot": 11,
+          "name": "舰船厨师",
+          "description": "在有限配给里变花样，爽朗，记得每个人的口味与承诺。",
+          "color": "#d9b382"
+        }
+      ]
+    },
+    "tidal_archive": {
+      "name": "潮汐档案馆",
+      "personas": [
+        {
+          "seat": 1,
+          "slot": 0,
+          "name": "拾汐",
+          "description": "在盲潮滩捡拾漂来的残页，说话常从一件旧物讲起。",
+          "color": "#6fa8a0"
+        },
+        {
+          "seat": 2,
+          "slot": 1,
+          "name": "阿礁",
+          "description": "摆渡人，熟悉每一道暗流，直率，记得谁搭过哪班船。",
+          "color": "#4f7f8c"
+        },
+        {
+          "seat": 3,
+          "slot": 2,
+          "name": "灯婆",
+          "description": "守了三十年灯屋，寡言，先看天色再看人。",
+          "color": "#d9a441"
+        },
+        {
+          "seat": 4,
+          "slot": 3,
+          "name": "纸鸢",
+          "description": "修补盐纸的匠人，耐心，喜欢追问一句话的出处。",
+          "color": "#c98f6a"
+        },
+        {
+          "seat": 5,
+          "slot": 4,
+          "name": "盐生",
+          "description": "盐灶上的年轻人，语快，爱用咸淡比喻可信程度。",
+          "color": "#8fb3c7"
+        },
+        {
+          "seat": 6,
+          "slot": 5,
+          "name": "螺音",
+          "description": "会吹螺号召集渔船，热情，常替沉默的人转述。",
+          "color": "#b58ac6"
+        },
+        {
+          "seat": 7,
+          "slot": 6,
+          "name": "灰鲸",
+          "description": "远洋水手，见过无名的岛，讲话简短，不信巧合。",
+          "color": "#5f7d95"
+        },
+        {
+          "seat": 8,
+          "slot": 7,
+          "name": "桥生",
+          "description": "修木栈桥的匠人，稳重，先量再下结论。",
+          "color": "#a98467"
+        },
+        {
+          "seat": 9,
+          "slot": 8,
+          "name": "墨篱",
+          "description": "抄册人，字迹工整，习惯逐条核对日期。",
+          "color": "#7f8fa6"
+        },
+        {
+          "seat": 10,
+          "slot": 9,
+          "name": "鹭娘",
+          "description": "在盐沼观鸟，敏感，能从停顿里听出犹豫。",
+          "color": "#9bbf8a"
+        },
+        {
+          "seat": 11,
+          "slot": 10,
+          "name": "石臼",
+          "description": "磨藻墨的老人，慢，记得许多旧名字。",
+          "color": "#8a8f7a"
+        },
+        {
+          "seat": 12,
+          "slot": 11,
+          "name": "潮生",
+          "description": "在放册台唱潮歌的年轻人，声音亮，情绪外露。",
+          "color": "#d18b9a"
+        }
+      ]
+    }
+  }
+}

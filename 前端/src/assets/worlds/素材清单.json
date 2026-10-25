@@ -1,0 +1,249 @@
+{
+  "issue": 67,
+  "说明": "四世界美术资源清单：仅记录真实交接并接入的文件；缺失槽位不写占位。",
+  "atlas": {
+    "personas": {
+      "columns": 3,
+      "rows": 4
+    },
+    "icons": {
+      "columns": 4,
+      "rows": 4
+    },
+    "effects": {
+      "columns": 6,
+      "rows": 5
+    }
+  },
+  "worlds": {
+    "mist": {
+      "personas": {
+        "width": 1086,
+        "height": 1448,
+        "source_mode": "RGBA",
+        "alpha": true,
+        "bytes": 465970,
+        "sha256": "7322f87411e5f59c8ea52aec295ddabf9eb9e71d7214c7baf9bc4c149cf4860c",
+        "mode": "RGBA",
+        "frames": {
+          "columns": 3,
+          "rows": 4,
+          "cell_width": 362,
+          "cell_height": 362,
+          "layout": "row-major",
+          "slots": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11
+          ]
+        },
+        "file": "personas.webp",
+        "slug": "mist-portraits",
+        "source": "/workspace/langrensha-agent/临时/世界书视觉Issue/完整美术包/mist-portraits.png",
+        "handoff": "/workspace/langrensha-agent/临时/世界书视觉Issue/完整美术包/mist-portraits.png",
+        "prompt_file": "文档/版本/v0.7.0/素材提示词/mist-personas.txt",
+        "generator": "ChatGPT image generation tool",
+        "notes": "",
+        "received_at": "2026-10-26T05:02:53+08:00"
+      },
+      "scene_day": {
+        "width": 1672,
+        "height": 941,
+        "source_mode": "RGB",
+        "alpha": false,
+        "bytes": 422608,
+        "sha256": "602dd493519af43d8ccda643ef391b8f440b27c5533a5d188c8ce1ba0dbbdefd",
+        "mode": "RGB",
+        "file": "scene-day.webp",
+        "slug": "mist-scene-day",
+        "source": "/workspace/langrensha-agent/临时/世界书视觉Issue/完整美术包/mist-scene-day.png",
+        "handoff": "/workspace/langrensha-agent/临时/世界书视觉Issue/完整美术包/mist-scene-day.png",
+        "prompt_file": "文档/版本/v0.7.0/素材提示词/mist-scene_day.txt",
+        "generator": "ChatGPT image generation tool",
+        "notes": "",
+        "received_at": "2026-10-26T05:03:41+08:00"
+      }
+    },
+    "hyperion": {
+      "personas": {
+        "width": 1086,
+        "height": 1448,
+        "source_mode": "RGBA",
+        "alpha": true,
+        "bytes": 517174,
+        "sha256": "bb6e51d87bd5166ce0b2c24b48a3aa8b3ebbf4fb4ee35a2e1f9478a568c92a64",
+        "mode": "RGBA",
+        "frames": {
+          "columns": 3,
+          "rows": 4,
+          "cell_width": 362,
+          "cell_height": 362,
+          "layout": "row-major",
+          "slots": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11
+          ]
+        },
+        "file": "personas.webp",
+        "slug": "hyperion-portraits",
+        "source": "/workspace/langrensha-agent/临时/世界书视觉Issue/完整美术包/hyperion-portraits.png",
+        "handoff": "/workspace/langrensha-agent/临时/世界书视觉Issue/完整美术包/hyperion-portraits.png",
+        "prompt_file": "文档/版本/v0.7.0/素材提示词/hyperion-personas.txt",
+        "generator": "ChatGPT image generation tool",
+        "notes": "",
+        "received_at": "2026-10-26T05:03:13+08:00"
+      },
+      "scene_day": {
+        "width": 1672,
+        "height": 941,
+        "source_mode": "RGB",
+        "alpha": false,
+        "bytes": 300248,
+        "sha256": "51da7e655120992f6bb071e497a253fc1c60e555a456c91dc418f9124efd566b",
+        "mode": "RGB",
+        "file": "scene-day.webp",
+        "slug": "hyperion-scene-day",
+        "source": "/workspace/langrensha-agent/临时/世界书视觉Issue/完整美术包/hyperion-scene-day.png",
+        "handoff": "/workspace/langrensha-agent/临时/世界书视觉Issue/完整美术包/hyperion-scene-day.png",
+        "prompt_file": "文档/版本/v0.7.0/素材提示词/hyperion-scene_day.txt",
+        "generator": "ChatGPT image generation tool",
+        "notes": "",
+        "received_at": "2026-10-26T05:03:42+08:00"
+      }
+    },
+    "threebody": {
+      "personas": {
+        "width": 1086,
+        "height": 1448,
+        "source_mode": "RGBA",
+        "alpha": true,
+        "bytes": 389384,
+        "sha256": "6c7991fe9117ea45b14540c9a8293bbb30566c8061f10a303d2ac62f1d76544a",
+        "mode": "RGBA",
+        "frames": {
+          "columns": 3,
+          "rows": 4,
+          "cell_width": 362,
+          "cell_height": 362,
+          "layout": "row-major",
+          "slots": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11
+          ]
+        },
+        "file": "personas.webp",
+        "slug": "threebody-portraits",
+        "source": "/workspace/langrensha-agent/临时/世界书视觉Issue/完整美术包/threebody-portraits.png",
+        "handoff": "/workspace/langrensha-agent/临时/世界书视觉Issue/完整美术包/threebody-portraits.png",
+        "prompt_file": "文档/版本/v0.7.0/素材提示词/threebody-personas.txt",
+        "generator": "ChatGPT image generation tool",
+        "notes": "",
+        "received_at": "2026-10-26T05:03:25+08:00"
+      },
+      "scene_day": {
+        "width": 1672,
+        "height": 941,
+        "source_mode": "RGB",
+        "alpha": false,
+        "bytes": 322868,
+        "sha256": "f53738876da4a06f51512207969a5a7e574fcaff322444e21b83384a884b7ebe",
+        "mode": "RGB",
+        "file": "scene-day.webp",
+        "slug": "threebody-scene-day",
+        "source": "/workspace/langrensha-agent/临时/世界书视觉Issue/完整美术包/threebody-scene-day.png",
+        "handoff": "/workspace/langrensha-agent/临时/世界书视觉Issue/完整美术包/threebody-scene-day.png",
+        "prompt_file": "文档/版本/v0.7.0/素材提示词/threebody-scene_day.txt",
+        "generator": "ChatGPT image generation tool",
+        "notes": "",
+        "received_at": "2026-10-26T05:03:40+08:00"
+      }
+    },
+    "tidal_archive": {
+      "personas": {
+        "width": 1086,
+        "height": 1448,
+        "source_mode": "RGBA",
+        "alpha": true,
+        "bytes": 601356,
+        "sha256": "45ba7cfedf22ad7a5269fdc33c2020e30f6b60d26ac5adde213e4db0d335419b",
+        "mode": "RGBA",
+        "frames": {
+          "columns": 3,
+          "rows": 4,
+          "cell_width": 362,
+          "cell_height": 362,
+          "layout": "row-major",
+          "slots": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11
+          ]
+        },
+        "file": "personas.webp",
+        "slug": "tidal_archive-portraits",
+        "source": "/workspace/langrensha-agent/临时/世界书视觉Issue/完整美术包/tidal_archive-portraits.png",
+        "handoff": "/workspace/langrensha-agent/临时/世界书视觉Issue/完整美术包/tidal_archive-portraits.png",
+        "prompt_file": "文档/版本/v0.7.0/素材提示词/tidal_archive-personas.txt",
+        "generator": "ChatGPT image generation tool",
+        "notes": "",
+        "received_at": "2026-10-26T05:03:40+08:00"
+      },
+      "scene_day": {
+        "width": 1672,
+        "height": 941,
+        "source_mode": "RGB",
+        "alpha": false,
+        "bytes": 480772,
+        "sha256": "d5a987b0dd288aa0ab314a95742af809914a41d0996626ad8744f02c671b9fce",
+        "mode": "RGB",
+        "file": "scene-day.webp",
+        "slug": "tidal_archive-scene-day",
+        "source": "/workspace/langrensha-agent/临时/世界书视觉Issue/完整美术包/tidal_archive-scene-day.png",
+        "handoff": "/workspace/langrensha-agent/临时/世界书视觉Issue/完整美术包/tidal_archive-scene-day.png",
+        "prompt_file": "文档/版本/v0.7.0/素材提示词/tidal_archive-scene_day.txt",
+        "generator": "ChatGPT image generation tool",
+        "notes": "",
+        "received_at": "2026-10-26T05:03:41+08:00"
+      }
+    }
+  },
+  "updated_at": "2026-10-26T05:03:42+08:00"
+}
