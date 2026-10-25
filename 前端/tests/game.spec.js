@@ -65,6 +65,21 @@ test("入镇、私语、权限、札记、刷新与手机画面", async ({ page 
     path: "../临时/完整可玩版/网页截图/夜间私语.png",
     fullPage: true,
   });
+  await expect(page.locator("#query-warning")).toBeHidden();
+  await page.locator("#query-kind").selectOption("ask_world");
+  await page.locator("#query-text").fill("铜铃");
+  await page.getByRole("button", { name: "翻阅札记" }).click();
+  await expect(page.locator("#query-warning")).toBeVisible();
+  await expect(page.locator("#query-warning")).toContainText("关键词");
+  await expect(page.locator("#answer")).toContainText("铜铃");
+  await page.screenshot({
+    path: "../临时/完整可玩版/网页截图/语义降级提示.png",
+    fullPage: true,
+  });
+  await page.locator("#query-kind").selectOption("self_info");
+  await page.getByRole("button", { name: "翻阅札记" }).click();
+  await expect(page.locator("#query-warning")).toBeHidden();
+  await expect(page.locator("#answer")).toContainText("夜裔");
   const original = await page.evaluate(async () =>
     (await fetch("/api/state")).json(),
   );

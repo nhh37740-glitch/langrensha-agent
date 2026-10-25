@@ -1010,6 +1010,15 @@ textarea::placeholder {
   filter: brightness(1.08);
   border-color: #a9a87c;
 }
+.query-warning {
+  margin: 10px 0 0;
+  padding: 9px 12px;
+  border-left: 2px solid var(--gold);
+  background: var(--gold-soft);
+  color: #d8c69c;
+  font-size: 11px;
+  line-height: 1.7;
+}
 .answer {
   font-size: 12px;
   line-height: 2;

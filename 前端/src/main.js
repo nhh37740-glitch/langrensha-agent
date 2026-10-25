@@ -333,6 +333,8 @@ $("query-kind").addEventListener("change", () => {
 $("query-form").addEventListener("submit", async (e) => {
   e.preventDefault();
   error("");
+  $("query-warning").hidden = true;
+  $("query-warning").textContent = "";
   const name = $("query-kind").value,
     text = $("query-text").value;
   const payload =
@@ -347,6 +349,9 @@ $("query-form").addEventListener("submit", async (e) => {
             : {};
   try {
     const result = await api("query", { name, payload });
+    const degraded = result.warning ? "语义检索暂不可用，已改用关键词检索。" : "";
+    $("query-warning").textContent = degraded;
+    $("query-warning").hidden = !degraded;
     $("answer").textContent = result.answer;
     $("sources").replaceChildren(
       ...result.sources.map((s) => {
