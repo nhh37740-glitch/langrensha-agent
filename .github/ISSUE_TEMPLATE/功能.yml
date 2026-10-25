@@ -3,11 +3,15 @@ description: 提交一个可验收的新功能
 title: "[功能] "
 labels: ["功能"]
 body:
+  - type: markdown
+    attributes:
+      value: |
+        问题描述正文（不含标题）总计不得超过 300 个汉字；超限将自动提示并关闭 Issue。
   - type: textarea
     id: goal
     attributes:
       label: 用户要完成什么
-      description: 用用户能看到的结果说明需求。
+      description: 用用户能看到的结果说明需求（计入 300 汉字额度）。
       placeholder: 例如：真人能够在自己的回合查看有权看到的历史发言。
     validations:
       required: true

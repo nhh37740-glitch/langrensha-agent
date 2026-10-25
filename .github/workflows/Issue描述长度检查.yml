@@ -1,0 +1,61 @@
+name: Issue 描述长度检查
+
+on:
+  issues:
+    types: [opened, edited, reopened]
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  issue_body_length:
+    name: Issue 描述长度检查
+    runs-on: ubuntu-latest
+    steps:
+      - name: 获取仓库
+        uses: actions/checkout@v4
+
+      - name: 校验 Issue 正文
+        id: validate
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import pathlib
+          import subprocess
+
+          event = json.loads(pathlib.Path(os.environ["GITHUB_EVENT_PATH"]).read_text(encoding="utf-8"))
+          body = (event.get("issue", {}) or {}).get("body") or ""
+          body_file = pathlib.Path(os.environ["RUNNER_TEMP"]) / "issue-body.md"
+          body_file.write_text(body, encoding="utf-8")
+          result = subprocess.run(
+              ["python", ".github/scripts/校验Issue描述长度.py", "--text-file", str(body_file)],
+              capture_output=True,
+              text=True,
+          )
+          output = pathlib.Path(os.environ["RUNNER_TEMP"]) / "issue-check.json"
+          output.write_text(result.stdout.strip() or '{"ok": false, "code": "no_output"}', encoding="utf-8")
+          with pathlib.Path(os.environ["GITHUB_OUTPUT"]).open("a", encoding="utf-8") as file:
+              file.write(f"ok={'true' if result.returncode == 0 else 'false'}\n")
+              file.write(f"check_path={output}\n")
+          PY
+
+      - name: 超限时提示并关闭
+        if: steps.validate.outputs.ok != 'true'
+        uses: actions/github-script@v7
+        env:
+          CHECK_PATH: ${{ steps.validate.outputs.check_path }}
+        with:
+          script: |
+            const fs = require("fs");
+            const result = JSON.parse(fs.readFileSync(process.env.CHECK_PATH, "utf8"));
+            const limit = result.limit ?? 300;
+            const hanzi = result.hanzi ?? 0;
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const issue_number = context.payload.issue.number;
+            const body = `问题描述正文超过 ${limit} 个汉字（当前 ${hanzi} 个）。请压缩到 ${limit} 个汉字以内后重新提交。`;
+            await github.rest.issues.createComment({ owner, repo, issue_number, body });
+            await github.rest.issues.update({ owner, repo, issue_number, state: "closed" });
+            core.setFailed(`issue_description_too_long:${hanzi}>${limit}`);

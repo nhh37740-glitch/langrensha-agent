@@ -3,6 +3,10 @@ description: 报告可复现的问题
 title: "[缺陷] "
 labels: ["缺陷"]
 body:
+  - type: markdown
+    attributes:
+      value: |
+        问题描述正文（不含标题）总计不得超过 300 个汉字；超限将自动提示并关闭 Issue。
   - type: textarea
     id: location
     attributes:
