@@ -157,7 +157,24 @@ def audit(request=False):
         state = codex_state(comments, pr["head"]["sha"])
         if request and len(prs) == 1 and state == "等待 Codex 审查":
             request_review(pr, comments)
-        reports.append({"pr": pr["number"], "sha": pr["head"]["sha"], "codex": state})
+        from 校验PR问题关联 import declared_issue, validate
+
+        try:
+            number = declared_issue(pr.get("body"))
+            target = next((i for i in issues if i["number"] == number), None)
+            active = [i for i in issues if ACTIVE in {x["name"] for x in i["labels"]}]
+            validate(pr, target, active)
+            association = "一致"
+        except ValueError as error:
+            association = str(error)
+        reports.append(
+            {
+                "pr": pr["number"],
+                "sha": pr["head"]["sha"],
+                "codex": state,
+                "issue_association": association,
+            }
+        )
     report = {
         "time_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "selection": selection,
@@ -171,7 +188,11 @@ def audit(request=False):
     }
     for result in reports:
         result.update(checks_at(result["sha"]))
-        result["gate_pass"] = result["ci_pass"] and result["codex"] == "Codex 当前提交无发现"
+        result["gate_pass"] = (
+            result["ci_pass"]
+            and result["codex"] == "Codex 当前提交无发现"
+            and result["issue_association"] == "一致"
+        )
     OUT.mkdir(parents=True, exist_ok=True)
     (OUT / "验收.json").write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n")
     summary = (
@@ -307,7 +328,9 @@ def worker():
         if value := os.environ.get(name):
             evidence = evidence.replace(value, "[已脱敏]")
     body.write_text(
-        f"Closes #{number}\n\n由官方 DeepSeek Harness 串行执行。"
+        f"Issue: #{number}\n\nCloses #{number}\n\n本次范围：{issue['title']}。\n\n"
+        "正式依据：根 AGENTS.md、项目说明.md、开发规范及关联 Issue 引用的正式需求与设计。\n\n"
+        "由官方 DeepSeek Harness 串行执行。"
         "实现和验证证据见提交；必须核对 Issue 验收、CI 与当前提交的 Codex review。"
         "未自动合并、发布或部署。\n\n" + str(evidence)
     )
