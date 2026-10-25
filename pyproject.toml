@@ -14,6 +14,7 @@ dependencies = []
 dev = ["pytest==8.4.2", "ruff==0.14.2", "build==1.3.0", "import-linter==2.15"]
 web = ["fastapi==0.161.1", "uvicorn==0.54.0"]
 ai = ["langchain-deepseek==1.1.1", "langgraph==1.2.16", "python-dotenv==1.2.4"]
+rag = ["numpy==2.5.4", "onnxruntime==1.31.0", "tokenizers==0.23.3"]
 
 [project.scripts]
 langrensha-demo = "langrensha.__main__:main"
@@ -52,7 +53,7 @@ layers = [
     "web : __main__ : ai_demo : full_demo : operations",
     "ai | assistant | presentation | service",
     "retrieval | store | full_game",
-    "content | rules",
+    "semantic | content | rules",
 ]
 
 [[tool.importlinter.contracts]]

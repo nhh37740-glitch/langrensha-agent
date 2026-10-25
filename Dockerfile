@@ -17,9 +17,10 @@ COPY .github/scripts ./.github/scripts
 COPY --from=frontend /build/src/langrensha/static ./src/langrensha/static
 RUN --mount=type=secret,id=proxy_ca \
     if [ -f /run/secrets/proxy_ca ]; then export PIP_CERT=/run/secrets/proxy_ca; fi; \
-    pip install --no-cache-dir -c requirements-dev.lock '.[ai,web]' \
+    pip install --no-cache-dir -c requirements-dev.lock '.[ai,web,rag]' \
     && useradd --uid 10001 --create-home town \
-    && mkdir /data && chown town:town /data
+    && mkdir -p /home/town/.cache/langrensha /data \
+    && chown -R town:town /home/town/.cache /data
 USER town
 ENV LANGRENSHA_DATABASE=/data/对局.sqlite3
 EXPOSE 8000

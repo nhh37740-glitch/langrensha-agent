@@ -10,7 +10,7 @@
 
 ```bash
 python -m venv .venv
-.venv/bin/python -m pip install -c requirements-dev.lock -e '.[dev,ai,web]'
+.venv/bin/python -m pip install -c requirements-dev.lock -e '.[dev,ai,web,rag]'
 npm ci --prefix 前端
 npm run build --prefix 前端
 cp .env.example .env
@@ -34,6 +34,7 @@ chmod 600 .env
 - [v0.5.1 新手源码架构图与讲解](文档/版本/v0.5.1/新手源码讲解.md)
 - [v0.5.0 视觉与动效说明](文档/版本/v0.5.0/视觉与动效说明.md)
 - [v0.5.0 版本说明与前端状态图](文档/版本/v0.5.0/版本说明.md)
+- [RAG 语义检索说明](文档/开发/RAG语义检索说明.md)：固定版本中文模型、权限前置分块、CPU 实测与失败回退。
 - [暗牌呈现补丁 v0.3.1](文档/版本/v0.3.1/版本说明.md)
 - [验收记录](文档/验收/完整可玩版验收.md) / [v0.3.0 版本图](文档/版本/v0.3.0/版本说明.md)
 - [开发流程](文档/规范/开发流程与协作规范.md) / [中文看板](https://github.com/users/nhh37740-glitch/projects/2)
