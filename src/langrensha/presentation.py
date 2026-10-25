@@ -621,6 +621,14 @@ def debug_timeline(state, decisions):
         if isinstance(item, dict) and isinstance(item.get("seat"), int)
     }
     phase_by_id = {}
+    event_rounds = {}
+    for event in state.get("events", []):
+        if not isinstance(event, dict):
+            continue
+        phase_id = event.get("phase_id")
+        round_number = event.get("round")
+        if isinstance(phase_id, str) and type(round_number) is int:
+            event_rounds.setdefault(phase_id, round_number)
     groups = {}
     order = []
     missing = []
@@ -630,16 +638,20 @@ def debug_timeline(state, decisions):
         seat = decision.get("actor")
         if type(seat) is not int or not 1 <= seat <= len(personas):
             continue
+        phase_id = decision.get("phase_id")
         round_number = decision.get("round")
         if type(round_number) is not int:
-            round_number = state.get("round", 1)
+            # 旧审计只有 phase_id；从快照事件恢复历史轮次，恢复不了就保持未知。
+            round_number = event_rounds.get(phase_id)
+        if type(round_number) is not int:
+            round_number = None
         phase = decision.get("phase")
-        phase_id = decision.get("phase_id")
         if not isinstance(phase, str) or not phase:
             phase = phase_by_id.get(phase_id)
         if not isinstance(phase, str) or not phase:
-            phase = state.get("phase", "unknown")
-        if isinstance(phase_id, str):
+            # 历史审计没有阶段名时不能用当前阶段冒充历史事实。
+            phase = "unknown"
+        if isinstance(phase_id, str) and phase != "unknown":
             phase_by_id.setdefault(phase_id, phase)
         key = (round_number, phase_id if isinstance(phase_id, str) else phase)
         if key not in groups:
@@ -679,7 +691,13 @@ def debug_timeline(state, decisions):
             for marker in markers
         )
 
-    order.sort(key=lambda key: (groups[key]["round"], groups[key]["time"]))
+    order.sort(
+        key=lambda key: (
+            groups[key]["round"] is None,
+            groups[key]["round"] or 0,
+            groups[key]["time"],
+        )
+    )
     rounds = []
     for key in order:
         group = groups[key]
@@ -689,7 +707,10 @@ def debug_timeline(state, decisions):
             {
                 "phase": group["phase"],
                 "phase_id": group["phase_id"],
-                "label": theme["chapters"].get(group["phase"]) or group["phase"],
+                "label": (
+                    theme["chapters"].get(group["phase"])
+                    or ("阶段未知（历史审计）" if group["phase"] == "unknown" else group["phase"])
+                ),
                 "players": [group["players"][seat] for seat in sorted(group["players"])],
             }
         )
@@ -707,13 +728,7 @@ def debug_timeline(state, decisions):
         if not isinstance(text, str) or not text:
             continue
         phase_id = event.get("phase_id")
-        phase = phase_by_id.get(phase_id)
-        if not phase:
-            phase = (
-                state.get("phase", "night_wolves")
-                if phase_id == state.get("phase_id")
-                else "night_wolves"
-            )
+        phase = phase_by_id.get(phase_id) or "unknown"
         wolf_chat.append(
             {
                 "round": event.get("round", 1),
@@ -724,6 +739,6 @@ def debug_timeline(state, decisions):
                 "time": event.get("time", ""),
             }
         )
-    wolf_chat.sort(key=lambda item: (item["time"], item["round"]))
+    wolf_chat.sort(key=lambda item: (str(item["time"]), item["round"] or 0))
 
     return {"rounds": rounds, "wolf_chat": wolf_chat, "missing": missing}

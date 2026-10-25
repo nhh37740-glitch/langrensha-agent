@@ -756,16 +756,18 @@ function debugPhaseNode(phase, index) {
   return section;
 }
 
-function debugRoundNode(round, index) {
+function debugRoundNode(round) {
   const section = node("section", undefined, "debug-round");
-  const number = Number(round?.round) || index + 1;
-  section.dataset.round = String(number);
+  const raw = Number(round?.round);
+  const known = Number.isInteger(raw) && raw > 0;
+  const number = known ? raw : null;
+  section.dataset.round = known ? String(number) : "unknown";
   const head = node("div", undefined, "debug-round__head");
   head.append(
-    node("h3", `第 ${number} 轮`),
+    node("h3", known ? `第 ${number} 轮` : "轮次未知（历史审计）"),
     node(
       "span",
-      `ROUND ${String(number).padStart(2, "0")}`,
+      known ? `ROUND ${String(number).padStart(2, "0")}` : "ROUND ?",
       "debug-round__code",
     ),
   );
@@ -873,7 +875,7 @@ function renderDebug(data) {
 
   $("debug-rounds").replaceChildren(
     ...(rounds.length
-      ? rounds.map((round, index) => debugRoundNode(round, index))
+      ? rounds.map((round) => debugRoundNode(round))
       : [
           debugEmptyMessage(
             "暂无模型决策记录。入镇并推进对局后，会按轮次、阶段和玩家显示。",

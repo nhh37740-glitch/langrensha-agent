@@ -197,6 +197,47 @@ def test_debug_timeline_marks_empty_content_as_missing(tmp_path):
     assert timeline["missing"][0]["reason"] == "no_content"
 
 
+def test_legacy_audit_recovers_round_from_events_and_marks_unknown_phase(tmp_path):
+    service, game_id = game_service(tmp_path)
+    actor = pending(service.host_snapshot(game_id))[0]
+    snapshot = service.host_snapshot(game_id)
+    old_phase_id = snapshot["events"][0]["phase_id"]
+    service._record_decision(
+        game_id,
+        actor,
+        {
+            "id": str(uuid4()),
+            "phase_id": old_phase_id,
+            "rounds": 1,
+            "reason": "acted",
+            "acted": True,
+            "thinking": [
+                {
+                    "step": 1,
+                    "content": "旧审计显式说明",
+                    "has_content": True,
+                    "tool_calls": [],
+                }
+            ],
+            "calls": [],
+        },
+    )
+    # 当前状态已推进到第二轮白天；历史审计不能被归到当前阶段/轮次。
+    snapshot["round"] = 2
+    snapshot["phase"] = "day_speech"
+    snapshot["phase_id"] = str(uuid4())
+    with service.store.transaction() as db:
+        service.store.save(db, snapshot)
+
+    timeline = debug_timeline(snapshot, service.host_decisions(game_id))
+    assert [item["round"] for item in timeline["rounds"]] == [1]
+    phase = timeline["rounds"][0]["phases"][0]
+    assert phase["phase"] == "unknown"
+    assert phase["label"] == "阶段未知（历史审计）"
+    assert phase["phase_id"] == old_phase_id
+    assert phase["players"][0]["decisions"][0]["thinking"][0]["content"] == "旧审计显式说明"
+
+
 def test_debug_endpoint_requires_login_and_strict_body(tmp_path):
     c, _ = client(tmp_path)
     assert c.get("/api/debug").status_code == 401
