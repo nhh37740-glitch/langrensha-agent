@@ -29,6 +29,12 @@ IDENTITY = {
     "threebody": "地球公民",
     "tidal_archive": "守册人",
 }
+NARRATOR = {
+    "mist": "钟楼记事",
+    "hyperion": "营地纪事",
+    "threebody": "站内记录",
+    "tidal_archive": "馆内潮记",
+}
 FORBIDDEN_KEYS = {"entries", "guidance", "personas", "basis"}
 
 
@@ -69,6 +75,7 @@ def test_catalog_is_public_and_never_exports_secret_worldbook_data():
         public = [entry for entry in worldbook["entries"] if entry["visibility"] == "public"]
         assert book["name"] == worldbook["name"]
         assert book["motif"] == MOTIFS[book["id"]]
+        assert book["narrator"] == NARRATOR[book["id"]]
         assert book["tagline"] and book["summary"] and book["glyph"]
         assert set(book["palette"]) == {"sky", "mid", "accent", "paper", "ink"}
         assert set(book["role_labels"]) == set(ROLE_NAMES)
@@ -99,6 +106,7 @@ def test_worldbook_endpoint_is_public_and_has_no_store_cache(tmp_path):
     payload = response.json()
     assert payload["default"] == "mist"
     assert [book["id"] for book in payload["worldbooks"]] == list(WORLDS)
+    assert all(book["narrator"] == NARRATOR[book["id"]] for book in payload["worldbooks"])
     assert not (FORBIDDEN_KEYS & set(keys(payload)))
 
 
@@ -115,11 +123,13 @@ def test_all_four_worldbooks_can_create_games_and_survive_refresh(tmp_path):
         created = response.json()
         assert created["worldbook"] == worldbook
         assert created["worldbook_name"] == get_worldbook(worldbook)["name"]
+        assert created["narrator"] == NARRATOR[worldbook]
         assert created["identity"] == IDENTITY[worldbook]
 
         refreshed = c.get("/api/state").json()
         assert refreshed["game_id"] == created["game_id"]
         assert refreshed["worldbook"] == worldbook
+        assert refreshed["narrator"] == NARRATOR[worldbook]
         assert app.state.service.host_snapshot(created["game_id"])["worldbook"] == worldbook
 
 
