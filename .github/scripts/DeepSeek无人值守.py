@@ -22,9 +22,11 @@ REQUIRED_CHECKS = {
     "文档阶段检查",
     "版本图检查",
 }
+SUPERVISION_CHECKS = {"supervise", "DeepSeek 定时监督"}
 
 
 def ci_passes(checks, statuses):
+    checks = [c for c in checks if c["name"] not in SUPERVISION_CHECKS]
     names = {c["name"] for c in checks}
     return (
         REQUIRED_CHECKS <= names
@@ -106,6 +108,11 @@ def choose(issues, prs):
     if prs:
         return None, "等待当前 PR 审查、CI 与维护者合并；不领取其他 Issue"
     if active:
+        if active[0].get("state") == "closed":
+            return (
+                None,
+                "当前 Issue 已关闭，但验收/所需发布尚未确认；维护者完成后移除 deepseek-active",
+            )
         if BLOCKED in {x["name"] for x in active[0]["labels"]}:
             return None, "当前 Issue 已受阻；维护者补齐依据后移除 deepseek-blocked 再继续"
         return active[0], "继续唯一活动 Issue"
@@ -135,19 +142,28 @@ def request_review(pr, comments):
 
 def audit(request=False):
     issues = [i for i in items("issues?state=open&per_page=100") if "pull_request" not in i]
+    # 活动标签不随关闭 Issue 消失；维护者确认合并、主线检查及所需发布后才解除。
+    held = [
+        i
+        for i in items(f"issues?state=all&labels={ACTIVE}&per_page=100")
+        if "pull_request" not in i
+    ]
+    issues = list({i["number"]: i for i in [*issues, *held]}.values())
     prs = items("pulls?state=open&per_page=100")
     _, selection = choose(issues, prs)
     reports = []
     for pr in prs:
         comments = items(f"issues/{pr['number']}/comments?per_page=100")
         state = codex_state(comments, pr["head"]["sha"])
-        if request and state == "等待 Codex 审查":
+        if request and len(prs) == 1 and state == "等待 Codex 审查":
             request_review(pr, comments)
         reports.append({"pr": pr["number"], "sha": pr["head"]["sha"], "codex": state})
     report = {
         "time_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "selection": selection,
-        "issues": [{"number": i["number"], "title": i["title"]} for i in issues],
+        "issues": [
+            {"number": i["number"], "title": i["title"], "state": i["state"]} for i in issues
+        ],
         "prs": reports,
         "worker_credentials": os.environ.get("HARNESS_CREDENTIALS_READY") == "true",
         "limitation": "自动状态验收不代表业务或线上验收；不自动合并、打 tag 或发布",
@@ -169,7 +185,7 @@ def audit(request=False):
 
 
 def worker():
-    issues, prs = audit(request=True)
+    issues, prs = audit()
     issue, reason = choose(issues, prs)
     current_pr = None
     if len(prs) > 1 or sum(ACTIVE in {x["name"] for x in i["labels"]} for i in issues) > 1:
@@ -179,12 +195,21 @@ def worker():
         pr = prs[0]
         match = re.fullmatch(r"deepseek/issue-(\d+)", pr["head"]["ref"])
         if match and pr["head"]["repo"]["full_name"] == REPO:
+            active = [i for i in issues if ACTIVE in {x["name"] for x in i["labels"]}]
+            if not active or active[0]["number"] != int(match[1]):
+                print("PR 对应 Issue 与唯一活动任务不一致，停止修订")
+                return
+            if active[0].get("state") == "closed":
+                print("活动 Issue 已关闭，等待维护者确认验收和所需发布")
+                return
             current_pr = pr
             issue = next((i for i in issues if i["number"] == int(match[1])), None)
             if issue and BLOCKED in {x["name"] for x in issue["labels"]}:
                 print("当前 PR 对应 Issue 已受阻，等待维护者处理")
                 return
             report = json.loads((OUT / "验收.json").read_text())["prs"][0]
+            if report["codex"] == "等待 Codex 审查":
+                request_review(pr, items(f"issues/{pr['number']}/comments?per_page=100"))
             failing = any(
                 c["conclusion"] in {"failure", "timed_out", "cancelled"} for c in report["checks"]
             )

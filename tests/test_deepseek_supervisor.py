@@ -63,6 +63,13 @@ def test_ambiguous_active_tasks_stop():
     )
 
 
+def test_closed_active_issue_still_blocks_next_until_release_confirmed():
+    closed = issue(7, "deepseek-active") | {"state": "closed"}
+    ready = issue(8, "deepseek-ready")
+    assert supervisor.choose([closed, ready], [])[0] is None
+    assert supervisor.choose([ready], [])[0]["number"] == 8
+
+
 def test_old_or_spoofed_review_cannot_pass():
     assert supervisor.codex_state([review(sha="old")], "head") == "等待 Codex 审查"
     assert supervisor.codex_state([review(author="someone")], "head") == "等待 Codex 审查"
@@ -102,3 +109,43 @@ def test_ci_requires_all_project_checks_and_no_failure():
     assert not supervisor.ci_passes(checks[:-1], statuses)
     checks[0]["conclusion"] = "failure"
     assert not supervisor.ci_passes(checks, statuses)
+
+
+def test_current_and_previous_supervision_dont_block_main_ci():
+    checks = [
+        {"name": n, "status": "completed", "conclusion": "success"}
+        for n in supervisor.REQUIRED_CHECKS
+    ]
+    statuses = {"statuses": [], "state": "pending"}
+    checks += [
+        {"name": "DeepSeek 定时监督", "status": "in_progress", "conclusion": None},
+        {"name": "supervise", "status": "completed", "conclusion": "failure"},
+    ]
+    assert supervisor.ci_passes(checks, statuses)
+    checks.append({"name": "额外安全检查", "status": "completed", "conclusion": "failure"})
+    assert not supervisor.ci_passes(checks, statuses)
+
+
+def test_worker_cannot_switch_to_pr_for_different_active_issue(monkeypatch, tmp_path):
+    active = issue(1, "deepseek-active")
+    other = issue(2, "deepseek-ready")
+    pr = {"number": 3, "head": {"ref": "deepseek/issue-2", "repo": {"full_name": supervisor.REPO}}}
+    monkeypatch.setattr(supervisor, "audit", lambda **kwargs: ([active, other], [pr]))
+
+    def fail(*args, **kwargs):
+        raise AssertionError("不得执行 git、模型或 GitHub 写操作")
+
+    monkeypatch.setattr(supervisor, "run", fail)
+    supervisor.worker()
+
+
+def test_worker_does_not_revise_closed_active_issue(monkeypatch):
+    closed = issue(2, "deepseek-active") | {"state": "closed"}
+    pr = {"number": 3, "head": {"ref": "deepseek/issue-2", "repo": {"full_name": supervisor.REPO}}}
+    monkeypatch.setattr(supervisor, "audit", lambda **kwargs: ([closed], [pr]))
+
+    def fail(*args, **kwargs):
+        raise AssertionError("已关闭任务不得启动开发")
+
+    monkeypatch.setattr(supervisor, "run", fail)
+    supervisor.worker()
