@@ -6,6 +6,8 @@ import sys
 from pathlib import Path
 from uuid import uuid4
 
+import pytest
+
 from langrensha import semantic
 from langrensha.full_game import pending
 from langrensha.retrieval import _tokens, build_chunks, query, split_text
@@ -153,6 +155,38 @@ print(json.dumps({
     assert measured["peak_mb"] < 1_500, measured
     print(f"语义模型 CPU 实测：{measured}")
     assert semantic.embed(["铜铃"]).shape == (1, 512)
+
+
+def test_cache_eviction_does_not_drop_vectors_needed_by_current_request(monkeypatch):
+    monkeypatch.setattr(semantic, "CACHE_LIMIT", 2)
+    monkeypatch.setattr(semantic, "_load_runtime", lambda: object())
+
+    def fake_embed(runtime, texts):
+        import numpy as np
+
+        vectors = np.array([[float(len(text)), 1.0] for text in texts], dtype=np.float32)
+        return vectors / np.linalg.norm(vectors, axis=1, keepdims=True)
+
+    monkeypatch.setattr(semantic, "_embed_batch", fake_embed)
+    semantic.reset()
+    try:
+        vectors = semantic.embed(["a", "bb", "ccc"])
+        assert vectors.shape == (3, 2)
+    finally:
+        semantic.reset()
+
+
+def test_corrupt_model_is_rejected_instead_of_used(monkeypatch, tmp_path):
+    (tmp_path / "model.onnx").write_bytes(b"not-a-real-model")
+    (tmp_path / "tokenizer.json").write_bytes(b"not-a-real-tokenizer")
+    monkeypatch.setenv("LANGRENSHA_MODEL_DIR", str(tmp_path))
+    monkeypatch.setenv("LANGRENSHA_RAG_OFFLINE", "1")
+    semantic.reset()
+    try:
+        with pytest.raises(semantic.EmbeddingUnavailable, match="缺失或损坏"):
+            semantic.embed(["铜铃"])
+    finally:
+        semantic.reset()
 
 
 def test_model_unavailable_is_reported_and_uses_lexical_fallback(monkeypatch, tmp_path):

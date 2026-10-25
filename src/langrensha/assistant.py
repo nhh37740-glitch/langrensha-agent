@@ -75,11 +75,16 @@ def assist(model, name, payload, retrieved):
             or any(not isinstance(r, str) or r not in sources for r in references)
         ):
             return retrieved
-        return {
+        result = {
             "answer": story_language(text),
             "sources": [sources[r] for r in dict.fromkeys(references)],
             "method": "grounded_model_note",
         }
+        if retrieved.get("method"):
+            result["retrieval_method"] = retrieved["method"]
+        if retrieved.get("warning"):
+            result["warning"] = retrieved["warning"]
+        return result
     except Exception:
         # 出错只退回已有原文整理；不公开 provider 错误，不记录私有推理。
         return retrieved

@@ -187,7 +187,12 @@ def _embed_many(texts: list[str]):
 
     runtime = _load_runtime()
     with _CACHE_LOCK:
-        missing = list(dict.fromkeys(text for text in texts if text not in _CACHE))
+        known = {
+            text: _CACHE[text]
+            for text in dict.fromkeys(texts)
+            if text in _CACHE
+        }
+    missing = [text for text in dict.fromkeys(texts) if text not in known]
     for start in range(0, len(missing), BATCH_SIZE):
         batch = missing[start : start + BATCH_SIZE]
         try:
@@ -197,11 +202,12 @@ def _embed_many(texts: list[str]):
             raise EmbeddingUnavailable(f"语义推理失败：{exc}") from exc
         with _CACHE_LOCK:
             for text, vector in zip(batch, vectors, strict=True):
-                _CACHE[text] = vector.copy()
+                copied = vector.copy()
+                known[text] = copied
+                _CACHE[text] = copied
             while len(_CACHE) > CACHE_LIMIT:
                 _CACHE.pop(next(iter(_CACHE)))
-    with _CACHE_LOCK:
-        return np.stack([_CACHE[text] for text in texts])
+    return np.stack([known[text] for text in texts])
 
 
 def embed(texts):
