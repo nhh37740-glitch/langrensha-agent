@@ -36,6 +36,13 @@ const WORLD_PLACE = {
   threebody: "频道中",
   tidal_archive: "潮声里",
 };
+// 故事面板叙事称谓只随公开世界主题切换，不参与规则或身份判断。
+const WORLD_NARRATOR = {
+  mist: "钟楼记事",
+  hyperion: "营地纪事",
+  threebody: "站内记录",
+  tidal_archive: "馆内潮记",
+};
 const ROLE_FALLBACK = {
   wolf: "夜裔",
   villager: "镇民",
@@ -78,6 +85,7 @@ const FALLBACK_INTROS = {
 const SAFE_BOOK = {
   id: "mist",
   name: "雾钟镇",
+  narrator: "钟楼记事",
   tagline: "雾里听证词，灯下作选择。",
   summary:
     "雾封住了出镇的路。十二位旅人围坐在钟楼广场，每个人都带着不能说的秘密。",
@@ -132,6 +140,10 @@ function normalizeBook(raw) {
     ...book,
     id: asText(book.id),
     name: asText(book.name) || asText(book.id),
+    narrator:
+      asText(book.narrator) ||
+      WORLD_NARRATOR[asText(book.id)] ||
+      WORLD_NARRATOR.mist,
     tagline: asText(book.tagline),
     summary: asText(book.summary),
     excerpt: asText(book.excerpt),
@@ -203,6 +215,12 @@ function worldNightLabel(worldId = activeWorld) {
 
 function worldPlaceLabel(worldId = activeWorld) {
   return WORLD_PLACE[worldId] || WORLD_PLACE.mist;
+}
+
+function worldNarratorLabel(worldId = activeWorld, fallback = "") {
+  return (
+    asText(fallback) || WORLD_NARRATOR[worldId] || WORLD_NARRATOR.mist
+  );
 }
 
 function applyWorld(worldId) {
@@ -443,6 +461,7 @@ function applyCatalogText(book, chapterOverride) {
     $("site-footer-text").textContent = scene.footer;
   }
   if (book?.tagline) $("world-footer-text").textContent = book.tagline;
+  $("story-narrator").textContent = worldNarratorLabel(book?.id, book?.narrator);
   if (!view) {
     $("day").textContent = `${book?.name || "雾钟镇"} · 初至`;
     $("story-title").textContent = chapter || "等一场雾散";
@@ -527,6 +546,7 @@ function applyGameWorld(state) {
     $("brand-name").textContent = state.worldbook_name;
     updateRoleOptions(null);
   }
+  $("story-narrator").textContent = worldNarratorLabel(id, state?.narrator);
 }
 
 // 场景只画服务器给当前玩家的可见事实；动效偏好同时交给 CSS 与 Phaser。
@@ -1092,6 +1112,10 @@ function render(state) {
   );
   $("chapter").textContent = state.chapter;
   $("story-title").textContent = state.chapter;
+  $("story-narrator").textContent = worldNarratorLabel(
+    state.worldbook,
+    state.narrator,
+  );
   const day = $("day");
   day.replaceChildren();
   const dayIcon = node("i", undefined, "day-icon");

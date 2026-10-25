@@ -17,6 +17,7 @@ export const FALLBACK_BOOKS = Object.freeze([
     id: "mist",
     name: "雾钟镇",
     tagline: "雾夜钟声里，十二位旅人彼此试探。",
+    narrator: "钟楼记事",
     summary:
       "浓雾困住钟楼广场，白昼交换证词，夜晚灯火熄灭。夜裔藏在旅人之中，铜铃只交给最值得信任的人。",
     glyph: "♜",
@@ -54,6 +55,7 @@ export const FALLBACK_BOOKS = Object.freeze([
     id: "hyperion",
     name: "海伯利安",
     tagline: "光阴冢外，最后一批朝圣者各怀心愿。",
+    narrator: "营地纪事",
     summary:
       "边境行星海伯利安没有远距传输门，光阴冢在反熵场中缓缓移动。十二名朝圣者在冢外扎营；白天核对来历与时间，夜里有人被献祭。",
     glyph: "✶",
@@ -91,6 +93,7 @@ export const FALLBACK_BOOKS = Object.freeze([
     id: "threebody",
     name: "三体",
     tagline: "临海监听站里，警报与沉默同时抵达。",
+    narrator: "站内记录",
     summary:
       "风暴把十二名观测员困在临海监听站，三体舰队逼近的警报反复响起。站内有人替三体文明工作；白天交换证词，夜里有人被清除。",
     glyph: "◎",
@@ -128,6 +131,7 @@ export const FALLBACK_BOOKS = Object.freeze([
     id: "tidal_archive",
     name: "潮汐档案馆",
     tagline: "潮窗之内，名字比人更先被潮水带走。",
+    narrator: "馆内潮记",
     summary:
       "低潮时，十二位岛民穿过玄武岩缝进入册屿的潮汐档案馆，为校对《生民册》而来。一页名字被刮成空白；退潮只有几个时辰，下一次开门要等明天。",
     glyph: "⚓",
@@ -210,6 +214,10 @@ function normalizeBook(book) {
       typeof book.tagline === "string" && book.tagline
         ? book.tagline
         : fallback.tagline,
+    narrator:
+      typeof book.narrator === "string" && book.narrator
+        ? book.narrator
+        : fallback.narrator,
     summary:
       typeof book.summary === "string" && book.summary
         ? book.summary
