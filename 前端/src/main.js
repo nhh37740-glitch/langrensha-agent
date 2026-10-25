@@ -1,5 +1,6 @@
 import "./style.css";
 import "./catalog.css";
+import "./debug.css";
 import * as worldart from "./worldart.js";
 import { makeScene } from "./scene.js";
 
@@ -13,7 +14,13 @@ let view = null,
   entering = false,
   lastHint = "",
   audio = null,
-  sounded = 0;
+  sounded = 0,
+  debugEnabled = true,
+  debugInitialized = false,
+  debugEndpointMissing = false,
+  debugTimer = null,
+  debugInFlight = false,
+  debugToggleBusy = false;
 
 const ROLE_ORDER = ["villager", "wolf", "seer", "witch", "hunter", "idiot"];
 // 世界词只影响界面提示，不参与规则与权限判断。
@@ -568,6 +575,445 @@ async function api(path, data) {
   }
   return response.json();
 }
+/* ---------- Issue #64 调试观察 ----------
+   面板只读取 /api/debug 的审计结果；所有文本用 textContent/DOM 写入。
+   不把调试数据发往 AI，也不改变对局请求。 */
+const DEBUG_POLL_MS = 1500;
+
+function debugTime(value) {
+  const raw = asText(value);
+  if (!raw) return "";
+  const date = new Date(raw);
+  if (Number.isNaN(date.getTime())) return raw;
+  return date.toLocaleTimeString("zh-CN", { hour12: false });
+}
+
+function compactValue(value, limit = 180) {
+  if (value === undefined || value === null) return "";
+  let text;
+  if (typeof value === "string") text = value;
+  else {
+    try {
+      text = JSON.stringify(value);
+    } catch {
+      text = String(value);
+    }
+  }
+  if (text === undefined) return "";
+  return text.length > limit ? `${text.slice(0, limit)}…` : text;
+}
+
+function debugEmptyMessage(text) {
+  return node("p", text, "debug-empty");
+}
+
+function debugMissingText(item) {
+  const label = asText(item?.label);
+  const reason = asText(item?.reason);
+  if (label) return label;
+  if (reason) return `缺失原因：${reason}`;
+  return "未记录显式说明";
+}
+
+function debugToolCallNode(call) {
+  const tool = asText(call?.name) || asText(call?.tool) || "未知工具";
+  const entry = node("div", undefined, "debug-tool-call");
+  entry.append(node("b", tool));
+  if (call?.args !== undefined)
+    entry.append(document.createTextNode(` · 参数 ${compactValue(call.args)}`));
+  if (call?.result !== undefined)
+    entry.append(
+      document.createTextNode(` · 结果 ${compactValue(call.result)}`),
+    );
+  return entry;
+}
+
+function debugThinkingStepNode(step, index) {
+  const content = asText(step?.content);
+  const hasContent = step?.has_content === true && content !== "";
+  const wrap = node("div", undefined, "debug-thinking-step");
+  wrap.dataset.hasContent = String(hasContent);
+  wrap.append(
+    node(
+      "div",
+      `显式说明 · 第 ${Number(step?.step) || index + 1} 步`,
+      "debug-thinking-step__head",
+    ),
+  );
+  if (hasContent) wrap.append(node("p", content, "debug-thinking-content"));
+  else
+    wrap.append(
+      node(
+        "p",
+        "模型未返回显式说明（has_content=false，未补写）。",
+        "debug-thinking-missing",
+      ),
+    );
+  const calls = Array.isArray(step?.tool_calls) ? step.tool_calls : [];
+  if (calls.length) {
+    const list = node("div", undefined, "debug-tool-calls");
+    calls.forEach((call) => list.append(debugToolCallNode(call)));
+    wrap.append(list);
+  }
+  return wrap;
+}
+
+function debugDecisionNode(decision) {
+  const card = node("article", undefined, "debug-decision");
+  const reason = asText(decision?.reason) || "未记录";
+  const meta = node("div", undefined, "debug-decision__meta");
+  meta.append(node("span", `原因 ${reason}`));
+  meta.append(node("span", decision?.acted ? "已行动" : "未行动"));
+  if (asText(decision?.time)) meta.append(node("span", debugTime(decision.time)));
+  card.append(meta);
+
+  const thinking = Array.isArray(decision?.thinking) ? decision.thinking : [];
+  const thinkingBox = node("div", undefined, "debug-thinking");
+  if (thinking.length) {
+    thinking.forEach((step, index) =>
+      thinkingBox.append(debugThinkingStepNode(step, index)),
+    );
+  } else {
+    const missing = Array.isArray(decision?.missing)
+      ? decision.missing.map(debugMissingText).filter(Boolean)
+      : [];
+    thinkingBox.append(
+      node(
+        "p",
+        missing.length
+          ? `缺失显式说明：${missing.join("；")}`
+          : "无模型显式说明记录（人类操作或模型未提供，未补写）。",
+        "debug-thinking-missing",
+      ),
+    );
+  }
+  card.append(thinkingBox);
+
+  const calls = Array.isArray(decision?.calls) ? decision.calls : [];
+  if (calls.length) {
+    const callList = node("div", undefined, "debug-tool-calls");
+    calls.forEach((call) => callList.append(debugToolCallNode(call)));
+    card.append(callList);
+  }
+
+  const missing = Array.isArray(decision?.missing) ? decision.missing : [];
+  if (missing.length && thinking.length) {
+    const list = node("ul", undefined, "debug-decision__missing");
+    missing.forEach((item) =>
+      list.append(node("li", debugMissingText(item))),
+    );
+    card.append(list);
+  }
+  return card;
+}
+
+function debugPlayerNode(player) {
+  const card = node("article", undefined, "debug-player");
+  card.dataset.seat = String(player?.seat ?? "");
+  const head = node("div", undefined, "debug-player__head");
+  head.append(
+    node("span", String(player?.seat ?? "?").padStart(2, "0"), "debug-seat"),
+    node("strong", asText(player?.name) || "姓名未记录", "debug-player__name"),
+    node(
+      "span",
+      `角色：${asText(player?.role) || "未记录"}（调试可见）`,
+      "debug-role",
+    ),
+  );
+  const alive = node("span", player?.alive ? "在场" : "离场", "debug-alive");
+  alive.dataset.alive = String(Boolean(player?.alive));
+  head.append(alive);
+  card.append(head);
+
+  const decisions = Array.isArray(player?.decisions) ? player.decisions : [];
+  const box = node("div", undefined, "debug-decisions");
+  if (decisions.length)
+    decisions.forEach((decision) => box.append(debugDecisionNode(decision)));
+  else box.append(debugEmptyMessage("本阶段无决策记录。"));
+  card.append(box);
+  return card;
+}
+
+function debugPhaseNode(phase, index) {
+  const section = node("section", undefined, "debug-phase");
+  section.dataset.phase = asText(phase?.phase) || `phase-${index + 1}`;
+  if (asText(phase?.phase_id)) section.dataset.phaseId = phase.phase_id;
+  const head = node("div", undefined, "debug-phase__head");
+  head.append(
+    node("h4", asText(phase?.label) || asText(phase?.phase) || "未命名阶段"),
+    node("span", asText(phase?.phase) || "phase?", "debug-phase__code"),
+  );
+  if (asText(phase?.phase_id))
+    head.append(node("span", `id ${phase.phase_id}`, "debug-phase__id"));
+  section.append(head);
+
+  const players = Array.isArray(phase?.players) ? phase.players : [];
+  const box = node("div", undefined, "debug-players");
+  if (players.length)
+    players.forEach((player) => box.append(debugPlayerNode(player)));
+  else box.append(debugEmptyMessage("本阶段无玩家决策。"));
+  section.append(box);
+  return section;
+}
+
+function debugRoundNode(round, index) {
+  const section = node("section", undefined, "debug-round");
+  const number = Number(round?.round) || index + 1;
+  section.dataset.round = String(number);
+  const head = node("div", undefined, "debug-round__head");
+  head.append(
+    node("h3", `第 ${number} 轮`),
+    node(
+      "span",
+      `ROUND ${String(number).padStart(2, "0")}`,
+      "debug-round__code",
+    ),
+  );
+  section.append(head);
+
+  const phases = Array.isArray(round?.phases) ? round.phases : [];
+  const box = node("div", undefined, "debug-phases");
+  if (phases.length)
+    phases.forEach((phase, phaseIndex) =>
+      box.append(debugPhaseNode(phase, phaseIndex)),
+    );
+  else box.append(debugEmptyMessage("本轮暂无阶段记录。"));
+  section.append(box);
+  return section;
+}
+
+function debugWolfChatNode(item, phaseLabels) {
+  const card = node("article", undefined, "debug-chat-item");
+  if (view && Number(item?.seat) === Number(view.seat))
+    card.dataset.human = "true";
+  const phase = asText(item?.phase);
+  const meta = [
+    `第 ${Number(item?.round) || "?"} 轮`,
+    phaseLabels?.get(phase) || phase || "阶段未记录",
+    `${item?.seat ?? "?"}号 ${asText(item?.name) || "未记录"}`,
+  ];
+  if (asText(item?.time)) meta.push(debugTime(item.time));
+  card.append(node("div", meta.join(" · "), "debug-chat-item__meta"));
+  card.append(node("p", asText(item?.text) || "（空对话）"));
+  return card;
+}
+
+function debugMissingNode(item, phaseLabels) {
+  const card = node("article", undefined, "debug-missing-item");
+  const phase = asText(item?.phase);
+  const meta = [
+    `第 ${Number(item?.round) || "?"} 轮`,
+    phaseLabels?.get(phase) || phase || "阶段未记录",
+    `${item?.seat ?? "?"}号`,
+  ];
+  card.append(node("div", meta.join(" · "), "debug-missing-item__meta"));
+  const reason = asText(item?.reason);
+  const text = debugMissingText(item);
+  card.append(
+    node(
+      "p",
+      reason && !text.includes(reason) ? `${text}（${reason}）` : text,
+    ),
+  );
+  return card;
+}
+
+function hideDebugNotice() {
+  const notice = $("debug-notice");
+  notice.hidden = true;
+  notice.textContent = "";
+  notice.dataset.kind = "";
+}
+
+function showDebugNotice(message, kind = "error") {
+  const notice = $("debug-notice");
+  notice.textContent = message;
+  notice.dataset.kind = kind;
+  notice.hidden = false;
+}
+
+function emptyDebugView() {
+  $("debug-rounds").replaceChildren();
+  $("debug-wolf-chat").replaceChildren();
+  $("debug-missing").replaceChildren();
+  $("debug-status").textContent = "";
+  $("debug-updated").textContent = "";
+  hideDebugNotice();
+}
+
+function clearDebugView(message = "等待入镇") {
+  $("debug-rounds").replaceChildren(debugEmptyMessage(message));
+  $("debug-wolf-chat").replaceChildren(
+    debugEmptyMessage("本局尚未记录狼队内部对话。这里只显示真实发生的事件。"),
+  );
+  $("debug-missing").replaceChildren(
+    debugEmptyMessage("未记录缺失说明。"),
+  );
+  $("debug-status").textContent = message;
+  $("debug-updated").textContent = "";
+  hideDebugNotice();
+}
+
+function renderDebug(data) {
+  if (!data || data.enabled === false) {
+    if (data?.enabled === false) applyDebugEnabled(false);
+    return;
+  }
+  hideDebugNotice();
+  const rounds = Array.isArray(data.rounds) ? data.rounds : [];
+  const wolfChat = Array.isArray(data.wolf_chat) ? data.wolf_chat : [];
+  const missing = Array.isArray(data.missing) ? data.missing : [];
+  const phaseLabels = new Map();
+  rounds.forEach((round) => {
+    (Array.isArray(round?.phases) ? round.phases : []).forEach((phase) => {
+      if (asText(phase?.phase))
+        phaseLabels.set(phase.phase, asText(phase.label) || phase.phase);
+    });
+  });
+
+  $("debug-rounds").replaceChildren(
+    ...(rounds.length
+      ? rounds.map((round, index) => debugRoundNode(round, index))
+      : [
+          debugEmptyMessage(
+            "暂无模型决策记录。入镇并推进对局后，会按轮次、阶段和玩家显示。",
+          ),
+        ]),
+  );
+  $("debug-wolf-chat").replaceChildren(
+    ...(wolfChat.length
+      ? wolfChat.map((item) => debugWolfChatNode(item, phaseLabels))
+      : [
+          debugEmptyMessage(
+            "本局尚未记录狼队内部对话。这里只显示真实发生的事件。",
+          ),
+        ]),
+  );
+  $("debug-missing").replaceChildren(
+    ...(missing.length
+      ? missing.map((item) => debugMissingNode(item, phaseLabels))
+      : [debugEmptyMessage("未记录缺失说明。")]),
+  );
+
+  const gameId = asText(data.game_id);
+  $("debug-status").textContent = gameId
+    ? `对局 ${gameId.slice(0, 8)} · ${rounds.length} 轮`
+    : "等待入镇";
+  $("debug-updated").textContent =
+    `更新 ${new Date().toLocaleTimeString("zh-CN", { hour12: false })}`;
+}
+
+function stopDebugPolling() {
+  if (debugTimer !== null) {
+    clearInterval(debugTimer);
+    debugTimer = null;
+  }
+}
+
+function syncDebugPolling() {
+  const active =
+    debugEnabled &&
+    debugInitialized &&
+    Boolean(view) &&
+    !debugEndpointMissing;
+  if (!active) {
+    stopDebugPolling();
+    return;
+  }
+  if (debugTimer === null) {
+    debugTimer = setInterval(refreshDebug, DEBUG_POLL_MS);
+    refreshDebug();
+  }
+}
+
+function applyDebugEnabled(enabled) {
+  debugEnabled = Boolean(enabled);
+  const toggle = $("debug-toggle");
+  toggle.setAttribute("aria-pressed", String(debugEnabled));
+  $("debug-toggle-state").textContent = debugEnabled ? "开" : "关";
+  $("debug-panel").hidden = !debugEnabled || !view;
+  root.dataset.debug = debugEnabled ? "on" : "off";
+  if (!debugEnabled) {
+    stopDebugPolling();
+    emptyDebugView();
+  } else if (debugInitialized) {
+    syncDebugPolling();
+  }
+}
+
+async function refreshDebug() {
+  if (!debugEnabled || !view || debugInFlight || debugEndpointMissing) return;
+  debugInFlight = true;
+  try {
+    const data = await api("debug");
+    if (!debugEnabled) return;
+    if (data?.enabled === false) {
+      applyDebugEnabled(false);
+      return;
+    }
+    renderDebug(data);
+  } catch (err) {
+    if (err?.status === 401) {
+      stopDebugPolling();
+      showDebugNotice("登录状态已失效，调试数据暂停；对局界面会按服务端状态恢复。", "info");
+    } else if (err?.status === 404) {
+      debugEndpointMissing = true;
+      stopDebugPolling();
+      showDebugNotice("调试接口尚未开放，对局不受影响。", "info");
+    } else {
+      showDebugNotice("调试数据暂时不可用，对局继续；面板会在下次轮询时重试。");
+    }
+  } finally {
+    debugInFlight = false;
+  }
+}
+
+async function bootDebug() {
+  try {
+    const data = await api("debug");
+    debugEndpointMissing = false;
+    applyDebugEnabled(data?.enabled !== false);
+    if (data?.enabled !== false) renderDebug(data);
+  } catch (err) {
+    if (err?.status === 404) {
+      debugEndpointMissing = true;
+      showDebugNotice("调试接口尚未开放，对局不受影响。", "info");
+    } else if (err?.status !== 401) {
+      showDebugNotice("暂时无法读取调试状态，默认保持开启。", "info");
+    }
+  } finally {
+    debugInitialized = true;
+    syncDebugPolling();
+  }
+}
+
+async function toggleDebug() {
+  if (debugToggleBusy) return;
+  const next = !debugEnabled;
+  debugToggleBusy = true;
+  $("debug-toggle").disabled = true;
+  debugEndpointMissing = false;
+  try {
+    if (!next) applyDebugEnabled(false);
+    else clearDebugView("正在读取调试记录……");
+    const result = await api("debug", { enabled: next });
+    debugEndpointMissing = false;
+    applyDebugEnabled(result?.enabled !== false);
+    if (debugEnabled) {
+      clearDebugView("正在读取调试记录……");
+      syncDebugPolling();
+      refreshDebug();
+    }
+  } catch (err) {
+    applyDebugEnabled(!next);
+    showDebugNotice(`调试开关未能保存：${err.message}`, "error");
+    if (debugEnabled) refreshDebug();
+  } finally {
+    debugToggleBusy = false;
+    $("debug-toggle").disabled = false;
+  }
+}
+
 function bell() {
   if (!audio) return;
   const oscillator = audio.createOscillator(),
@@ -583,6 +1029,7 @@ function bell() {
 function render(state) {
   const oldVersion = view?.version;
   view = state;
+  if (debugEnabled) $("debug-panel").hidden = false;
   applyGameWorld(state);
   scene.update(state);
   $("intro").hidden = true;
@@ -687,6 +1134,7 @@ function render(state) {
     bell();
   }
   applyUiState(state);
+  syncDebugPolling();
 }
 function choiceChanged() {
   const c = view?.choices.find((c) => c.tool === $("choice").value);
@@ -781,6 +1229,7 @@ $("reset").addEventListener("click", () => {
   if (!confirm("结束眼前的故事，重新入镇吗？")) return;
   auto = false;
   view = null;
+  $("debug-panel").hidden = true;
   $("intro").hidden = false;
   $("world-picker").hidden = false;
   [
@@ -795,6 +1244,8 @@ $("reset").addEventListener("click", () => {
   $("status").textContent = "";
   error("");
   applyUiState(null);
+  syncDebugPolling();
+  clearDebugView(debugEnabled ? "等待入镇" : "调试已关闭");
   selectWorld(selectedWorld, { silent: true });
 });
 $("assistant-toggle").addEventListener("click", () => {
@@ -861,6 +1312,7 @@ $("use-hint").addEventListener("click", () => {
   $("speech").value = lastHint;
   $("speech").focus();
 });
+$("debug-toggle").addEventListener("click", toggleDebug);
 $("sound").addEventListener("click", async () => {
   if (audio) {
     await audio.close();
@@ -906,7 +1358,10 @@ root.dataset.mode = "entering";
 root.dataset.busy = "no";
 applyWorld("mist");
 applyUiState(null);
+applyDebugEnabled(true);
+clearDebugView("等待入镇");
 catalogPromise = loadWorldbooks();
+bootDebug();
 api("state")
   .then(render)
   .catch((err) => {

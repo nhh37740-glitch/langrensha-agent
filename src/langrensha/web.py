@@ -12,7 +12,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from .full_game import pending
-from .presentation import present, worldbook_catalog
+from .presentation import debug_timeline, present, worldbook_catalog
 from .rules import Rejected, Role
 from .service import GameService
 from .worldbooks import DEFAULT_WORLD_ID, personas_for, worldbook_ids
@@ -27,7 +27,11 @@ def create_app(
     service = GameService(database)
     with service.store.transaction() as db:
         db.execute("""CREATE TABLE IF NOT EXISTS web_sessions (
-            digest TEXT PRIMARY KEY, game_id TEXT, seat INTEGER NOT NULL DEFAULT 1)""")
+            digest TEXT PRIMARY KEY, game_id TEXT, seat INTEGER NOT NULL DEFAULT 1,
+            debug INTEGER NOT NULL DEFAULT 1)""")
+        columns = {row[1] for row in db.execute("PRAGMA table_info(web_sessions)")}
+        if "debug" not in columns:
+            db.execute("ALTER TABLE web_sessions ADD COLUMN debug INTEGER NOT NULL DEFAULT 1")
     app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
     app.state.service = service
     advance_lock = threading.Lock()
@@ -71,14 +75,14 @@ def create_app(
         digest = hashlib.sha256(token.encode()).hexdigest()
         with service.store.transaction() as db:
             row = db.execute(
-                "SELECT game_id,seat FROM web_sessions WHERE digest=?", (digest,)
+                "SELECT game_id,seat,debug FROM web_sessions WHERE digest=?", (digest,)
             ).fetchone()
         if row is None:
             raise HTTPException(401, "请先进入钟楼。")
         return digest, row
 
     def session(request):
-        _, (game_id, seat) = login(request)
+        _, (game_id, seat, _debug) = login(request)
         if game_id is None:
             raise HTTPException(404, "尚未启程。")
         return service.bind_player(game_id, seat)
@@ -172,6 +176,42 @@ def create_app(
     @app.get("/api/state")
     def state(request: Request):
         return present(session(request).view())
+
+    @app.get("/api/debug")
+    def debug_state(request: Request):
+        _, (game_id, _seat, enabled) = login(request)
+        if not enabled or game_id is None:
+            return {
+                "enabled": bool(enabled),
+                "game_id": game_id,
+                "rounds": [],
+                "wolf_chat": [],
+                "missing": [],
+            }
+        snapshot = service.host_snapshot(game_id)
+        return {
+            "enabled": True,
+            "game_id": game_id,
+            **debug_timeline(snapshot, service.host_decisions(game_id)),
+        }
+
+    @app.post("/api/debug")
+    async def set_debug(request: Request):
+        digest, _ = login(request)
+        data = await request.json()
+        if (
+            not isinstance(data, dict)
+            or set(data) != {"enabled"}
+            or type(data["enabled"]) is not bool
+        ):
+            raise HTTPException(422, "请检查调试开关。")
+        enabled = data["enabled"]
+        with service.store.transaction() as db:
+            db.execute(
+                "UPDATE web_sessions SET debug=? WHERE digest=?",
+                (int(enabled), digest),
+            )
+        return {"enabled": enabled}
 
     @app.post("/api/action")
     async def action(request: Request):
