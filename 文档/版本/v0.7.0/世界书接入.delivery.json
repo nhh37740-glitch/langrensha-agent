@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "12ab4098-fdb0-448f-bb0a-79e8df558d00",
+  "status": "current",
+  "command": "deliver",
+  "type": "architecture",
+  "input": "/workspace/langrensha-agent/临时/DSH团队/issue-39/文档/版本/v0.7.0/世界书接入.architecture.json",
+  "output": "/workspace/langrensha-agent/临时/DSH团队/issue-39/文档/版本/v0.7.0/世界书接入.html",
+  "specification": {
+    "sha256": "28fd66f48c5d4ea98e59ca55fa90c1a793bd73baa5f893dc2ba83723a403154b",
+    "bytes": 5821
+  },
+  "artifact": {
+    "sha256": "4dd3b422621921cadf089953596716a10389bc68e788802ee75f9203c828cfa2",
+    "bytes": 826901
+  }
+}

@@ -1,0 +1,195 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "v0.7.0 海伯利安世界书接入",
+    "locale": "zh-CN",
+    "output": "文档/版本/v0.7.0/世界书接入.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/nhh37740-glitch/langrensha-agent.git",
+      "revision": "d74f4bcffc1e305e50f6f076de9ce6e097632d0a",
+      "provider": "github"
+    }
+  },
+  "components": [
+    {
+      "id": "player-view",
+      "type": "external",
+      "label": "受限玩家视图",
+      "sublabel": "view['worldbook'] 可选 · 默认 mist",
+      "pos": [40, 40],
+      "size": [190, 80],
+      "sources": [
+        { "path": "src/langrensha/full_game.py", "line": 482, "end_line": 514 },
+        { "path": "src/langrensha/retrieval.py", "line": 27, "end_line": 31 }
+      ]
+    },
+    {
+      "id": "worldbook-registry",
+      "type": "backend",
+      "label": "世界书注册表",
+      "sublabel": "pkgutil 自动发现 · 校验 · get_worldbook",
+      "tag": "worldbooks/__init__.py",
+      "pos": [330, 40],
+      "size": [250, 90],
+      "sources": [
+        { "path": "src/langrensha/worldbooks/__init__.py", "line": 63, "end_line": 91 }
+      ]
+    },
+    {
+      "id": "visibility-filter",
+      "type": "security",
+      "label": "可见性过滤",
+      "sublabel": "先按查看者角色过滤 visibility",
+      "tag": "秘密不外泄",
+      "pos": [660, 40],
+      "size": [230, 90],
+      "sources": [
+        { "path": "src/langrensha/worldbooks/__init__.py", "line": 94, "end_line": 103 }
+      ]
+    },
+    {
+      "id": "retrieval",
+      "type": "backend",
+      "label": "检索查询层",
+      "sublabel": "ask_world · self_info · build_chunks",
+      "tag": "过滤后才检索",
+      "pos": [980, 40],
+      "size": [260, 100],
+      "sources": [
+        { "path": "src/langrensha/retrieval.py", "line": 116, "end_line": 142 },
+        { "path": "src/langrensha/retrieval.py", "line": 258, "end_line": 281 }
+      ]
+    },
+    {
+      "id": "mist-book",
+      "type": "database",
+      "label": "雾钟镇 mist",
+      "sublabel": "默认世界 · 历史来源 id",
+      "tag": "content.py 适配",
+      "pos": [40, 240],
+      "size": [200, 80],
+      "sources": [
+        { "path": "src/langrensha/worldbooks/mist.py", "line": 1, "end_line": 21 },
+        { "path": "src/langrensha/content.py", "line": 25, "end_line": 68 }
+      ]
+    },
+    {
+      "id": "hyperion-book",
+      "type": "database",
+      "label": "海伯利安 hyperion",
+      "sublabel": "23 条 · 6 条角色秘密",
+      "tag": "原创改编标注",
+      "pos": [280, 240],
+      "size": [220, 90],
+      "sources": [
+        { "path": "src/langrensha/worldbooks/hyperion.py", "line": 7, "end_line": 15 },
+        { "path": "src/langrensha/worldbooks/hyperion.py", "line": 189, "end_line": 249 },
+        { "path": "src/langrensha/worldbooks/hyperion.py", "line": 261, "end_line": 294 }
+      ]
+    },
+    {
+      "id": "ai-prompt",
+      "type": "backend",
+      "label": "AI 系统提示词",
+      "sublabel": "名称 · 称谓 · 指导 · 入场背景",
+      "tag": "system_prompt",
+      "pos": [620, 240],
+      "size": [250, 100],
+      "sources": [
+        { "path": "src/langrensha/ai.py", "line": 67, "end_line": 88 },
+        { "path": "src/langrensha/ai.py", "line": 174, "end_line": 178 }
+      ]
+    },
+    {
+      "id": "semantic-rank",
+      "type": "backend",
+      "label": "语义/词项排序",
+      "sublabel": "只对过滤后文本建索引",
+      "tag": "不可用则回退",
+      "pos": [980, 240],
+      "size": [260, 90],
+      "sources": [
+        { "path": "src/langrensha/retrieval.py", "line": 145, "end_line": 160 },
+        { "path": "src/langrensha/retrieval.py", "line": 182, "end_line": 192 }
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "view-worldbook-id",
+      "from": "player-view",
+      "to": "worldbook-registry",
+      "label": "worldbook id",
+      "variant": "emphasis"
+    },
+    {
+      "id": "mist-discovered",
+      "from": "mist-book",
+      "to": "worldbook-registry",
+      "label": "WORLDBOOK"
+    },
+    {
+      "id": "hyperion-discovered",
+      "from": "hyperion-book",
+      "to": "worldbook-registry",
+      "label": "WORLDBOOK"
+    },
+    {
+      "id": "registry-entries",
+      "from": "worldbook-registry",
+      "to": "visibility-filter",
+      "label": "条目/角色"
+    },
+    {
+      "id": "filtered-entries",
+      "from": "visibility-filter",
+      "to": "retrieval",
+      "label": "仅可见条目",
+      "variant": "security"
+    },
+    {
+      "id": "prompt-context",
+      "from": "worldbook-registry",
+      "to": "ai-prompt",
+      "label": "称谓/指导/背景"
+    },
+    {
+      "id": "ranked-docs",
+      "from": "retrieval",
+      "to": "semantic-rank",
+      "label": "过滤后文本"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "可见性先于索引",
+      "items": [
+        "public 或角色列表；秘密条目不进入其他角色候选",
+        "未知世界报 unknown_worldbook，不静默换书",
+        "只取当前世界书，不跨世界拼接资料"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "四个接入点",
+      "items": [
+        "ask_world：过滤后条目与自身上下文",
+        "self_info：世界内称谓与身份指导",
+        "build_chunks：世界名随当前书变化",
+        "system_prompt：名称、指导与首条 public 背景"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "本轮边界",
+      "items": [
+        "未带 worldbook 时保持默认 mist，现有对局不变",
+        "只交付检索知识层，不含建局选择与视觉切换",
+        "只画已合入的 mist 与 hyperion，不画未合入世界"
+      ]
+    }
+  ]
+}
