@@ -42,6 +42,20 @@ def test_summary_uses_visible_sources_without_acting():
     assert assist(NoteModel(["event:404"]), "speech_hint", {}, evidence) == evidence
 
 
+def test_note_keeps_retrieval_fallback_warning():
+    evidence = {
+        "answer": "原文",
+        "method": "lexical_fallback",
+        "warning": "语义模型不可用，已回退词项检索。",
+        "sources": [{"source": "world:bell", "text": "铜铃", "category": "world"}],
+    }
+    result = assist(NoteModel(["world:bell"]), "ask_world", {"question": "铜铃"}, evidence)
+    assert result["method"] == "grounded_model_note"
+    assert result["retrieval_method"] == "lexical_fallback"
+    assert result["warning"] == evidence["warning"]
+    assert result["sources"] == evidence["sources"]
+
+
 def test_unavailable_model_keeps_grounded_extracts():
     class Broken:
         def bind_tools(self, tools):

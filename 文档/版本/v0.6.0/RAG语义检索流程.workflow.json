@@ -1,0 +1,158 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "RAG 语义检索：权限过滤、切块、固定模型与明确回退",
+    "locale": "zh-CN",
+    "subtitle": "先过滤可见资料，再切块并交给固定版本中文模型；模型不可用时明确回退并在札记显示提示。",
+    "output": "文档/版本/v0.6.0/RAG语义检索流程.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/nhh37740-glitch/langrensha-agent.git",
+      "revision": "9ba0d3b914091fcf16789f5716f07a98e50dc016",
+      "provider": "github"
+    }
+  },
+  "lanes": [
+    { "id": "page", "label": "页面与请求" },
+    { "id": "guard", "label": "权限前置" },
+    { "id": "index", "label": "切块与索引" },
+    { "id": "model", "label": "固定轻量模型" },
+    { "id": "result", "label": "召回与降级" }
+  ],
+  "phases": [
+    { "id": "visible", "label": "只取可见资料", "fromCol": 0, "toCol": 1, "variant": "security" },
+    { "id": "prepare", "label": "切块并建临时索引", "fromCol": 2, "toCol": 3 },
+    { "id": "recall", "label": "语义召回或明确回退", "fromCol": 4, "toCol": 5, "variant": "emphasis" }
+  ],
+  "mainPath": ["query", "view", "chunk", "index", "model", "semantic", "render"],
+  "nodes": [
+    {
+      "id": "query",
+      "lane": "page",
+      "col": 0,
+      "type": "frontend",
+      "label": "① 翻阅札记",
+      "sublabel": "main.js:333-374 · 提交问题",
+      "sources": [{ "path": "前端/src/main.js", "line": 333, "end_line": 374 }]
+    },
+    {
+      "id": "view",
+      "lane": "guard",
+      "col": 1,
+      "type": "security",
+      "label": "② 先取受限视图",
+      "sublabel": "player_view 过滤事件与观众",
+      "sources": [
+        { "path": "src/langrensha/full_game.py", "line": 460, "end_line": 515 },
+        { "path": "src/langrensha/retrieval.py", "line": 219, "end_line": 267 }
+      ]
+    },
+    {
+      "id": "chunk",
+      "lane": "index",
+      "col": 2,
+      "type": "backend",
+      "label": "③ 按句读/事件切块",
+      "sublabel": "≤300 字符 · 保留来源/座位/时间",
+      "sources": [{ "path": "src/langrensha/retrieval.py", "line": 55, "end_line": 129 }]
+    },
+    {
+      "id": "index",
+      "lane": "index",
+      "col": 3,
+      "type": "backend",
+      "label": "④ 临时语义索引",
+      "sublabel": "SemanticIndex.build · 每查询重建",
+      "sources": [{ "path": "src/langrensha/retrieval.py", "line": 151, "end_line": 180 }]
+    },
+    {
+      "id": "model",
+      "lane": "model",
+      "col": 4,
+      "type": "backend",
+      "label": "⑤ 固定中文向量模型",
+      "sublabel": "Qdrant BGE-small-zh · ONNX CPU · 固定 SHA",
+      "sources": [
+        { "path": "src/langrensha/semantic.py", "line": 12, "end_line": 28 },
+        { "path": "src/langrensha/semantic.py", "line": 108, "end_line": 150 },
+        { "path": "src/langrensha/semantic.py", "line": 223, "end_line": 237 }
+      ]
+    },
+    {
+      "id": "semantic",
+      "lane": "result",
+      "col": 4,
+      "type": "backend",
+      "label": "⑥ 语义召回",
+      "sublabel": "余弦≥0.40 · 排序去重 · 原文出处",
+      "sources": [
+        { "path": "src/langrensha/retrieval.py", "line": 132, "end_line": 150 },
+        { "path": "src/langrensha/retrieval.py", "line": 313, "end_line": 315 }
+      ]
+    },
+    {
+      "id": "fallback",
+      "lane": "result",
+      "col": 5,
+      "type": "security",
+      "label": "模型不可用：词项回退",
+      "sublabel": "lexical_fallback + warning · 同一受限文档集",
+      "sources": [
+        { "path": "src/langrensha/retrieval.py", "line": 169, "end_line": 180 },
+        { "path": "src/langrensha/retrieval.py", "line": 313, "end_line": 315 }
+      ]
+    },
+    {
+      "id": "render",
+      "lane": "page",
+      "col": 5,
+      "type": "frontend",
+      "label": "⑦ 显示札记与提示",
+      "sublabel": "正常查询清除旧提示",
+      "sources": [
+        { "path": "前端/src/main.js", "line": 350, "end_line": 370 },
+        { "path": "前端/index.html", "line": 185, "end_line": 192 }
+      ]
+    }
+  ],
+  "edges": [
+    { "id": "ask", "from": "query", "to": "view", "label": "提问", "variant": "default", "role": "main" },
+    { "id": "visible", "from": "view", "to": "chunk", "label": "仅可见文档", "variant": "security", "role": "main" },
+    { "id": "split", "from": "chunk", "to": "index", "label": "边界切块", "variant": "default", "role": "main" },
+    { "id": "vectorize", "from": "index", "to": "model", "label": "固定版本向量化", "variant": "emphasis", "role": "main" },
+    { "id": "score", "from": "model", "to": "semantic", "label": "512 维余弦", "variant": "emphasis", "role": "main" },
+    { "id": "rank", "from": "semantic", "to": "render", "label": "≥0.40 命中 + 出处", "variant": "default", "role": "main" },
+    { "id": "unavailable", "from": "model", "to": "fallback", "label": "缺失/校验失败", "variant": "security", "role": "error" },
+    { "id": "degraded", "from": "fallback", "to": "render", "label": "warning + 词项结果", "variant": "dashed", "role": "error" }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "权限先行",
+      "items": [
+        "先由 player_view 过滤世界书、身份指导与事件，再进入切块与索引",
+        "块保留来源、世界/对局、说话人、回合、事件时间与可见座位",
+        "狼人私聊、他人星兆和其他对局不会进入当前检索"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "固定与回退",
+      "items": [
+        "模型固定为 Qdrant/BAAI BGE-small-zh-v1.5 ONNX，权重不入 Git，下载后校验 SHA-256",
+        "模型缺失或损坏时标为 lexical_fallback 并返回 warning，不伪造向量",
+        "前端只在 warning 存在时显示“语义检索暂不可用，已改用关键词检索。”，正常查询清除旧提示"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "本 Issue 实测",
+      "items": [
+        "零字面重叠的同义问法能召回铁匠证词",
+        "60 条短文本耗时约 152～262ms，峰值内存约 231～238MB（5 vCPU）",
+        "测试覆盖角色指导隔离、跨局私聊隔离、模型缺失/损坏回退与降级提示"
+      ]
+    }
+  ]
+}

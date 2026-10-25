@@ -8,6 +8,12 @@ import uvicorn
 
 from langrensha.web import create_app
 
+# 浏览器测试固定走模型缺失分支，避免本机缓存或外部下载影响 UI 断言。
+os.environ["LANGRENSHA_MODEL_DIR"] = str(
+    Path(__file__).resolve().parents[1] / "临时/浏览器测试/无模型"
+)
+os.environ["LANGRENSHA_RAG_OFFLINE"] = "1"
+
 
 class OfflineRunner:
     def run(self, session, persona):

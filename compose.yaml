@@ -9,7 +9,9 @@ services:
       COOKIE_SECURE: ${COOKIE_SECURE:-true}
     volumes:
       - town-data:/data
+      - town-models:/home/town/.cache/langrensha
     restart: unless-stopped
     stop_grace_period: 45s
 volumes:
   town-data:
+  town-models:
