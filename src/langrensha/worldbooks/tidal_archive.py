@@ -36,6 +36,16 @@ WORLDBOOK = {
             "visibility": "public",
         },
         {
+            "id": "world:tidal_archive:blindflat",
+            "title": "潮汐档案馆·盲潮滩",
+            "text": (
+                "盲潮滩在退潮时露出泥脊，雾天听不见回声。拾痕人凭鸟声、水流与脚下泥温辨路；"
+                "不熟潮路的人容易绕回原处，等发现时潮水已经从身后合拢。滩上散落着被潮水磨白的"
+                "旧木牌，多半已看不出名字。"
+            ),
+            "visibility": "public",
+        },
+        {
             "id": "world:tidal_archive:archive",
             "title": "潮汐档案馆·盐雾书库",
             "text": (
@@ -115,11 +125,31 @@ WORLDBOOK = {
             "visibility": "public",
         },
         {
+            "id": "world:tidal_archive:saltworks",
+            "title": "潮汐档案馆·盐屿盐灶",
+            "text": (
+                "盐屿的盐灶熬卤取盐，供灯油、腌鱼与药铺。盐工按潮窗收盐，账目向岛民公开；"
+                "药铺另有不在公开账目上的小囊，只有盐药师自己知道里面装什么。盐灶的烟从不断，"
+                "岛民说那是岛上唯一不分昼夜的钟。"
+            ),
+            "visibility": "public",
+        },
+        {
             "id": "world:tidal_archive:clock",
             "title": "潮汐档案馆·执时人",
             "text": (
                 "议事时众人可推举一名执时人保管潮钟钥匙。执时人最后陈述，逐离表决时一票计一票半；"
                 "离开册屿时可把钥匙交给在场者，或投入验潮井。钥匙沉井后，本轮不再推举新的执时人。"
+            ),
+            "visibility": "public",
+        },
+        {
+            "id": "world:tidal_archive:anchorage",
+            "title": "潮汐档案馆·回声码头与放册台",
+            "text": (
+                "回声码头是册屿唯一能停靠外来小舟的地方。码头尽头的放册台，是归潮会唱潮歌、"
+                "送原页入海的地方；台后的无名碑林插着被除名者的无字木牌。岛民在这里迎接归舟，"
+                "也在这里听离岛者最后一段公开陈述。"
             ),
             "visibility": "public",
         },
