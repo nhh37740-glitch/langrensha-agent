@@ -1,6 +1,4 @@
 import Phaser from "phaser";
-import tidalArchiveBackground from "./assets/ai/tidal-archive-lowtide.webp";
-import tidalArchivist from "./assets/ai/tidal-archivist.webp";
 import frameHyperion from "./assets/kenney/frame-hyperion.webp";
 import frameMist from "./assets/kenney/frame-mist.webp";
 import frameThreebody from "./assets/kenney/frame-threebody.webp";
@@ -9,6 +7,15 @@ import skyHyperion from "./assets/kenney/sky-hyperion.webp";
 import skyMist from "./assets/kenney/sky-mist.webp";
 import skyThreebody from "./assets/kenney/sky-threebody.webp";
 import skyTidal from "./assets/kenney/sky-tidal.webp";
+import {
+  ATLAS,
+  atlasTextureKey,
+  effectFrames,
+  iconFrame,
+  sceneTextureKey,
+  worldAsset,
+} from "./worlds/assets.js";
+import { personaSlot } from "./worlds/personas.js";
 
 // 四套世界共用一块固定舞台，只按 state.worldbook 切换天空、建筑、地面、
 // 环境动效与头像框。所有人物颜色只取服务器公开的 player.color，绝不按身份着色。
@@ -18,8 +25,22 @@ const FALLBACK_COLORS = [
   0xd6ba87, 0xf1c86d, 0x92cbd6, 0xb3a4d8, 0x80c3b5, 0xd7ad85, 0x9caec4,
   0xd99ab2, 0xa9c78b, 0xd6a0cf, 0xc9907e, 0x82b9b4,
 ];
-const PORTRAIT_SEAT = 9;
-const PORTRAIT_WORLD = "tidal_archive";
+// 人物胸像在席位框内的显示尺寸；图集按图片实际像素推导后等比裁切，不拉伸。
+const PERSONA_DISPLAY = Object.freeze({ width: 50, height: 64, y: -5 });
+// 只保留最近两个世界的纹理：当前世界 + 上一个世界，切回时无需重新下载。
+const TEXTURE_WORLD_LIMIT = 2;
+// 昼夜真实背景交叉淡化的时长；减少动效时直接切换。
+const SCENE_FADE_MS = 900;
+const EFFECT_FRAME_MS = 80;
+const EFFECT_DISPLAY = 104;
+// 席位容器深度约为 10+486/8≈71；效果层必须在其上，否则会被头像框整个盖住。
+const FX_DEPTH = 76;
+const VEIL_DEPTH = 92;
+const ATLAS_PARTS = Object.freeze({
+  personas: ATLAS.personas,
+  icons: ATLAS.icons,
+  effects: ATLAS.effects,
+});
 const EFFECT_COLORS = {
   vision: 0x9dc4ff,
   potion: 0x9ed0a4,
@@ -32,7 +53,7 @@ const SKY_KEYS = {
   mist: "sky-mist",
   hyperion: "sky-hyperion",
   threebody: "sky-threebody",
-  tidal_archive: "bg-tidal",
+  tidal_archive: "sky-tidal",
 };
 const FRAME_KEYS = {
   mist: "frame-mist",
@@ -45,12 +66,10 @@ const TEXTURE_URLS = {
   "sky-hyperion": skyHyperion,
   "sky-threebody": skyThreebody,
   "sky-tidal": skyTidal,
-  "bg-tidal": tidalArchiveBackground,
   "frame-mist": frameMist,
   "frame-hyperion": frameHyperion,
   "frame-threebody": frameThreebody,
   "frame-tidal": frameTidal,
-  "portrait-tidal-archivist": tidalArchivist,
 };
 
 const WORLD = {
@@ -141,6 +160,15 @@ class WorldScene extends Phaser.Scene {
     this.previewWorld = null;
     this.profile = WORLD.mist;
     this.skyImage = null;
+    this.backgroundDay = null;
+    this.backgroundNight = null;
+    this.backgroundTween = null;
+    this.phaseIcon = null;
+    this.worldAssets = new Map();
+    this.loadingTextures = new Map();
+    this.textureWorlds = [];
+    this.effectTimers = [];
+    this.destroyed = false;
   }
 
   preload() {
@@ -157,6 +185,151 @@ class WorldScene extends Phaser.Scene {
     return Boolean(key) && !this.failedTextures.has(key) && this.textures.exists(key);
   }
 
+  /* ---------- 世界资源懒加载与纹理保留 ---------- */
+
+  // Vite 只把真实存在的素材写进 glob；这里按需加载当前世界，未交接的槽位
+  // 仍为 null，不请求、不伪造，直接走 scene.js 原有兜底。
+  ensureWorldAssets(worldId) {
+    const id = normalizeWorld(worldId);
+    if (!this.worldAssets.has(id)) {
+      this.worldAssets.set(id, worldAsset(id));
+    }
+    const asset = this.worldAssets.get(id);
+    const parts = [
+      ["day", sceneTextureKey(id, false), asset.day, "scene"],
+      ["night", sceneTextureKey(id, true), asset.night, "scene"],
+      ["personas", atlasTextureKey(id, "personas"), asset.personas, "personas"],
+      ["icons", atlasTextureKey(id, "icons"), asset.icons, "icons"],
+      ["effects", atlasTextureKey(id, "effects"), asset.effects, "effects"],
+    ];
+    parts.forEach(([kind, key, url, mode]) => {
+      this.loadWorldTexture(id, key, url, mode, kind);
+    });
+  }
+
+  loadWorldTexture(worldId, key, url, mode, kind) {
+    if (
+      !url ||
+      !key ||
+      this.destroyed ||
+      this.hasTexture(key) ||
+      this.failedTextures.has(key) ||
+      this.loadingTextures.has(key)
+    ) {
+      return;
+    }
+    const image = new Image();
+    this.loadingTextures.set(key, image);
+    image.onload = () => {
+      this.loadingTextures.delete(key);
+      if (this.destroyed) return;
+      if (!image.naturalWidth || !image.naturalHeight) {
+        this.failedTextures.add(key);
+        return;
+      }
+      let texture = null;
+      try {
+        const spec = ATLAS_PARTS[mode];
+        if (spec) {
+          // 交接图集可能不是接口示例的标称尺寸（如 1086×1448 → 362/格）；
+          // 一律按实际像素推导单元格，避免硬编码切片错位。
+          const frameWidth = Math.max(1, Math.floor(image.naturalWidth / spec.columns));
+          const frameHeight = Math.max(1, Math.floor(image.naturalHeight / spec.rows));
+          texture = this.textures.addSpriteSheet(key, image, {
+            frameWidth,
+            frameHeight,
+          });
+        } else {
+          texture = this.textures.addImage(key, image);
+        }
+      } catch {
+        texture = null;
+      }
+      if (!texture) {
+        this.failedTextures.add(key);
+        return;
+      }
+      // 快速切换世界时，旧世界的图片可能在淘汰后才加载完成；立刻回收，
+      // 避免缓存里留下无人管理的纹理。
+      if (!this.textureWorlds.includes(worldId)) {
+        this.releaseWorldTextures(worldId);
+        return;
+      }
+      this.afterWorldTexture(worldId, kind);
+    };
+    image.onerror = () => {
+      this.loadingTextures.delete(key);
+      if (!this.destroyed) this.failedTextures.add(key);
+    };
+    image.src = url;
+  }
+
+  afterWorldTexture(worldId, kind) {
+    if (this.destroyed || !this.ready || worldId !== this.worldId) return;
+    if (kind === "day" || kind === "night") {
+      this.drawWorld(Boolean(this.night), false);
+    } else if (kind === "personas") {
+      this.refreshPeople();
+    } else if (kind === "icons") {
+      this.refreshPeople();
+      this.updatePhaseIcon();
+    }
+  }
+
+  hasWorldTexture(worldId, kind) {
+    if (kind === "day" || kind === "night") {
+      return this.hasTexture(sceneTextureKey(worldId, kind === "night"));
+    }
+    return this.hasTexture(atlasTextureKey(worldId, kind));
+  }
+
+  retainWorldTextures(worldId) {
+    this.textureWorlds = [
+      worldId,
+      ...this.textureWorlds.filter((id) => id !== worldId),
+    ];
+    const evicted = this.textureWorlds.slice(TEXTURE_WORLD_LIMIT);
+    this.textureWorlds = this.textureWorlds.slice(0, TEXTURE_WORLD_LIMIT);
+    evicted.forEach((id) => this.releaseWorldTextures(id));
+  }
+
+  releaseWorldTextures(worldId) {
+    if (!worldId || worldId === this.worldId) return;
+    const keys = [
+      sceneTextureKey(worldId, false),
+      sceneTextureKey(worldId, true),
+      atlasTextureKey(worldId, "personas"),
+      atlasTextureKey(worldId, "icons"),
+      atlasTextureKey(worldId, "effects"),
+    ];
+    keys.forEach((key) => {
+      if (this.hasTexture(key) && !this.textureInUse(key)) {
+        this.textures.remove(key);
+      }
+    });
+  }
+
+  textureInUse(key) {
+    if (!key) return false;
+    const images = [
+      this.skyImage,
+      this.backgroundDay,
+      this.backgroundNight,
+      this.phaseIcon,
+    ];
+    this.people.forEach((person) => {
+      [
+        person.portrait,
+        person.statusIcon,
+        person.youIcon,
+        person.sheriffIcon,
+      ].forEach((image) => {
+        if (image) images.push(image);
+      });
+    });
+    return images.some((image) => image.texture && image.texture.key === key);
+  }
+
   create() {
     this.cameras.main.setBackgroundColor("#050b10");
     this.buildLayers();
@@ -170,8 +343,17 @@ class WorldScene extends Phaser.Scene {
     if (this.state) this.applyState(this.state);
     else this.drawEmptyPeople();
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.destroyed = true;
       this.motionTweens.forEach((tween) => tween.stop());
       this.motionTweens = [];
+      this.effectTimers.forEach((timer) => timer.remove(false));
+      this.effectTimers = [];
+      this.loadingTextures.forEach((image) => {
+        image.onload = null;
+        image.onerror = null;
+      });
+      this.loadingTextures.clear();
+      if (this.backgroundTween) this.backgroundTween.stop();
     });
   }
 
@@ -182,9 +364,18 @@ class WorldScene extends Phaser.Scene {
     if (initialSky) {
       this.skyImage = this.add
         .image(WIDTH / 2, HEIGHT / 2, initialSky)
-        .setDepth(1)
+        .setDepth(0.8)
         .setVisible(false);
     }
+    // 真实昼夜背景分两层叠放：稳定在底层，上层只做透明度交叉淡化。
+    this.backgroundDay = this.add
+      .image(WIDTH / 2, HEIGHT / 2)
+      .setDepth(1)
+      .setVisible(false);
+    this.backgroundNight = this.add
+      .image(WIDTH / 2, HEIGHT / 2)
+      .setDepth(1.05)
+      .setVisible(false);
     this.tintG = this.add.graphics().setDepth(1.2);
     this.celestialG = this.add.graphics().setDepth(2);
     this.farG = this.add.graphics().setDepth(3);
@@ -193,7 +384,7 @@ class WorldScene extends Phaser.Scene {
     this.groundG = this.add.graphics().setDepth(6);
     this.detailG = this.add.graphics().setDepth(7);
     this.ambient = this.add.container(0, 0).setDepth(8);
-    this.fx = this.add.container(0, 0).setDepth(30);
+    this.fx = this.add.container(0, 0).setDepth(FX_DEPTH);
     this.worldTag = this.add
       .text(WIDTH - 20, 40, "", {
         fontFamily: '"Songti SC", "Noto Serif CJK SC", serif',
@@ -204,9 +395,14 @@ class WorldScene extends Phaser.Scene {
       .setOrigin(1, 0)
       .setDepth(31)
       .setAlpha(0.82);
+    this.phaseIcon = this.add
+      .image(WIDTH - 28, 66)
+      .setDepth(31)
+      .setAlpha(0.9)
+      .setVisible(false);
     this.veil = this.add
       .rectangle(WIDTH / 2, HEIGHT / 2, WIDTH, HEIGHT, 0x000000, 0)
-      .setDepth(40);
+      .setDepth(VEIL_DEPTH);
   }
 
   buildPeople() {
@@ -214,13 +410,9 @@ class WorldScene extends Phaser.Scene {
     for (let i = 0; i < 12; i++) {
       const halo = this.add.graphics();
       const body = this.add.graphics();
-      let portrait = null;
-      if (this.hasTexture("portrait-tidal-archivist")) {
-        portrait = this.add
-          .image(0, -7, "portrait-tidal-archivist")
-          .setDisplaySize(46, 49)
-          .setVisible(false);
-      }
+      // 人物图集是懒加载的，先建占位 Image（默认纹理隐藏）；加载完成或切世界
+      // 时由 drawPerson 按公开席位/姓名换成对应帧。
+      const portrait = this.add.image(0, 0).setVisible(false);
       let frame = null;
       if (anyFrame) {
         frame = this.add
@@ -230,6 +422,9 @@ class WorldScene extends Phaser.Scene {
       }
       const frameG = this.add.graphics();
       const badge = this.add.graphics();
+      const statusIcon = this.add.image(0, 0).setVisible(false);
+      const youIcon = this.add.image(0, 0).setVisible(false);
+      const sheriffIcon = this.add.image(0, 0).setVisible(false);
       const label = this.add
         .text(0, 40, "", {
           fontFamily: '"Songti SC", "Noto Serif CJK SC", serif',
@@ -237,10 +432,16 @@ class WorldScene extends Phaser.Scene {
           color: "#cdbf9c",
         })
         .setOrigin(0.5);
-      const children = [halo, body];
-      if (portrait) children.push(portrait);
+      const children = [halo, body, portrait];
       if (frame) children.push(frame);
-      children.push(frameG, badge, label);
+      children.push(
+        frameG,
+        badge,
+        statusIcon,
+        youIcon,
+        sheriffIcon,
+        label,
+      );
       const container = this.add.container(0, 0, children);
       this.people.push({
         container,
@@ -250,6 +451,9 @@ class WorldScene extends Phaser.Scene {
         frame,
         frameG,
         badge,
+        statusIcon,
+        youIcon,
+        sheriffIcon,
         label,
         seat: i + 1,
       });
@@ -282,15 +486,117 @@ class WorldScene extends Phaser.Scene {
       .setVisible(true);
   }
 
+  fitBackground(image, key) {
+    const source = this.textures.get(key)?.getSourceImage();
+    if (!source || !source.width || !source.height) return false;
+    const scale = Math.max(WIDTH / source.width, HEIGHT / source.height);
+    image
+      .setTexture(key)
+      .setScale(scale)
+      .setPosition(WIDTH / 2, HEIGHT / 2)
+      .clearTint()
+      .setVisible(true);
+    return true;
+  }
+
+  // 隐藏时同时清掉纹理引用，否则被淘汰世界的纹理会被隐藏图片“占用”而无法释放。
+  clearImageTexture(image) {
+    if (!image) return;
+    image.setVisible(false);
+    if (image.texture && image.texture.key !== "__DEFAULT") {
+      image.setTexture("__DEFAULT");
+    }
+  }
+
+  hideBackgrounds() {
+    if (this.backgroundTween) {
+      this.backgroundTween.stop();
+      this.backgroundTween = null;
+    }
+    if (this.backgroundDay) {
+      this.backgroundDay.setAlpha(0);
+      this.clearImageTexture(this.backgroundDay);
+    }
+    if (this.backgroundNight) {
+      this.backgroundNight.setAlpha(0);
+      this.clearImageTexture(this.backgroundNight);
+    }
+  }
+
+  // 返回 true 表示当前世界已用真实场景图，程序化绘制整体让位；
+  // 只有单张时复用该图并用明暗色偏表现另一时段，不混用照片与画笔。
+  updateSceneBackground(night, animate = true) {
+    if (!this.backgroundDay || !this.backgroundNight) return false;
+    const dayKey = sceneTextureKey(this.worldId, false);
+    const nightKey = sceneTextureKey(this.worldId, true);
+    const dayReady = this.hasTexture(dayKey);
+    const nightReady = this.hasTexture(nightKey);
+    if (!dayReady && !nightReady) {
+      this.hideBackgrounds();
+      return false;
+    }
+    if (this.skyImage) this.skyImage.setVisible(false);
+    if (dayReady && nightReady) {
+      if (!this.fitBackground(this.backgroundDay, dayKey)) return false;
+      if (!this.fitBackground(this.backgroundNight, nightKey)) return false;
+      this.backgroundDay.setVisible(true);
+      this.backgroundNight.setVisible(true);
+      if (this.backgroundTween) {
+        this.backgroundTween.stop();
+        this.backgroundTween = null;
+      }
+      if (!animate || this.reducedMotion) {
+        this.backgroundDay.setAlpha(night ? 0 : 1);
+        this.backgroundNight.setAlpha(night ? 1 : 0);
+        return true;
+      }
+      // 用代理值同时驱动两层 alpha：上层淡入多少，底层就淡出多少。
+      const state = { value: this.backgroundNight.alpha };
+      const day = this.backgroundDay;
+      const nightLayer = this.backgroundNight;
+      this.backgroundTween = this.tweens.add({
+        targets: state,
+        value: night ? 1 : 0,
+        duration: SCENE_FADE_MS,
+        ease: "Sine.easeInOut",
+        onUpdate: () => {
+          day.setAlpha(1 - state.value);
+          nightLayer.setAlpha(state.value);
+        },
+        onComplete: () => {
+          this.backgroundTween = null;
+        },
+      });
+      return true;
+    }
+    const onlyDay = dayReady;
+    const key = onlyDay ? dayKey : nightKey;
+    const image = onlyDay ? this.backgroundDay : this.backgroundNight;
+    const other = onlyDay ? this.backgroundNight : this.backgroundDay;
+    if (this.backgroundTween) {
+      this.backgroundTween.stop();
+      this.backgroundTween = null;
+    }
+    other.setAlpha(0);
+    this.clearImageTexture(other);
+    if (!this.fitBackground(image, key)) return false;
+    image.setAlpha(1);
+    if (night && onlyDay) {
+      image.setTint(0x8290a6);
+      this.tintG.fillStyle(0x06121a, 0.18);
+      this.tintG.fillRect(0, 0, WIDTH, HEIGHT);
+    } else if (!night && !onlyDay) {
+      image.setTint(0xffe3bd);
+      this.tintG.fillStyle(0xffe9c8, 0.16);
+      this.tintG.fillRect(0, 0, WIDTH, HEIGHT);
+    }
+    return true;
+  }
+
   updateSkyImage(night) {
     if (!this.skyImage) return;
     const key = SKY_KEYS[this.worldId];
-    const fallbackKey = this.worldId === "tidal_archive" ? "sky-tidal" : null;
-    const visibleKey = this.hasTexture(key)
-      ? key
-      : fallbackKey && this.hasTexture(fallbackKey)
-        ? fallbackKey
-        : null;
+    const visibleKey = this.hasTexture(key) ? key : null;
     if (!visibleKey) {
       this.skyImage.setVisible(false);
       return;
@@ -305,23 +611,30 @@ class WorldScene extends Phaser.Scene {
 
   setWorld(worldId, animate = true) {
     const id = normalizeWorld(worldId);
-    if (this.worldId === id) return;
+    if (this.worldId === id) {
+      this.ensureWorldAssets(id);
+      return;
+    }
     const previous = this.worldId;
     this.worldId = id;
     this.profile = WORLD[id];
-    this.drawWorld(Boolean(this.night));
+    this.ensureWorldAssets(id);
+    this.drawWorld(Boolean(this.night), false);
     this.positionPeople();
     this.buildAmbient(id);
     this.applyFrames();
     this.refreshPeople();
     this.updateWorldTag();
+    this.updatePhaseIcon();
+    this.retainWorldTextures(id);
     if (this.ready && previous && animate && !this.reducedMotion) {
       this.flash(this.profile.flash, 0.26);
     }
   }
 
-  drawWorld(night) {
+  drawWorld(night, animateBackground = true) {
     this.clearGraphics();
+    if (this.updateSceneBackground(night, animateBackground)) return;
     this.updateSkyImage(night);
     const painter = {
       mist: this.drawMist,
@@ -362,7 +675,9 @@ class WorldScene extends Phaser.Scene {
         you: false,
         sheriff: false,
         color: FALLBACK_COLORS[index],
-        name: index === PORTRAIT_SEAT - 1 ? "墨篱" : "",
+        name: "",
+        // 尚未开局时按公开席位预览本世界人物；只有素材存在时才显示。
+        preview: true,
       });
     });
   }
@@ -470,6 +785,24 @@ class WorldScene extends Phaser.Scene {
     this.worldTag.setText(`${this.profile.name} · ${this.profile.place}${ending}`);
     this.worldTag.setColor(this.profile.tagColor);
     this.worldTag.setFontFamily(this.profile.font);
+  }
+
+  // 昼夜图标只用公开 phase；素材缺失时不画，页面原有的 phase-chip 仍是兜底。
+  updatePhaseIcon() {
+    if (!this.phaseIcon) return;
+    const key = this.hasWorldTexture(this.worldId, "icons")
+      ? atlasTextureKey(this.worldId, "icons")
+      : null;
+    const frame = iconFrame(this.night ? "night" : "day");
+    if (!key || frame < 0) {
+      this.clearImageTexture(this.phaseIcon);
+      return;
+    }
+    this.phaseIcon
+      .setTexture(key, frame)
+      .setDisplaySize(20, 20)
+      .setAlpha(0.9)
+      .setVisible(true);
   }
 
   /* ---------- 雾钟镇 ---------- */
@@ -1290,15 +1623,10 @@ class WorldScene extends Phaser.Scene {
     if (night) g.fillGradientStyle(0x041616, 0x071d1e, 0x123a37, 0x1f4a50, 1);
     else g.fillGradientStyle(0x2f6b65, 0x46877d, 0x8fb6a6, 0xa9c8b8, 1);
     g.fillRect(0, 0, WIDTH, HEIGHT);
-    const photo = this.hasTexture("bg-tidal");
-    if (photo) {
-      this.tintG.fillStyle(night ? 0x041a1c : 0xffefd0, night ? 0.18 : 0.06);
-      this.tintG.fillRect(0, 0, WIDTH, HEIGHT);
-    }
     this.drawStars(34, night ? 0.55 : 0.04, 17);
-    this.drawTidalMoon(night, photo);
-    if (!photo) this.drawTidalFallback(night);
-    this.drawTidalWater(night, photo);
+    this.drawTidalMoon(night, false);
+    this.drawTidalFallback(night);
+    this.drawTidalWater(night, false);
     this.drawTidalForeground(night);
   }
 
@@ -1566,7 +1894,8 @@ class WorldScene extends Phaser.Scene {
     if (this.night === night) return;
     const first = this.night === null;
     this.night = night;
-    this.drawWorld(night);
+    this.drawWorld(night, animate && !first);
+    this.updatePhaseIcon();
     if (first || !animate || this.reducedMotion) return;
     this.flash(night ? this.profile.flash : 0xf1e6c8, 0.3);
   }
@@ -1574,7 +1903,19 @@ class WorldScene extends Phaser.Scene {
   drawPerson(seat, info) {
     const parts = this.people[seat - 1];
     if (!parts) return;
-    const { body, halo, badge, label, container, frame, frameG, portrait } = parts;
+    const {
+      body,
+      halo,
+      badge,
+      label,
+      container,
+      frame,
+      frameG,
+      portrait,
+      statusIcon,
+      youIcon,
+      sheriffIcon,
+    } = parts;
     const base = colorOf(info.color, FALLBACK_COLORS[(seat - 1) % 12]);
     const dark = shade(base, 0.42);
     const mid = shade(base, 0.7);
@@ -1658,19 +1999,16 @@ class WorldScene extends Phaser.Scene {
     }
 
     const personName = typeof info.name === "string" ? info.name : "";
-    const hasPortrait =
-      this.worldId === PORTRAIT_WORLD &&
-      seat === PORTRAIT_SEAT &&
-      (!personName || personName.includes("墨篱")) &&
-      Boolean(portrait) &&
-      this.hasTexture("portrait-tidal-archivist");
-    if (portrait) {
-      portrait.setVisible(hasPortrait);
-      if (hasPortrait) {
-        portrait.setAlpha(info.alive ? 1 : 0.5);
-        if (info.alive) portrait.clearTint();
-        else portrait.setTint(0x7f8f8a);
-      }
+    const personaKey = atlasTextureKey(this.worldId, "personas");
+    // 只按服务器公开的 seat + 姓名绑定；姓名不匹配或素材缺失都回退程序化头像。
+    const slot = personaSlot(this.worldId, seat, personName, {
+      allowSeatOnly: Boolean(info.preview),
+    });
+    if (slot !== null && this.hasTexture(personaKey)) {
+      this.fitPersonaPortrait(portrait, personaKey, slot, info.alive);
+    } else {
+      // 姓名未知或图集缺失：直接回退到既有程序化头像，不保留旧版单张立绘。
+      this.clearImageTexture(portrait);
     }
 
     const frameAvailable = this.hasTexture(FRAME_KEYS[this.worldId]);
@@ -1687,16 +2025,52 @@ class WorldScene extends Phaser.Scene {
 
     label.setText(String(seat));
     label.setFontFamily(this.profile.font);
-    halo.setVisible(Boolean(info.you) && Boolean(info.alive));
-    if (info.you && info.alive) {
+    const iconKey = this.hasWorldTexture(this.worldId, "icons")
+      ? atlasTextureKey(this.worldId, "icons")
+      : "";
+    const hasYouIcon = this.setSeatIcon(
+      youIcon,
+      iconKey,
+      "you",
+      -21,
+      -44,
+      17,
+      Boolean(info.you),
+    );
+    const hasSheriffIcon = this.setSeatIcon(
+      sheriffIcon,
+      iconKey,
+      "sheriff",
+      21,
+      -44,
+      17,
+      Boolean(info.sheriff),
+    );
+    const hasStatusIcon = this.setSeatIcon(
+      statusIcon,
+      iconKey,
+      info.alive ? "alive" : "dead",
+      -20,
+      22,
+      13,
+      true,
+    );
+    if (hasStatusIcon) {
+      statusIcon.setAlpha(info.alive ? 0.82 : 0.68);
+    }
+    // 图标未命中时才用原有的光环/圆点，保证缺图世界仍能看出本人与执铃人。
+    halo.setVisible(Boolean(info.you) && Boolean(info.alive) && !hasYouIcon);
+    if (info.you && info.alive && !hasYouIcon) {
       const accent = this.profile.accent;
       halo.lineStyle(2, accent, 0.9);
       halo.strokeCircle(0, 2, 38);
       halo.fillStyle(accent, 0.3);
       halo.fillCircle(0, 48, 3);
     }
-    badge.setVisible(Boolean(info.sheriff) && Boolean(info.alive));
-    if (info.sheriff && info.alive) {
+    badge.setVisible(
+      Boolean(info.sheriff) && Boolean(info.alive) && !hasSheriffIcon,
+    );
+    if (info.sheriff && info.alive && !hasSheriffIcon) {
       const accent = this.profile.accent;
       badge.fillStyle(accent, 0.95);
       badge.fillCircle(19, -45, 5);
@@ -1704,6 +2078,46 @@ class WorldScene extends Phaser.Scene {
       badge.lineBetween(19, -50, 19, -53);
     }
     container.setAlpha(info.alive ? 1 : 0.48);
+  }
+
+  // 图集实际尺寸由图片推导；这里按单元格等比 cover 到席位框，避免拉伸。
+  fitPersonaPortrait(image, key, frameIndex, alive) {
+    const texture = this.textures.get(key);
+    if (!texture || !texture.has(frameIndex)) {
+      this.clearImageTexture(image);
+      return;
+    }
+    image.setTexture(key, frameIndex);
+    const frame = image.frame;
+    if (!frame || !frame.width || !frame.height) {
+      this.clearImageTexture(image);
+      return;
+    }
+    const scale = Math.max(
+      PERSONA_DISPLAY.width / frame.width,
+      PERSONA_DISPLAY.height / frame.height,
+    );
+    image
+      .setScale(scale)
+      .setPosition(0, PERSONA_DISPLAY.y)
+      .setAlpha(alive ? 1 : 0.5)
+      .setVisible(true);
+    if (alive) image.clearTint();
+    else image.setTint(0x77837e);
+  }
+
+  setSeatIcon(image, key, frameName, x, y, size, visible) {
+    const frame = iconFrame(frameName);
+    if (!visible || !key || frame < 0 || !this.hasTexture(key)) {
+      this.clearImageTexture(image);
+      return false;
+    }
+    image
+      .setTexture(key, frame)
+      .setDisplaySize(size, size)
+      .setPosition(x, y)
+      .setVisible(true);
+    return true;
   }
 
   drawCostume(seat, dark, mid) {
@@ -1827,6 +2241,15 @@ class WorldScene extends Phaser.Scene {
   playEffect(entry) {
     const actor = this.people[(entry.actor || 1) - 1];
     if (!actor) return;
+    const effectKey = this.hasWorldTexture(this.worldId, "effects")
+      ? atlasTextureKey(this.worldId, "effects")
+      : "";
+    const frames = effectFrames(entry.effect);
+    if (effectKey && frames.length) {
+      this.playAtlasEffect(actor, effectKey, frames);
+      return;
+    }
+    // 动效图集未交接时保留原有圆环 + 粒子的程序化反馈。
     const color = EFFECT_COLORS[entry.effect] || this.profile.accent;
     const { x, y } = actor.container;
     const ring = this.add.circle(x, y - 6, 14, color, 0).setStrokeStyle(2, color, 0.9);
@@ -1872,6 +2295,50 @@ class WorldScene extends Phaser.Scene {
         onComplete: () => mist.destroy(),
       });
     }
+  }
+
+  playAtlasEffect(actor, key, frames) {
+    const { x, y } = actor.container;
+    const sprite = this.add
+      .image(x, y - 10, key, frames[0])
+      .setDepth(31)
+      .setDisplaySize(EFFECT_DISPLAY, EFFECT_DISPLAY);
+    this.fx.add(sprite);
+    if (this.reducedMotion) {
+      // 减少动效：只显示一帧静态反馈，不做缩放、位移或逐帧播放。
+      sprite
+        .setFrame(frames[Math.floor(frames.length / 2)])
+        .setAlpha(0.9);
+      const timer = this.time.delayedCall(700, () => {
+        if (sprite.active) sprite.destroy();
+        this.effectTimers = this.effectTimers.filter((item) => item !== timer);
+      });
+      this.effectTimers.push(timer);
+      return;
+    }
+    let index = 0;
+    const timer = this.time.addEvent({
+      delay: EFFECT_FRAME_MS,
+      repeat: frames.length - 1,
+      callback: () => {
+        if (!sprite.active) return;
+        index = Math.min(index + 1, frames.length - 1);
+        sprite.setFrame(frames[index]);
+      },
+    });
+    this.effectTimers.push(timer);
+    this.tweens.add({
+      targets: sprite,
+      alpha: 0,
+      delay: EFFECT_FRAME_MS * frames.length + 120,
+      duration: 240,
+      ease: "Sine.easeIn",
+      onComplete: () => {
+        timer.remove(false);
+        this.effectTimers = this.effectTimers.filter((item) => item !== timer);
+        if (sprite.active) sprite.destroy();
+      },
+    });
   }
 
   setReducedMotion(reduced) {

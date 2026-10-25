@@ -399,6 +399,22 @@ html[data-world] .story-panel::before {
   filter: saturate(0.92) contrast(1.04);
   transform: scale(1.02);
 }
+/* 真实 cover.webp：让独立封面成为主体，收掉程序化徽记与天气层；
+   缺图时 data-cover 回到 fallback，原 CSS/SVG 主题封面原样恢复。 */
+.world-cover[data-cover="art"] .world-cover__photo {
+  opacity: 1;
+  filter: saturate(1.02) contrast(1.02);
+  transform: scale(1.01);
+}
+.world-cover[data-cover="art"] .world-cover__wash {
+  opacity: 0.32;
+}
+.world-cover[data-cover="art"] .world-cover__motif,
+.world-cover[data-cover="art"] .world-cover__seal,
+.world-cover[data-cover="art"] .world-cover__orb,
+.world-cover[data-cover="art"] .world-cover__weather {
+  display: none;
+}
 .world-cover__photo.is-missing,
 .world-cover__frame.is-missing {
   display: none;

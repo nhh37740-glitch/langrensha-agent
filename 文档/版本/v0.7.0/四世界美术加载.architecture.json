@@ -1,0 +1,342 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "四世界美术加载与公开人物绑定",
+    "subtitle": "Issue #67 实际实现：素材清单 → Vite 资源注册 → 封面/名册/昼夜/图集/动效；只按公开席位绑定，缺图显式回退。",
+    "locale": "zh-CN",
+    "output": "文档/版本/v0.7.0/四世界美术加载.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/nhh37740-glitch/langrensha-agent.git",
+      "revision": "71aedf9fae92b13e15c1ff6ec11b00909a164157",
+      "provider": "github"
+    },
+    "viewBox": [
+      900,
+      720
+    ]
+  },
+  "components": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "Web 玩家",
+      "sublabel": "桌面 / 390px",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        120,
+        60
+      ]
+    },
+    {
+      "id": "catalog",
+      "type": "frontend",
+      "label": "世界选择与详情",
+      "sublabel": "封面 / 12 人名册",
+      "pos": [
+        40,
+        140
+      ],
+      "size": [
+        170,
+        64
+      ],
+      "sources": [
+        {
+          "path": "前端/src/main.js",
+          "line": 223,
+          "end_line": 245,
+          "label": "封面注入目录卡"
+        },
+        {
+          "path": "前端/src/main.js",
+          "line": 344,
+          "end_line": 370,
+          "label": "详情公开人物名册"
+        }
+      ]
+    },
+    {
+      "id": "theme",
+      "type": "frontend",
+      "label": "封面与名册层",
+      "sublabel": "worldart.js + CSS 图集切片",
+      "pos": [
+        40,
+        420
+      ],
+      "size": [
+        170,
+        64
+      ],
+      "sources": [
+        {
+          "path": "前端/src/worldart.js",
+          "line": 796,
+          "end_line": 827,
+          "label": "独立封面与回退"
+        },
+        {
+          "path": "前端/src/worldart.js",
+          "line": 442,
+          "end_line": 478,
+          "label": "公开人物名册"
+        },
+        {
+          "path": "前端/src/worldart.js",
+          "line": 363,
+          "end_line": 385,
+          "label": "技能/状态图标切片"
+        }
+      ]
+    },
+    {
+      "id": "scene",
+      "type": "frontend",
+      "label": "Phaser 对局场景",
+      "sublabel": "昼夜 / 人物图集 / 动效",
+      "pos": [
+        250,
+        420
+      ],
+      "size": [
+        190,
+        64
+      ],
+      "sources": [
+        {
+          "path": "前端/src/scene.js",
+          "line": 191,
+          "end_line": 257,
+          "label": "按世界懒加载与图集切片"
+        },
+        {
+          "path": "前端/src/scene.js",
+          "line": 1902,
+          "end_line": 1910,
+          "label": "昼夜切换"
+        },
+        {
+          "path": "前端/src/scene.js",
+          "line": 2250,
+          "end_line": 2261,
+          "label": "动效图集或程序化回退"
+        }
+      ]
+    },
+    {
+      "id": "resourceBinding",
+      "type": "frontend",
+      "label": "公开资源与人物绑定",
+      "sublabel": "worldAsset · personaSlot · 图集帧",
+      "pos": [
+        250,
+        610
+      ],
+      "size": [
+        280,
+        64
+      ],
+      "sources": [
+        {
+          "path": "前端/src/worlds/assets.js",
+          "line": 15,
+          "end_line": 44,
+          "label": "Vite 自动发现与图集约定"
+        },
+        {
+          "path": "前端/src/worlds/assets.js",
+          "line": 94,
+          "end_line": 127,
+          "label": "worldAsset / 缺失报告"
+        },
+        {
+          "path": "前端/src/worlds/personas.js",
+          "line": 1,
+          "end_line": 39,
+          "label": "只读公开 personas"
+        }
+      ]
+    },
+    {
+      "id": "server",
+      "type": "backend",
+      "label": "服务端公开视图",
+      "sublabel": "/api/worldbooks · state.worldbook",
+      "pos": [
+        590,
+        140
+      ],
+      "size": [
+        190,
+        64
+      ],
+      "sources": [
+        {
+          "path": "src/langrensha/presentation.py",
+          "line": 407,
+          "end_line": 432,
+          "label": "目录不导出秘密字段"
+        },
+        {
+          "path": "src/langrensha/web.py",
+          "line": 100,
+          "label": "目录与建局路由"
+        }
+      ]
+    },
+    {
+      "id": "artPackage",
+      "type": "external",
+      "label": "四世界美术包",
+      "sublabel": "Codex WebP + 提示词",
+      "pos": [
+        660,
+        610
+      ],
+      "size": [
+        200,
+        64
+      ],
+      "sources": [
+        {
+          "path": "前端/src/assets/worlds/素材清单.json",
+          "line": 1,
+          "label": "来源/哈希/尺寸清单"
+        },
+        {
+          "path": "文档/版本/v0.7.0/素材提示词/mist-personas.txt",
+          "line": 1,
+          "label": "公开人物提示词"
+        }
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "浏览器 · 只接收公开视图",
+      "wraps": [
+        "user",
+        "catalog",
+        "theme",
+        "scene",
+        "resourceBinding"
+      ],
+      "pad": 20
+    },
+    {
+      "kind": "security-group",
+      "label": "受信服务端 · 公开目录与对局状态",
+      "wraps": [
+        "server"
+      ],
+      "pad": 20
+    }
+  ],
+  "connections": [
+    {
+      "id": "user-browse",
+      "from": "user",
+      "to": "catalog",
+      "label": "浏览 / 选择"
+    },
+    {
+      "id": "catalog-server",
+      "from": "catalog",
+      "to": "server",
+      "label": "GET 目录 / POST 建局",
+      "variant": "emphasis"
+    },
+    {
+      "id": "catalog-theme",
+      "from": "catalog",
+      "to": "theme",
+      "label": "applyWorldTheme",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "theme-scene",
+      "from": "theme",
+      "to": "scene",
+      "label": "世界 token"
+    },
+    {
+      "id": "server-scene",
+      "from": "server",
+      "to": "scene",
+      "label": "state.worldbook / night",
+      "variant": "dashed"
+    },
+    {
+      "id": "art-resource",
+      "from": "artPackage",
+      "to": "resourceBinding",
+      "label": "WebP + SHA-256 清单"
+    },
+    {
+      "id": "resource-scene",
+      "from": "resourceBinding",
+      "to": "scene",
+      "label": "昼夜 / 图集 / 动效 URL",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "resource-theme",
+      "from": "resourceBinding",
+      "to": "theme",
+      "label": "cover / 名册 / icons"
+    },
+    {
+      "id": "server-resource",
+      "from": "server",
+      "to": "resourceBinding",
+      "label": "公开 personas 同步",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "四世界资产",
+      "items": [
+        "封面、昼夜场景、12 人 3×4 图集、4×4 图标、6×5 动效",
+        "素材清单记录来源、SHA-256、尺寸与提示词位置",
+        "缺失槽位返回 null 并显式回退，不用占位图冒充"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "公开人物边界",
+      "items": [
+        "worldbooks personas 是唯一事实；personas.json 只公开 seat/姓名/描述/色标",
+        "图集 slot = seat − 1；姓名或席位不符回退程序化头像",
+        "不读 identity、阵营、暗牌，也不按身份换图"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "加载与回退",
+      "items": [
+        "当前世界按需加载，纹理保留最近两个世界，避免串图",
+        "昼夜交叉淡化；减少动效时直接切换",
+        "封面/图标/动效缺图时保留 CSS/SVG、文字或程序化反馈"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "验收",
+      "items": [
+        "pytest 校验三方人物映射与素材清单/图集布局",
+        "Playwright 覆盖封面、名册、对局昼夜、图标、动效与 390px",
+        "截图与真实结果写入 v0.7.0 四世界美术包文档"
+      ]
+    }
+  ]
+}

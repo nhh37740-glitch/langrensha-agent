@@ -358,6 +358,135 @@ html[data-world] .world-card[aria-pressed="true"] {
   letter-spacing: 0.4px;
 }
 
+/* 详情页公开人物名册：只用公开席位/姓名/简介/色标，头像按 personas 图集切帧。
+   图集缺失或解码失败时，头像保留姓名首字与色块，不显示破图或伪造画像。 */
+.world-detail__personas {
+  margin-top: 13px;
+  padding-top: 12px;
+  border-top: 1px solid
+    color-mix(in srgb, var(--book-accent) 22%, var(--line-soft));
+}
+
+.world-detail__personas-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 10px;
+}
+
+.world-detail__personas-head .eyebrow {
+  color: color-mix(in srgb, var(--book-accent) 82%, var(--text));
+  font-size: 10px;
+  letter-spacing: 2px;
+}
+
+.world-detail__personas-hint {
+  color: var(--muted-deep);
+  font-size: 9px;
+  line-height: 1.6;
+  letter-spacing: 0.4px;
+}
+
+.world-persona-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(138px, 100%), 1fr));
+  gap: 7px;
+  margin-top: 9px;
+}
+
+.world-persona {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  column-gap: 8px;
+  align-items: center;
+  min-width: 0;
+  padding: 8px;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-sm);
+  background:
+    linear-gradient(
+      160deg,
+      color-mix(in srgb, var(--persona-color) 7%, rgba(30, 48, 48, 0.62)),
+      rgba(16, 30, 34, 0.88)
+    );
+}
+
+.world-persona__portrait {
+  grid-row: span 2;
+  display: grid;
+  place-items: center;
+  width: 42px;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border: 1px solid
+    color-mix(in srgb, var(--persona-color) 55%, transparent);
+  border-radius: 42% 42% 6px 6px;
+  background-color: color-mix(
+    in srgb,
+    var(--persona-color) 16%,
+    #0c191d
+  );
+  background-repeat: no-repeat;
+  background-size: 300% 400%;
+  background-position: var(--persona-x, 0%) var(--persona-y, 0%);
+  color: var(--persona-color);
+  font: 15px/1 var(--font-display);
+  box-shadow: inset 0 -7px 12px rgba(4, 10, 12, 0.35);
+}
+
+.world-persona__portrait.has-atlas {
+  color: transparent;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+.world-persona__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.world-persona__name {
+  overflow: hidden;
+  color: var(--book-paper);
+  font: 13px/1.35 var(--font-display);
+  letter-spacing: 1px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.world-persona__seat {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--muted);
+  font-size: 8.5px;
+  letter-spacing: 0.6px;
+}
+
+.world-persona__dot {
+  width: 6px;
+  height: 6px;
+  flex: 0 0 6px;
+  border-radius: 50%;
+  background: var(--persona-color);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--persona-color) 55%, transparent);
+}
+
+.world-persona__desc {
+  display: -webkit-box;
+  grid-column: 1 / -1;
+  overflow: hidden;
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1.65;
+  letter-spacing: 0.25px;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
 .world-footer .world-footer__note {
   padding-left: 0;
   border-left: 0;
@@ -460,6 +589,35 @@ html[data-world] .world-card[aria-pressed="true"] {
 
   .world-detail__head h3 {
     font-size: 21px;
+  }
+
+  .world-detail__personas {
+    margin-top: 11px;
+    padding-top: 10px;
+  }
+
+  .world-persona-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .world-persona {
+    column-gap: 7px;
+    padding: 7px;
+  }
+
+  .world-persona__portrait {
+    width: 38px;
+  }
+
+  .world-persona__name {
+    font-size: 12.5px;
+    letter-spacing: 0.6px;
+  }
+
+  .world-persona__desc {
+    font-size: 8.5px;
+    -webkit-line-clamp: 2;
   }
 }
 

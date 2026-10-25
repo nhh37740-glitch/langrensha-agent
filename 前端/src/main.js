@@ -44,6 +44,25 @@ const ROLE_FALLBACK = {
   hunter: "守林人",
   idiot: "守誓者",
 };
+// 服务器只给公开工具名；这里映射到每世界同一顺序的 icons 图集语义。
+// 未列出的工具保持纯文字，不猜图标。
+const TOOL_ICON = Object.freeze({
+  inspect: "inspect",
+  antidote: "antidote",
+  poison: "poison",
+  shoot: "shoot",
+  explode: "explode",
+  signup: "badge",
+  withdraw: "badge",
+  sheriff_vote: "badge",
+  transfer_badge: "badge",
+  reveal: "badge",
+  exile_vote: "vote",
+  wolf_vote: "vote",
+  speak: "speak",
+  wolf_chat: "speak",
+  abstain: "abstain",
+});
 // 目录的 scene.intro 是入镇欢迎语；内置 fallback 缺字段时用本地文案补齐。
 const FALLBACK_INTROS = {
   mist: "雾封住了出镇的路。十一位旅人已经等在广场，今夜，你会带着怎样的秘密入座？",
@@ -322,6 +341,34 @@ function renderWorldCards() {
   syncCardSelection();
 }
 
+function renderDetailPersonas(detail, book) {
+  const body = detail.querySelector(".world-detail__body");
+  if (!body) return;
+  let section = $("world-detail-personas");
+  if (!section) {
+    section = node("section", undefined, "world-detail__personas");
+    section.id = "world-detail-personas";
+    const head = node("div", undefined, "world-detail__personas-head");
+    head.append(
+      node("span", "公开人物名册", "eyebrow"),
+      node("span", "仅公开席位与姓名", "world-detail__personas-hint"),
+    );
+    const grid = node("div", undefined, "world-persona-grid");
+    grid.id = "world-detail-persona-grid";
+    section.append(head, grid);
+    body.append(section);
+  }
+  const grid = $("world-detail-persona-grid");
+  const roster = worldart.renderPersonaRoster(grid, book.id);
+  const hint = section.querySelector(".world-detail__personas-hint");
+  if (hint) {
+    const count = roster ? roster.childElementCount : 0;
+    hint.textContent = count
+      ? `仅公开席位、姓名与简介 · ${count} 位`
+      : "公开名册暂缺，不影响入镇";
+  }
+}
+
 function renderWorldDetail(book) {
   const detail = $("world-detail");
   detail.hidden = false;
@@ -337,6 +384,7 @@ function renderWorldDetail(book) {
     ? `公开条目 ${book.public_count}`
     : "世界书";
   fillRoleChips($("world-detail-roles"), book);
+  renderDetailPersonas(detail, book);
   $("world-detail-note").textContent =
     `确认后点击“踏入雾中”，以 ${book.name} 的身份与称谓入镇。`;
 }
@@ -510,6 +558,9 @@ function setBusy(value) {
   busy = value;
   root.dataset.busy = value ? "yes" : "no";
   $("submit-action").disabled = value;
+  document.querySelectorAll(".choice-chip").forEach((chip) => {
+    chip.disabled = value;
+  });
   syncWaiting();
 }
 // 等待指示跟随「自动推进中且没有轮到我」，不因请求忙而隐藏；忙碌结束后再同步一次。
@@ -1041,9 +1092,18 @@ function render(state) {
   );
   $("chapter").textContent = state.chapter;
   $("story-title").textContent = state.chapter;
-  $("day").textContent = `第 ${state.round} 日 · ${
-    state.night ? worldNightLabel() : "白昼"
-  }`;
+  const day = $("day");
+  day.replaceChildren();
+  const dayIcon = node("i", undefined, "day-icon");
+  if (
+    worldart.paintWorldIcon(dayIcon, activeWorld, state.night ? "night" : "day")
+  )
+    day.append(dayIcon);
+  day.append(
+    document.createTextNode(
+      `第 ${state.round} 日 · ${state.night ? worldNightLabel() : "白昼"}`,
+    ),
+  );
   $("role-title").textContent = `${state.identity} · ${state.seat}号`;
   $("role-note").textContent =
     state.note ||
@@ -1065,16 +1125,29 @@ function render(state) {
           (!p.alive ? " departed" : "") +
           (p.seat === state.seat ? " you" : ""),
       );
-      const portrait = node("span", p.name[0], "portrait");
+      const portrait = node("span", undefined, "portrait");
       portrait.style.setProperty("--person", p.color);
+      worldart.paintPersonaPortrait(portrait, activeWorld, p.seat, p.name);
+      const stateLine = node("small", undefined, "person__state");
+      [
+        p.alive ? "alive" : "dead",
+        p.sheriff ? "sheriff" : "",
+        p.seat === state.seat ? "you" : "",
+      ].forEach((key) => {
+        if (!key) return;
+        const icon = node("i", undefined, "person__icon");
+        if (worldart.paintWorldIcon(icon, activeWorld, key))
+          stateLine.append(icon);
+      });
+      stateLine.append(
+        document.createTextNode(
+          p.sheriff ? "执铃人" : p.role || (p.alive ? "身份未明" : "已离场"),
+        ),
+      );
       n.append(
         portrait,
         node("span", `${String(p.seat).padStart(2, "0")} ${p.name}`, "person__name"),
-        node(
-          "small",
-          p.sheriff ? "执铃人" : p.role || (p.alive ? "身份未明" : "已离场"),
-          "person__state",
-        ),
+        stateLine,
       );
       n.title = p.description;
       return n;
@@ -1113,6 +1186,8 @@ function render(state) {
   );
   if (state.choices.some((c) => c.tool === selected))
     $("choice").value = selected;
+  const choiceGrid = ensureChoiceGrid();
+  choiceGrid.replaceChildren(...state.choices.map(buildChoiceChip));
   $("action-form").hidden = !state.choices.length;
   choiceChanged();
   $("status").textContent = state.winner
@@ -1138,6 +1213,55 @@ function render(state) {
   applyUiState(state);
   syncDebugPolling();
 }
+function ensureChoiceGrid() {
+  const existing = $("choice-grid");
+  if (existing) return existing;
+  const select = $("choice");
+  const grid = node("div", undefined, "choice-grid");
+  grid.id = "choice-grid";
+  grid.setAttribute("role", "group");
+  grid.setAttribute("aria-label", "技能与动作");
+  // 插到 .action-top 之后而不是 select 之后，避免成为 flex 行里的窄列。
+  const top = select.closest(".action-top");
+  if (top) top.after(grid);
+  else select.after(grid);
+  // 原生 select 仍是表单取值与既有测试的稳定来源，仅视觉隐藏；
+  // 可见选项由带图标的按钮承担，键盘可用 Tab/Enter 操作。
+  select.classList.add("choice-native");
+  select.tabIndex = -1;
+  select.setAttribute("aria-hidden", "true");
+  return grid;
+}
+
+function buildChoiceChip(choice) {
+  const chip = node("button", undefined, "choice-chip");
+  chip.type = "button";
+  chip.dataset.tool = choice.tool;
+  chip.setAttribute("aria-pressed", "false");
+  const iconKey = TOOL_ICON[choice.tool];
+  if (iconKey) {
+    const icon = node("span", undefined, "choice-chip__icon");
+    if (worldart.paintWorldIcon(icon, activeWorld, iconKey)) chip.append(icon);
+  }
+  chip.append(
+    node("span", choice.label || choice.tool, "choice-chip__label"),
+  );
+  chip.addEventListener("click", () => {
+    const select = $("choice");
+    if (select.value === choice.tool) return;
+    select.value = choice.tool;
+    select.dispatchEvent(new Event("change", { bubbles: true }));
+  });
+  return chip;
+}
+
+function syncChoiceChips() {
+  const current = $("choice").value;
+  document.querySelectorAll(".choice-chip").forEach((chip) => {
+    chip.setAttribute("aria-pressed", String(chip.dataset.tool === current));
+  });
+}
+
 function choiceChanged() {
   const c = view?.choices.find((c) => c.tool === $("choice").value);
   $("speech-wrap").hidden = !c?.text;
@@ -1152,6 +1276,7 @@ function choiceChanged() {
   );
   if ((c?.targets || []).includes(Number(selected)))
     $("target").value = selected;
+  syncChoiceChips();
   $("submit-action").disabled = busy;
 }
 $("choice").addEventListener("change", choiceChanged);
