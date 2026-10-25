@@ -35,8 +35,6 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: 每小时状态验收（不执行 PR 代码）
-        run: python .github/scripts/DeepSeek无人值守.py
       - name: 判断无人值守凭据
         id: credentials
         env:
@@ -50,6 +48,10 @@ jobs:
             echo '::warning::缺少 DEEPSEEK_API_KEY 或 HARNESS_GH_TOKEN；验收继续，自动开发未启用。'
             echo '自动开发受阻：请在仓库 Actions Secrets 设置 DEEPSEEK_API_KEY 与 HARNESS_GH_TOKEN。' >> "$GITHUB_STEP_SUMMARY"
           fi
+      - name: 每小时状态验收（不执行 PR 代码）
+        env:
+          HARNESS_CREDENTIALS_READY: ${{ steps.credentials.outputs.ready }}
+        run: python .github/scripts/DeepSeek无人值守.py
       - uses: actions/setup-node@v4
         if: steps.credentials.outputs.ready == 'true' && (github.event_name == 'schedule' || inputs.work)
         with:

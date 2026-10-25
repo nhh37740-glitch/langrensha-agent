@@ -149,7 +149,7 @@ def audit(request=False):
         "selection": selection,
         "issues": [{"number": i["number"], "title": i["title"]} for i in issues],
         "prs": reports,
-        "worker_credentials": bool(os.environ.get("HARNESS_CREDENTIALS_READY")),
+        "worker_credentials": os.environ.get("HARNESS_CREDENTIALS_READY") == "true",
         "limitation": "自动状态验收不代表业务或线上验收；不自动合并、打 tag 或发布",
         "main": checks_at(gh("api", f"repos/{REPO}/commits/main")["sha"]),
     }
@@ -209,6 +209,7 @@ def worker():
     else:
         run("git", "checkout", "-b", branch, "origin/main")
     instructions = (ROOT / ".github/deepseek-harness/任务指令.md").read_text()
+    issue["comments_data"] = items(f"issues/{number}/comments?per_page=100")
     task = instructions + "\n本轮任务数据：\n" + json.dumps(issue, ensure_ascii=False)
     if current_pr:
         feedback = {
@@ -286,7 +287,17 @@ def worker():
         "未自动合并、发布或部署。\n\n" + str(evidence)
     )
     if current_pr:
-        run("gh", "pr", "edit", str(current_pr["number"]), "--repo", REPO, "--body-file", str(body))
+        payload = OUT / "PR参数.json"
+        payload.write_text(json.dumps({"body": body.read_text()}))
+        run(
+            "gh",
+            "api",
+            "--method",
+            "PATCH",
+            f"repos/{REPO}/pulls/{current_pr['number']}",
+            "--input",
+            str(payload),
+        )
     else:
         run(
             "gh",
