@@ -113,11 +113,7 @@ def test_every_role_has_at_least_one_secret_entry():
             if entry["visibility"] != PUBLIC and role in entry["visibility"]
         ]
         assert own, role
-    wolf_entries = [
-        entry
-        for entry in WORLDBOOK["entries"]
-        if entry["visibility"] == ["wolf"]
-    ]
+    wolf_entries = [entry for entry in WORLDBOOK["entries"] if entry["visibility"] == ["wolf"]]
     assert len(wolf_entries) >= 2
 
 
@@ -125,9 +121,7 @@ def test_every_role_has_at_least_one_secret_entry():
 def test_public_entries_are_visible_to_every_role_and_texts_are_disjoint(role):
     visible = visible_entries(WORLDBOOK["entries"], role)
     visible_ids = {entry["id"] for entry in visible}
-    public_ids = {
-        entry["id"] for entry in WORLDBOOK["entries"] if entry["visibility"] == PUBLIC
-    }
+    public_ids = {entry["id"] for entry in WORLDBOOK["entries"] if entry["visibility"] == PUBLIC}
     assert public_ids <= visible_ids
     joined = "".join(entry["text"] for entry in visible)
     for marker, owner in MARKERS.items():
@@ -197,10 +191,7 @@ def test_cross_world_and_cross_role_isolation():
             document
             for document in corpus
             if document["world"] == world
-            and (
-                document["visibility"] == PUBLIC
-                or role in document["visibility"]
-            )
+            and (document["visibility"] == PUBLIC or role in document["visibility"])
         ]
         return [document["id"] for document in candidates if needle in document["text"]]
 
