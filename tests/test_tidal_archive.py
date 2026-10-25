@@ -103,6 +103,13 @@ def test_entries_use_in_world_language():
         assert term not in joined
 
 
+def test_victory_wording_does_not_merge_ordinary_and_special_keepers():
+    audit = next(entry for entry in WORLDBOOK["entries"] if entry["id"].endswith(":audit"))
+    assert "普通守册人全部消失" in audit["text"]
+    assert "守册人一方全部消失" not in audit["text"]
+    assert "验潮员、盐药师、灯守、誓痕人四类守册职全部消失" in audit["text"]
+
+
 def test_every_role_has_at_least_one_secret_entry():
     for role in ROLE_KEYS:
         if role == "villager":
