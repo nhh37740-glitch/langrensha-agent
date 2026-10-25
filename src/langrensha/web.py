@@ -11,11 +11,11 @@ from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from .content import PERSONAS
 from .full_game import pending
-from .presentation import present
+from .presentation import present, worldbook_catalog
 from .rules import Rejected, Role
 from .service import GameService
+from .worldbooks import DEFAULT_WORLD_ID, personas_for, worldbook_ids
 
 COOKIE = "mist_session"
 
@@ -31,6 +31,13 @@ def create_app(
     app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
     app.state.service = service
     advance_lock = threading.Lock()
+
+    def world_personas(worldbook_id):
+        try:
+            rows = personas_for(worldbook_id)
+        except KeyError:
+            rows = personas_for(DEFAULT_WORLD_ID)
+        return rows if len(rows) == 12 else personas_for(DEFAULT_WORLD_ID)
 
     @app.middleware("http")
     async def boundary(request, call_next):
@@ -93,6 +100,11 @@ def create_app(
     def health():
         return {"status": "ok", "version": version("langrensha-agent")}
 
+    @app.get("/api/worldbooks")
+    def worldbooks():
+        # 目录只含公开表现数据，每次都从公开字段重建，不缓存任何世界书秘密。
+        return worldbook_catalog()
+
     @app.post("/api/enter")
     async def enter(request: Request, response: Response):
         data = await request.json()
@@ -131,7 +143,7 @@ def create_app(
         data = await request.json()
         if (
             not isinstance(data, dict)
-            or set(data) != {"role"}
+            or set(data) not in ({"role"}, {"role", "worldbook"})
             or (
                 data["role"] is not None
                 and (
@@ -140,10 +152,17 @@ def create_app(
             )
         ):
             raise HTTPException(422, "请选择自己的身份。")
+        worldbook_id = data.get("worldbook")
+        if worldbook_id is None:
+            worldbook_id = DEFAULT_WORLD_ID
+        if not isinstance(worldbook_id, str) or worldbook_id not in worldbook_ids():
+            raise HTTPException(422, "未知的世界书，请重新选择。")
         if not advance_lock.acquire(blocking=False):
             raise HTTPException(409, "上一段故事仍在继续。")
         try:
-            game_id = service.create(human_role=data["role"], full=True)
+            game_id = service.create(
+                human_role=data["role"], full=True, worldbook=worldbook_id
+            )
             with service.store.transaction() as db:
                 db.execute("UPDATE web_sessions SET game_id=? WHERE digest=?", (game_id, digest))
             return present(service.bind_player(game_id, 1).view())
@@ -188,9 +207,12 @@ def create_app(
                 actor = waiting[0]
                 from .ai import Persona
 
+                name, description, _color = world_personas(
+                    view.get("worldbook", DEFAULT_WORLD_ID)
+                )[actor - 1]
                 runner.run(
                     service.bind_player(view["game_id"], actor),
-                    Persona(PERSONAS[actor - 1][0], PERSONAS[actor - 1][1]),
+                    Persona(name, description),
                 )
             return present(human.view())
         finally:

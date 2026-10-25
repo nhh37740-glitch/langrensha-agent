@@ -11,9 +11,10 @@
     <div class="app">
       <header class="site-header">
         <a class="brand" href="/" aria-label="雾钟镇首页"
-          ><span class="emblem" aria-hidden="true">♜</span
+          ><span class="emblem" id="brand-emblem" aria-hidden="true">♜</span
           ><span class="brand__text"
-            >雾钟镇<small>THE MIST &amp; THE BELL</small></span
+            ><span id="brand-name">雾钟镇</span
+            ><small id="brand-sub">THE MIST &amp; THE BELL</small></span
           ></a
         >
         <div class="header-right">
@@ -28,6 +29,71 @@
         </div>
       </header>
       <main>
+        <section
+          id="world-picker"
+          class="world-picker"
+          aria-labelledby="world-picker-title"
+        >
+          <div class="world-picker__head">
+            <div>
+              <span class="eyebrow" id="world-picker-title">选择世界</span>
+              <p class="world-picker__hint">
+                每本世界书都有自己的称谓、广场与秘密。
+              </p>
+            </div>
+            <span
+              id="world-status"
+              class="world-status"
+              role="status"
+              aria-live="polite"
+              >正在翻阅世界书目录……</span
+            >
+          </div>
+          <div
+            id="world-list"
+            class="world-list"
+            role="group"
+            aria-label="世界书目录"
+            aria-busy="true"
+          ></div>
+          <div id="world-detail" class="world-detail" hidden>
+            <div
+              id="world-detail-cover"
+              class="world-detail__cover"
+              aria-hidden="true"
+            ></div>
+            <div class="world-detail__body">
+              <div class="world-detail__head">
+                <div>
+                  <span class="eyebrow">即将进入</span>
+                  <h3 id="world-detail-name"></h3>
+                </div>
+                <span
+                  id="world-detail-count"
+                  class="world-detail__count"
+                ></span>
+              </div>
+              <p
+                id="world-detail-tagline"
+                class="world-detail__tagline"
+              ></p>
+              <p
+                id="world-detail-summary"
+                class="world-detail__summary"
+              ></p>
+              <blockquote
+                id="world-detail-excerpt"
+                class="world-detail__excerpt"
+              ></blockquote>
+              <div
+                id="world-detail-roles"
+                class="world-roles"
+                aria-label="角色称谓"
+              ></div>
+              <p id="world-detail-note" class="world-detail__note"></p>
+            </div>
+          </div>
+        </section>
         <section class="world-panel" aria-label="雾钟镇场景与旅人">
           <div class="scene-wrap" id="scene-wrap">
             <div
@@ -42,9 +108,11 @@
               <span class="scene-grain"></span>
             </div>
             <div class="scene-title">
-              <span class="eyebrow">钟声之后 / CHAPTER OF THE MIST</span>
-              <h1>有人守着灯，<br />有人藏在雾里。</h1>
-              <p>听清每一句证词，再决定相信谁。</p>
+              <span class="eyebrow" id="scene-eyebrow"
+                >钟声之后 / CHAPTER OF THE MIST</span
+              >
+              <h1 id="scene-title">有人守着灯，<br />有人藏在雾里。</h1>
+              <p id="scene-subtitle">听清每一句证词，再决定相信谁。</p>
             </div>
             <div class="scene-caption">
               <span
@@ -70,7 +138,9 @@
           </div>
           <div id="roster" class="roster" aria-label="广场上的旅人"></div>
           <div class="world-footer">
-            晨钟响起之前，每个人都有自己的秘密。<span>雾钟镇 · 第一卷</span>
+            <span class="world-footer__note" id="world-footer-text"
+              >晨钟响起之前，每个人都有自己的秘密。</span
+            ><span id="world-footer-book">雾钟镇 · 第一卷</span>
           </div>
         </section>
         <section class="story-panel" aria-label="对局记录和行动">
@@ -89,8 +159,8 @@
           </div>
           <div id="intro" class="intro">
             <span class="intro-sigil" aria-hidden="true">☾</span>
-            <h2>欢迎来到雾钟镇</h2>
-            <p>
+            <h2 id="intro-title">欢迎来到雾钟镇</h2>
+            <p id="intro-lead">
               雾封住了出镇的路。十一位旅人已经等在广场，今夜，你会带着怎样的秘密入座？
             </p>
             <form id="enter-form">
@@ -126,7 +196,8 @@
           <div class="story-foot">
             <div id="status" class="status" role="status"></div>
             <div id="waiting" class="waiting" hidden aria-hidden="true">
-              <span class="waiting__pulse"></span>旅人正在雾中思索
+              <span class="waiting__pulse"></span
+              ><span id="waiting-text">旅人正在雾中思索</span>
             </div>
           </div>
           <div id="error" class="error" role="alert" hidden></div>
@@ -197,7 +268,8 @@
         </div>
       </aside>
       <footer>
-        雾里听证词，灯下作选择。<span>文字对局 · 无需匆忙</span>
+        <span id="site-footer-text">雾里听证词，灯下作选择。</span
+        ><span id="site-footer-note">文字对局 · 无需匆忙</span>
       </footer>
     </div>
     <script type="module" src="/src/main.js"></script>

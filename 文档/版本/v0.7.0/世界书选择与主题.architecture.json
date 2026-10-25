@@ -1,0 +1,475 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "世界书选择与主题：从公开目录到四套场景",
+    "subtitle": "Issue #63 实际实现：目录只公开，state.worldbook 是单一事实，玩家视图、AI/RAG 与视觉主题同步。",
+    "locale": "zh-CN",
+    "output": "文档/版本/v0.7.0/世界书选择与主题.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/nhh37740-glitch/langrensha-agent.git",
+      "revision": "a569ae3a6a48d72c5660a9a0dbefd1a8d6514bd9",
+      "provider": "github"
+    },
+    "viewBox": [
+      1120,
+      720
+    ]
+  },
+  "components": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "Web 玩家",
+      "sublabel": "桌面 / 390px",
+      "pos": [
+        50,
+        300
+      ],
+      "size": [
+        120,
+        60
+      ]
+    },
+    {
+      "id": "catalog",
+      "type": "frontend",
+      "label": "世界书选择带",
+      "sublabel": "封面 / 简介 / 角色称谓",
+      "pos": [
+        50,
+        150
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "sources": [
+        {
+          "path": "前端/src/main.js",
+          "line": 1,
+          "label": "目录加载与选择"
+        },
+        {
+          "path": "前端/index.html",
+          "line": 30,
+          "label": "选择带结构"
+        }
+      ]
+    },
+    {
+      "id": "theme",
+      "type": "frontend",
+      "label": "主题层",
+      "sublabel": "worldart.js + themes.css",
+      "pos": [
+        50,
+        450
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "sources": [
+        {
+          "path": "前端/src/worldart.js",
+          "line": 1,
+          "label": "封面与主题"
+        },
+        {
+          "path": "前端/src/themes.css",
+          "line": 1,
+          "label": "四套 token"
+        }
+      ]
+    },
+    {
+      "id": "scene",
+      "type": "frontend",
+      "label": "Phaser 场景",
+      "sublabel": "四套天空 / 建筑 / 头像框",
+      "pos": [
+        230,
+        450
+      ],
+      "size": [
+        160,
+        64
+      ],
+      "sources": [
+        {
+          "path": "前端/src/scene.js",
+          "line": 1,
+          "label": "四套 Phaser 场景"
+        }
+      ]
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "FastAPI",
+      "sublabel": "/api/worldbooks /api/game",
+      "pos": [
+        470,
+        300
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "sources": [
+        {
+          "path": "src/langrensha/web.py",
+          "line": 100,
+          "label": "目录与建局路由"
+        }
+      ]
+    },
+    {
+      "id": "service",
+      "type": "backend",
+      "label": "GameService",
+      "sublabel": "校验并写 state.worldbook",
+      "pos": [
+        680,
+        300
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "sources": [
+        {
+          "path": "src/langrensha/service.py",
+          "line": 34,
+          "label": "worldbook 校验与建局"
+        }
+      ]
+    },
+    {
+      "id": "state",
+      "type": "database",
+      "label": "SQLite 对局快照",
+      "sublabel": "games.state",
+      "pos": [
+        890,
+        300
+      ],
+      "size": [
+        160,
+        64
+      ],
+      "sources": [
+        {
+          "path": "src/langrensha/store.py",
+          "line": 1,
+          "label": "快照持久化"
+        }
+      ]
+    },
+    {
+      "id": "present",
+      "type": "backend",
+      "label": "表现层 present",
+      "sublabel": "公开目录 / 受限视图",
+      "pos": [
+        680,
+        150
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "sources": [
+        {
+          "path": "src/langrensha/presentation.py",
+          "line": 398,
+          "label": "公开目录与表现层"
+        }
+      ]
+    },
+    {
+      "id": "registry",
+      "type": "backend",
+      "label": "worldbooks 注册表",
+      "sublabel": "mist / hyperion / threebody / tidal",
+      "pos": [
+        890,
+        150
+      ],
+      "size": [
+        160,
+        64
+      ],
+      "sources": [
+        {
+          "path": "src/langrensha/worldbooks/__init__.py",
+          "line": 1,
+          "label": "自动发现与注册"
+        }
+      ]
+    },
+    {
+      "id": "retrieval",
+      "type": "backend",
+      "label": "RAG 检索",
+      "sublabel": "先过滤可见性再切块",
+      "pos": [
+        680,
+        450
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "sources": [
+        {
+          "path": "src/langrensha/retrieval.py",
+          "line": 1,
+          "label": "权限前置检索"
+        }
+      ]
+    },
+    {
+      "id": "ai",
+      "type": "backend",
+      "label": "AI 提示词",
+      "sublabel": "view.worldbook",
+      "pos": [
+        890,
+        450
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "sources": [
+        {
+          "path": "src/langrensha/ai.py",
+          "line": 67,
+          "label": "世界提示词"
+        }
+      ]
+    },
+    {
+      "id": "assets",
+      "type": "external",
+      "label": "美术素材",
+      "sublabel": "Kenney CC0 / ChatGPT AI",
+      "pos": [
+        230,
+        620
+      ],
+      "size": [
+        180,
+        64
+      ],
+      "sources": [
+        {
+          "path": "前端/src/assets/ai/来源.md",
+          "line": 1,
+          "label": "AI 素材来源"
+        },
+        {
+          "path": "前端/src/assets/kenney/来源.md",
+          "line": 1,
+          "label": "Kenney CC0"
+        }
+      ]
+    },
+    {
+      "id": "skill",
+      "type": "external",
+      "label": "frontend-design Skill",
+      "sublabel": "Apache-2.0 / 已归档",
+      "pos": [
+        50,
+        620
+      ],
+      "size": [
+        160,
+        64
+      ],
+      "sources": [
+        {
+          "path": ".agents/skills/frontend-design/SKILL.md",
+          "line": 1,
+          "label": "设计 Skill"
+        }
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "浏览器 · 只接收受限视图",
+      "wraps": [
+        "user",
+        "catalog",
+        "theme",
+        "scene"
+      ],
+      "pad": 20
+    },
+    {
+      "kind": "security-group",
+      "label": "受信服务端 · 规则 / 权限 / 持久化",
+      "wraps": [
+        "api",
+        "service",
+        "state",
+        "present",
+        "registry",
+        "retrieval",
+        "ai"
+      ],
+      "pad": 20
+    }
+  ],
+  "connections": [
+    {
+      "id": "user-browse",
+      "from": "user",
+      "to": "catalog",
+      "label": "浏览 / 选择"
+    },
+    {
+      "id": "catalog-api",
+      "from": "catalog",
+      "to": "api",
+      "label": "GET 目录 / POST 建局",
+      "variant": "emphasis"
+    },
+    {
+      "id": "catalog-theme",
+      "from": "catalog",
+      "to": "theme",
+      "label": "applyWorldTheme",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "theme-scene",
+      "from": "theme",
+      "to": "scene",
+      "label": "世界 token"
+    },
+    {
+      "id": "api-service",
+      "from": "api",
+      "to": "service",
+      "label": "create(worldbook)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "service-state",
+      "from": "service",
+      "to": "state",
+      "label": "持久化快照",
+      "variant": "emphasis"
+    },
+    {
+      "id": "api-present",
+      "from": "api",
+      "to": "present",
+      "label": "present(view)",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "present-registry",
+      "from": "present",
+      "to": "registry",
+      "label": "公开人物 / 主题",
+      "variant": "security"
+    },
+    {
+      "id": "api-retrieval",
+      "from": "api",
+      "to": "retrieval",
+      "label": "query(view)",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "api-ai",
+      "from": "api",
+      "to": "ai",
+      "label": "advance / 决策",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "bottom"
+    },
+    {
+      "id": "retrieval-registry",
+      "from": "retrieval",
+      "to": "registry",
+      "label": "可见条目",
+      "variant": "security",
+      "fromSide": "right",
+      "toSide": "bottom"
+    },
+    {
+      "id": "ai-registry",
+      "from": "ai",
+      "to": "registry",
+      "label": "世界提示词",
+      "variant": "security",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "assets-theme",
+      "from": "assets",
+      "to": "theme",
+      "label": "天空 / 头像框 / AI 图像",
+      "variant": "dashed"
+    },
+    {
+      "id": "skill-theme",
+      "from": "skill",
+      "to": "theme",
+      "label": "设计方法",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "选择真实生效",
+      "items": [
+        "目录只返回 public 封面、简介与角色称谓",
+        "POST /api/game 写入 state.worldbook",
+        "刷新后主题、身份、章节与检索保持一致"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "四套可辨主题",
+      "items": [
+        "雾蓝旧金 / 沙金锈红 / 冷蓝警戒红 / 海青铜绿",
+        "Phaser 纹理、头像框与 tween；失败回退 Graphics",
+        "入镇选择即时预览，开局由 state 驱动"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "信息权限",
+      "items": [
+        "秘密条目、指导、隐藏身份不进入目录",
+        "人物图只绑定公开席位，不按阵营切换",
+        "AI/RAG 仍先过滤可见性，再检索与生成"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "验证",
+      "items": [
+        "Playwright 8 项：四世界、390px、减少动效、失败兜底",
+        "pytest 262 项（本地不含 4 项语义模型用例）",
+        "5 项必需 CI 与 Codex 审查在 PR 记录"
+      ]
+    }
+  ]
+}

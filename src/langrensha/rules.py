@@ -54,7 +54,7 @@ def event(state, kind, data, *, actor=None, audience=None, now):
     return item["id"]
 
 
-def create_game(*, human_seat=1, human_role=None, now, rng=None):
+def create_game(*, human_seat=1, human_role=None, now, rng=None, worldbook="mist"):
     """rng 仅供受信测试重放；正常发牌使用 SystemRandom。"""
     seat_number(human_seat)
     deck = list(DECK)
@@ -71,6 +71,7 @@ def create_game(*, human_seat=1, human_role=None, now, rng=None):
         "schema_version": 1,
         "id": str(uuid4()),
         "mode": "kernel_rehearsal",
+        "worldbook": worldbook,
         "round": 1,
         "phase": NIGHT,
         "phase_id": str(uuid4()),
@@ -217,6 +218,7 @@ def player_view(state, actor):
         {
             "game_id": state["id"],
             "mode": state["mode"],
+            "worldbook": state["worldbook"],
             "seat": actor,
             "role": player["role"],
             "round": state["round"],

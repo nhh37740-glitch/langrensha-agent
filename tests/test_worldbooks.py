@@ -152,7 +152,7 @@ def test_hyperion_does_not_add_rule_tools_or_change_default_game(tmp_path):
     service = GameService(tmp_path / "default.db")
     game_id = service.create(full=True, human_role="villager", rng=random.Random(9))
     current = service.bind_player(game_id, 1).view()
-    assert "worldbook" not in current
+    assert current["worldbook"] == "mist"
     wolf_seat = pending(service.host_snapshot(game_id))[0]
     assert "wolf_vote" in service.bind_player(game_id, wolf_seat).view()["tools"]
     assert "wolf_vote" not in current["tools"]
