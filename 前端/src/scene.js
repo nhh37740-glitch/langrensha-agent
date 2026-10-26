@@ -433,14 +433,24 @@ class WorldScene extends Phaser.Scene {
       const sheriffIcon = this.add.image(0, 0).setVisible(false);
       const thinkG = this.add.graphics();
       const stateIcon = this.add.image(0, -58).setVisible(false);
+      const limbs = this.add.graphics();
+      const emote = this.add
+        .text(0, -72, "", {
+          fontFamily: '"Songti SC", "Noto Serif CJK SC", serif',
+          fontSize: 15,
+          color: "#f6e6b8",
+          fontStyle: "bold",
+        })
+        .setOrigin(0.5)
+        .setVisible(false);
       const label = this.add
-        .text(0, 40, "", {
+        .text(0, 54, "", {
           fontFamily: '"Songti SC", "Noto Serif CJK SC", serif',
           fontSize: 11,
           color: "#cdbf9c",
         })
         .setOrigin(0.5);
-      const children = [aura, halo, body, portrait];
+      const children = [aura, halo, body, portrait, limbs];
       if (frame) children.push(frame);
       children.push(
         frameG,
@@ -450,6 +460,7 @@ class WorldScene extends Phaser.Scene {
         sheriffIcon,
         thinkG,
         stateIcon,
+        emote,
         label,
       );
       const container = this.add.container(0, 0, children);
@@ -459,6 +470,7 @@ class WorldScene extends Phaser.Scene {
         halo,
         body,
         portrait,
+        limbs,
         frame,
         frameG,
         badge,
@@ -467,6 +479,7 @@ class WorldScene extends Phaser.Scene {
         sheriffIcon,
         thinkG,
         stateIcon,
+        emote,
         label,
         seat: i + 1,
         idleTween: null,
@@ -773,60 +786,60 @@ class WorldScene extends Phaser.Scene {
     // 三层景深：前排大、后排小；每层错位，避免十二人排成矩阵。
     const layouts = {
       mist: [
-        [210, 505, 1.0, -0.03],
-        [350, 515, 1.04, 0.0],
-        [490, 515, 1.04, 0.0],
-        [630, 505, 1.0, 0.03],
-        [150, 448, 0.92, 0.05],
-        [325, 458, 0.96, 0.02],
-        [515, 458, 0.96, -0.02],
-        [690, 448, 0.92, -0.05],
-        [255, 398, 0.84, 0.07],
-        [390, 390, 0.86, 0.03],
-        [530, 390, 0.86, -0.03],
-        [665, 398, 0.84, -0.07],
+        [210, 497, 1.0, -0.03],
+        [350, 507, 1.04, 0.0],
+        [490, 507, 1.04, 0.0],
+        [630, 497, 1.0, 0.03],
+        [150, 440, 0.92, 0.05],
+        [325, 450, 0.96, 0.02],
+        [515, 450, 0.96, -0.02],
+        [690, 440, 0.92, -0.05],
+        [255, 392, 0.84, 0.07],
+        [390, 384, 0.86, 0.03],
+        [530, 384, 0.86, -0.03],
+        [665, 392, 0.84, -0.07],
       ],
       hyperion: [
-        [230, 508, 1.0, 0.06],
-        [360, 518, 1.04, 0.02],
-        [480, 518, 1.04, -0.02],
-        [610, 508, 1.0, -0.06],
-        [160, 456, 0.92, 0.1],
-        [320, 462, 0.96, 0.05],
-        [520, 462, 0.96, -0.05],
-        [680, 456, 0.92, -0.1],
-        [270, 405, 0.84, 0.12],
-        [395, 398, 0.86, 0.06],
-        [515, 398, 0.86, -0.06],
-        [640, 405, 0.84, -0.12],
+        [230, 500, 1.0, 0.06],
+        [360, 510, 1.04, 0.02],
+        [480, 510, 1.04, -0.02],
+        [610, 500, 1.0, -0.06],
+        [160, 448, 0.92, 0.1],
+        [320, 454, 0.96, 0.05],
+        [520, 454, 0.96, -0.05],
+        [680, 448, 0.92, -0.1],
+        [270, 399, 0.84, 0.12],
+        [395, 392, 0.86, 0.06],
+        [515, 392, 0.86, -0.06],
+        [640, 399, 0.84, -0.12],
       ],
       threebody: [
-        [190, 512, 1.0, 0.0],
-        [340, 520, 1.04, 0.0],
-        [500, 520, 1.04, 0.0],
-        [650, 512, 1.0, 0.0],
-        [130, 455, 0.92, 0.08],
-        [300, 448, 0.94, 0.03],
-        [540, 448, 0.94, -0.03],
-        [710, 455, 0.92, -0.08],
-        [240, 392, 0.82, 0.12],
-        [370, 382, 0.84, 0.05],
-        [530, 382, 0.84, -0.05],
-        [660, 392, 0.82, -0.12],
+        [190, 504, 1.0, 0.0],
+        [340, 512, 1.04, 0.0],
+        [500, 512, 1.04, 0.0],
+        [650, 504, 1.0, 0.0],
+        [130, 447, 0.92, 0.08],
+        [300, 440, 0.94, 0.03],
+        [540, 440, 0.94, -0.03],
+        [710, 447, 0.92, -0.08],
+        [240, 384, 0.82, 0.12],
+        [370, 374, 0.84, 0.05],
+        [530, 374, 0.84, -0.05],
+        [660, 384, 0.82, -0.12],
       ],
       tidal_archive: [
-        [250, 510, 1.0, 0.04],
-        [370, 520, 1.05, 0.01],
-        [470, 520, 1.05, -0.01],
-        [590, 510, 1.0, -0.04],
-        [170, 452, 0.92, 0.1],
-        [330, 458, 0.96, 0.04],
-        [510, 458, 0.96, -0.04],
-        [670, 452, 0.92, -0.1],
-        [270, 400, 0.83, 0.14],
-        [390, 390, 0.85, 0.07],
-        [510, 390, 0.85, -0.07],
-        [630, 400, 0.83, -0.14],
+        [250, 502, 1.0, 0.04],
+        [370, 512, 1.05, 0.01],
+        [470, 512, 1.05, -0.01],
+        [590, 502, 1.0, -0.04],
+        [170, 444, 0.92, 0.1],
+        [330, 450, 0.96, 0.04],
+        [510, 450, 0.96, -0.04],
+        [670, 444, 0.92, -0.1],
+        [270, 392, 0.83, 0.14],
+        [390, 382, 0.85, 0.07],
+        [510, 382, 0.85, -0.07],
+        [630, 392, 0.83, -0.14],
       ],
     };
     return (layouts[worldId] || layouts.mist).map(([x, y, scale, rotation]) => ({
@@ -838,21 +851,10 @@ class WorldScene extends Phaser.Scene {
   }
 
   applyFrames() {
-    const key = FRAME_KEYS[this.worldId];
+    // 人物改为身体+头像的场景化呈现；装饰框保留资源但不再盖在人物上。
     this.people.forEach((person) => {
-      if (person.frame) {
-        if (this.hasTexture(key)) {
-          person.frame
-            .setTexture(key)
-            .setVisible(true)
-            .clearTint()
-            .setAlpha(1);
-        } else {
-          person.frame.setVisible(false);
-        }
-      }
+      if (person.frame) person.frame.setVisible(false);
       person.frameG.clear();
-      if (!this.hasTexture(key)) this.drawFrameFallback(person.frameG);
     });
   }
 
@@ -2032,17 +2034,25 @@ class WorldScene extends Phaser.Scene {
       sheriffIcon,
       thinkG,
       stateIcon,
+      limbs,
+      emote,
     } = parts;
     const base = colorOf(info.color, FALLBACK_COLORS[(seat - 1) % 12]);
     const dark = shade(base, 0.42);
     const mid = shade(base, 0.7);
     const light = shade(base, 1.22);
+    const speaking = Boolean(info.speaking && info.alive);
+    const thinking = Boolean(info.thinking && info.alive);
+    const voting = Boolean(info.voting && info.alive);
+    const seated = Boolean(parts.spot && parts.spot.scale < 0.9);
     body.clear();
     halo.clear();
     badge.clear();
     aura.clear();
     thinkG.clear();
+    limbs.clear();
     stateIcon.setVisible(false);
+    emote.setVisible(false);
     aura.fillStyle(base, info.alive ? 0.13 : 0.05);
     aura.fillCircle(0, 4, 40);
     aura.lineStyle(1.2, base, info.alive ? 0.24 : 0.09);
@@ -2099,6 +2109,30 @@ class WorldScene extends Phaser.Scene {
       body.strokePath();
       body.fillStyle(0xe9cf94, 0.9);
       body.fillCircle(0, -2, 2.2);
+      body.fillStyle(dark, 0.98);
+      body.fillPoints(
+        [
+          { x: -18, y: 16 },
+          { x: -23, y: 54 },
+          { x: 23, y: 54 },
+          { x: 18, y: 16 },
+        ],
+        true,
+      );
+      body.fillStyle(mid, 0.52);
+      body.fillPoints(
+        [
+          { x: -11, y: 18 },
+          { x: -15, y: 54 },
+          { x: 15, y: 54 },
+          { x: 11, y: 18 },
+        ],
+        true,
+      );
+      if (seated) {
+        body.fillStyle(0x0a1110, 0.35);
+        body.fillRoundedRect(-27, 48, 54, 7, 3);
+      }
       label.setColor(this.profile.tagColor);
     } else {
       body.fillStyle(0x657b73, 0.92);
@@ -2137,17 +2171,8 @@ class WorldScene extends Phaser.Scene {
     const style = this.personaStyle(personName, info.description, seat);
     if (portrait.visible) portrait.setX(style.gaze);
 
-    const frameAvailable = this.hasTexture(FRAME_KEYS[this.worldId]);
+    if (frame) frame.setVisible(false);
     frameG.clear();
-    if (frame) {
-      frame.setVisible(frameAvailable);
-      if (frameAvailable) {
-        frame
-          .setAlpha(info.alive ? 1 : 0.46)
-          .setTint(info.alive ? 0xffffff : 0x7e8a86);
-      }
-    }
-    if (!frameAvailable) this.drawFrameFallback(frameG);
 
     label.setText(String(seat));
     label.setFontFamily(this.profile.font);
@@ -2203,9 +2228,18 @@ class WorldScene extends Phaser.Scene {
       badge.lineStyle(1.5, accent, 0.9);
       badge.lineBetween(19, -50, 19, -53);
     }
-    const speaking = Boolean(info.speaking && info.alive);
-    const thinking = Boolean(info.thinking && info.alive);
-    const voting = Boolean(info.voting && info.alive);
+    const emoteText = speaking ? "!" : voting ? "✓" : thinking ? "…" : "";
+    if (emoteText) {
+      thinkG.fillStyle(0x081012, 0.82);
+      thinkG.fillRoundedRect(-15, -86, 30, 22, 8);
+      thinkG.fillTriangle(-4, -65, 4, -65, 0, -58);
+      thinkG.lineStyle(1, this.profile.accent, 0.6);
+      thinkG.strokeRoundedRect(-15, -86, 30, 22, 8);
+      emote
+        .setText(emoteText)
+        .setColor(speaking ? "#f6e6b8" : voting ? "#f0dfbd" : "#cfd8e8")
+        .setVisible(true);
+    }
     if (speaking) {
       aura.lineStyle(2.4, this.profile.accent, 0.92);
       aura.strokeCircle(0, 2, 44 + (seat % 3) * 2);
@@ -2214,21 +2248,41 @@ class WorldScene extends Phaser.Scene {
       aura.fillStyle(this.profile.accent, 0.95);
       aura.fillTriangle(-6, -74, 6, -74, 0, -66);
     }
-    if (thinking) {
-      for (let dot = 0; dot < 3; dot += 1) {
-        thinkG.fillStyle(0xf0dfbd, 0.52 - dot * 0.1);
-        thinkG.fillCircle((dot - 1) * 8, -58 - dot * 2, 2.1);
-      }
-    }
     if (voting) {
       aura.lineStyle(1.4, 0xf0dfbd, 0.45);
-      aura.lineBetween(-17, 45, 17, 45);
-      aura.lineBetween(-17, 45, -17, 40);
-      aura.lineBetween(17, 45, 17, 40);
+      aura.lineBetween(-17, 47, 17, 47);
+      aura.lineBetween(-17, 47, -17, 42);
+      aura.lineBetween(17, 47, 17, 42);
     }
-    if (speaking) {
-      this.setSeatIcon(stateIcon, iconKey, "speak", 0, -62, 16, true);
-      stateIcon.setAlpha(0.95);
+    if (info.alive) {
+      const rightHand = speaking
+        ? [26, -16]
+        : thinking
+          ? [14, -26]
+          : voting
+            ? [24, -28]
+            : [21, 18];
+      const leftHand = thinking
+        ? [-12, -24]
+        : speaking
+          ? [-22, 14]
+          : [-19, 18];
+      limbs.lineStyle(6, dark, 0.96);
+      limbs.beginPath();
+      limbs.moveTo(13, 2);
+      limbs.lineTo(rightHand[0], rightHand[1]);
+      limbs.strokePath();
+      limbs.beginPath();
+      limbs.moveTo(-13, 2);
+      limbs.lineTo(leftHand[0], leftHand[1]);
+      limbs.strokePath();
+      limbs.fillStyle(0xd9c6a8, 1);
+      limbs.fillCircle(rightHand[0], rightHand[1], 2.8);
+      limbs.fillCircle(leftHand[0], leftHand[1], 2.8);
+      if (voting) {
+        limbs.fillStyle(0xf0dfbd, 0.9);
+        limbs.fillRoundedRect(rightHand[0] - 4, rightHand[1] - 5, 8, 10, 1);
+      }
     }
     const pose = parts.spot || { y: 0, scale: 1, rotation: 0 };
     const lift = speaking ? -4 : 0;
