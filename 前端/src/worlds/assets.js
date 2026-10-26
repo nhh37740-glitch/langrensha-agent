@@ -62,13 +62,19 @@ export const ICON_KEYS = Object.freeze([
   "day",
 ]);
 
-export const EFFECT_KEYS = Object.freeze([
-  "vision",
-  "potion",
-  "shot",
-  "oath",
-  "shadow",
-]);
+// 每个动效 key 对应的图集行；heal 复用治疗药草行，harm 复用暗影行，
+// 客户端再以颜色和粒子区分治疗与伤害，不新增图集行或素材依赖。
+const EFFECT_ROWS = Object.freeze({
+  vision: 0,
+  potion: 1,
+  shot: 2,
+  oath: 3,
+  shadow: 4,
+  heal: 1,
+  harm: 4,
+});
+
+export const EFFECT_KEYS = Object.freeze(Object.keys(EFFECT_ROWS));
 
 const FILE_INDEX = new Map();
 Object.entries(FILES).forEach(([path, url]) => {
@@ -141,8 +147,8 @@ export function iconFrame(key) {
 
 /** 动效 key → 该行 6 帧的帧号数组；未知 key 返回空数组。 */
 export function effectFrames(key) {
-  const row = EFFECT_KEYS.indexOf(key);
-  if (row < 0) return [];
+  const row = EFFECT_ROWS[key];
+  if (row === undefined) return [];
   return Array.from({ length: ATLAS.effects.columns }, (_, col) => row * 6 + col);
 }
 
