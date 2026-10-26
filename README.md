@@ -36,7 +36,7 @@ chmod 600 .env
 
 ## 正式依据
 
-开发自动化：[DeepSeek 无人值守开发与调度现状](文档/开发/DeepSeek无人值守开发与验收.md)。GitHub Actions 调度已于 2026-10-25 停用且不得重新启用；当前会话没有 Automations 创建接口，未创建或运行 Codex 原生定时任务。DSH goal、Web 在线或任务草稿都不能冒充原生定时任务。团队并行执行、PR 与 Codex review 规则见文档。
+开发自动化：[DeepSeek 无人值守开发与调度现状](文档/开发/DeepSeek无人值守开发与验收.md)。GitHub Actions 调度已于 2026-10-25 停用且不得重新启用；当前会话没有 Automations 创建接口，未创建或运行 Codex 原生定时任务。DSH goal、Web 在线或任务草稿都不能冒充原生定时任务。DSH 单人串行、PR 与 Codex review 规则见文档。
 
 - [项目状态](项目说明.md) / [需求基线](文档/需求/需求分析.md)
 - [完整版本实施规格与规则裁定](文档/详细设计/首个可玩版本/完整可玩版实施规格.md)
@@ -49,7 +49,7 @@ chmod 600 .env
 - [开发流程](文档/规范/开发流程与协作规范.md) / [中文看板](https://github.com/users/nhh37740-glitch/projects/2)
 - 历史演练：[v0.1.0 内核](文档/版本/v0.1.0/版本说明.md)、[v0.2.0 DeepSeek](文档/版本/v0.2.0/版本说明.md)
 
-业务代码经 Issue、分支、PR、GitHub Actions 和 GitHub agent 审查合入，再打功能 tag；Codex Cloud 与本地 DSH 团队均可按 Issue 授权实施。每版用仓库内 Archify 3.2.0 维护与已提交源码相符的图；其 MIT 许可证及第三方声明保留。Wolfcha 仅为第三方研究参考，不随本项目发布。
+业务代码经 Issue、分支、PR、GitHub Actions 和 GitHub agent 审查合入，再打功能 tag；Codex Cloud 与本地 DSH 均可按 Issue 授权实施。每版用仓库内 Archify 3.2.0 维护与已提交源码相符的图；其 MIT 许可证及第三方声明保留。Wolfcha 仅为第三方研究参考，不随本项目发布。
 
 ## 源码架构入口
 
