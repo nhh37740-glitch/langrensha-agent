@@ -135,12 +135,57 @@ def test_chat_can_precede_final_action_in_same_reply(game):
     assert audit[-1]["args"] == {"target": 2}
 
 
+class ProviderStatusError(RuntimeError):
+    def __init__(self, status_code, message):
+        super().__init__(message)
+        self.status_code = status_code
+
+
+class WrappedProviderError(RuntimeError):
+    def __init__(self, status_code, message):
+        super().__init__(message)
+        self.response = type("Response", (), {"status_code": status_code})()
+
+
+@pytest.mark.parametrize(
+    ("error", "expected"),
+    [
+        (
+            ProviderStatusError(429, "private-429-body"),
+            {"type": "ProviderStatusError", "status": 429},
+        ),
+        (
+            WrappedProviderError(503, "private-503-body"),
+            {"type": "WrappedProviderError", "status": 503},
+        ),
+        (ProviderStatusError(99, "private-bad-status"), {"type": "ProviderStatusError"}),
+    ],
+)
+def test_provider_failure_records_only_safe_type_and_status(game, error, expected):
+    report = DecisionRunner(Model(error)).run(session(game))
+    assert report["reason"] == "model_unavailable"
+    assert report["error"] == expected
+    stored = game[0].host_decisions(game[1])[0]
+    assert stored["error"] == expected
+    assert "private-" not in json.dumps(stored, ensure_ascii=False)
+
+
+def test_non_message_response_is_classified_without_payload(game):
+    report = DecisionRunner(Model("private-provider-body")).run(session(game))
+    assert report["reason"] == "model_unavailable"
+    assert report["error"] == {"type": "ModelResponseError"}
+    assert "private-provider-body" not in json.dumps(
+        game[0].host_decisions(game[1]), ensure_ascii=False
+    )
+
+
 def test_provider_failure_is_redacted_and_has_distinct_fallback(game):
     model = Model(RuntimeError("private-provider-secret"))
     result = DecisionRunner(model).run(session(game))
     audit = game[0].host_decisions(game[1])
     assert result["rounds"] == 1 and result["reason"] == "model_unavailable"
     assert result["thinking"] == []
+    assert result["error"] == {"type": "RuntimeError"}
     assert "private-provider-secret" not in json.dumps(audit)
     assert audit[0]["calls"][0]["automatic_reason"] == "model_unavailable"
 

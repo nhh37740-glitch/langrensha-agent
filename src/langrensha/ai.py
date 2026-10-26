@@ -64,6 +64,10 @@ class Persona:
     description: str = "谨慎倾听，言简意赅；只根据自己知道的事情发言。"
 
 
+class ModelResponseError(RuntimeError):
+    """模型返回无法承载工具调用的对象；不保存响应正文。"""
+
+
 def system_prompt(view, persona=None):
     """按当前世界书生成系统提示；未知世界书回退默认雾钟镇。"""
     persona = persona or Persona()
@@ -96,6 +100,7 @@ class LoopState(TypedDict):
     calls: list[dict]
     audit: list[dict]
     thinking: list[dict]
+    error: dict
     done: bool
     reason: str
     acted: bool
@@ -138,6 +143,17 @@ def _thinking_step(reply, step):
         "has_content": bool(content),
         "tool_calls": calls,
     }
+
+
+def _error_diagnostic(error):
+    """只保留异常类别和 HTTP 状态码；不保存异常正文、请求头、密钥或环境值。"""
+    status = getattr(error, "status_code", None)
+    if type(status) is not int:
+        status = getattr(getattr(error, "response", None), "status_code", None)
+    diagnostic = {"type": type(error).__name__}
+    if type(status) is int and 100 <= status <= 599:
+        diagnostic["status"] = status
+    return diagnostic
 
 
 def tool_schemas(names):
@@ -244,14 +260,15 @@ class DecisionRunner:
                     config={"callbacks": []},
                 )
                 if not isinstance(reply, AIMessage):
-                    raise TypeError("model_response_type")
-            except Exception:
-                # 不保存 provider 异常正文、请求头、模型私有推理或环境值。
+                    raise ModelResponseError
+            except Exception as error:
+                # 只记录异常类别与状态码；不保存正文、请求头、模型私有推理或环境值。
                 return {
                     "rounds": turns,
                     "calls": [],
                     "thinking": list(state["thinking"]),
                     "reason": "model_unavailable",
+                    "error": _error_diagnostic(error),
                     "view": view,
                 }
             thinking = [*state["thinking"], _thinking_step(reply, len(state["thinking"]) + 1)]
@@ -379,6 +396,7 @@ class DecisionRunner:
                     "calls": [],
                     "audit": [],
                     "thinking": [],
+                    "error": {},
                     "done": False,
                     "reason": "",
                     "acted": False,
@@ -397,5 +415,7 @@ class DecisionRunner:
             "thinking": result["thinking"],
             "calls": result["audit"],
         }
+        if result.get("error"):
+            report["error"] = result["error"]
         session._record_decision(report)
         return {key: value for key, value in report.items() if key != "calls"}

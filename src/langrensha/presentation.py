@@ -597,6 +597,20 @@ def _debug_thinking(value):
     return thinking
 
 
+def _debug_error(value):
+    """只透出脱敏异常类别与 HTTP 状态码；不读取异常正文。"""
+    if not isinstance(value, dict):
+        return None
+    kind = value.get("type")
+    status = value.get("status")
+    error = {}
+    if isinstance(kind, str) and kind:
+        error["type"] = kind
+    if type(status) is int and 100 <= status <= 599:
+        error["status"] = status
+    return error or None
+
+
 def _debug_missing(thinking, reason):
     """模型没有返回可见说明时给出准确标记；不补写任何内容。"""
     if reason == "model_unavailable":
@@ -678,16 +692,18 @@ def debug_timeline(state, decisions):
         thinking = _debug_thinking(decision.get("thinking"))
         markers = _debug_missing(thinking, decision.get("reason"))
         calls = decision.get("calls")
-        player["decisions"].append(
-            {
-                "time": decision.get("time", ""),
-                "reason": decision.get("reason", ""),
-                "acted": bool(decision.get("acted")),
-                "thinking": thinking,
-                "calls": calls if isinstance(calls, list) else [],
-                "missing": markers,
-            }
-        )
+        entry = {
+            "time": decision.get("time", ""),
+            "reason": decision.get("reason", ""),
+            "acted": bool(decision.get("acted")),
+            "thinking": thinking,
+            "calls": calls if isinstance(calls, list) else [],
+            "missing": markers,
+        }
+        error = _debug_error(decision.get("error"))
+        if error is not None:
+            entry["error"] = error
+        player["decisions"].append(entry)
         missing.extend(
             {"seat": seat, "round": round_number, "phase": phase, **marker}
             for marker in markers

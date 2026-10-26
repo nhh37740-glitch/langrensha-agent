@@ -116,6 +116,7 @@ def test_runner_model_failure_has_no_thinking_and_no_provider_text(tmp_path):
 
     assert report["reason"] == "model_unavailable"
     assert report["thinking"] == []
+    assert report["error"] == {"type": "RuntimeError"}
     assert "private-provider-secret" not in json.dumps(
         service.host_decisions(game_id), ensure_ascii=False
     )
@@ -160,6 +161,7 @@ def test_debug_timeline_uses_real_events_roles_and_personas(tmp_path):
 
     second_player = phase["players"][1]
     assert second_player["decisions"][0]["thinking"] == []
+    assert second_player["decisions"][0]["error"] == {"type": "RuntimeError"}
     assert second_player["decisions"][0]["missing"][0]["reason"] == "model_unavailable"
     assert timeline["missing"] == [
         {
