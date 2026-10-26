@@ -44,6 +44,8 @@ const ATLAS_PARTS = Object.freeze({
 const EFFECT_COLORS = {
   vision: 0x9dc4ff,
   potion: 0x9ed0a4,
+  heal: 0x8fe3a4,
+  harm: 0xc58bd8,
   shot: 0xffe4a1,
   oath: 0xe9cf94,
   shadow: 0xb59ad0,
@@ -2245,12 +2247,17 @@ class WorldScene extends Phaser.Scene {
       ? atlasTextureKey(this.worldId, "effects")
       : "";
     const frames = effectFrames(entry.effect);
+    const color = EFFECT_COLORS[entry.effect] || this.profile.accent;
     if (effectKey && frames.length) {
-      this.playAtlasEffect(actor, effectKey, frames);
+      this.playAtlasEffect(
+        actor,
+        effectKey,
+        frames,
+        entry.effect === "harm" ? 0xd8b0ff : 0,
+      );
       return;
     }
     // 动效图集未交接时保留原有圆环 + 粒子的程序化反馈。
-    const color = EFFECT_COLORS[entry.effect] || this.profile.accent;
     const { x, y } = actor.container;
     const ring = this.add.circle(x, y - 6, 14, color, 0).setStrokeStyle(2, color, 0.9);
     ring.setDepth(31);
@@ -2259,9 +2266,10 @@ class WorldScene extends Phaser.Scene {
       this.time.delayedCall(240, () => ring.destroy());
       return;
     }
+    const isHarm = entry.effect === "harm";
     this.tweens.add({
       targets: ring,
-      scale: 5.6,
+      scale: isHarm ? 3.4 : 5.6,
       alpha: { from: 1, to: 0 },
       duration: 1100,
       ease: "Cubic.easeOut",
@@ -2283,12 +2291,12 @@ class WorldScene extends Phaser.Scene {
         onComplete: () => spark.destroy(),
       });
     }
-    if (entry.effect === "potion") {
+    if (["potion", "heal", "harm"].includes(entry.effect)) {
       const mist = this.add.circle(x, y - 10, 22, color, 0.35).setDepth(31);
       this.fx.add(mist);
       this.tweens.add({
         targets: mist,
-        scale: 3.4,
+        scale: isHarm ? 2.2 : 3.4,
         alpha: 0,
         duration: 1100,
         ease: "Sine.easeOut",
@@ -2297,12 +2305,13 @@ class WorldScene extends Phaser.Scene {
     }
   }
 
-  playAtlasEffect(actor, key, frames) {
+  playAtlasEffect(actor, key, frames, tint = 0) {
     const { x, y } = actor.container;
     const sprite = this.add
       .image(x, y - 10, key, frames[0])
       .setDepth(31)
       .setDisplaySize(EFFECT_DISPLAY, EFFECT_DISPLAY);
+    if (tint) sprite.setTint(tint);
     this.fx.add(sprite);
     if (this.reducedMotion) {
       // 减少动效：只显示一帧静态反馈，不做缩放、位移或逐帧播放。

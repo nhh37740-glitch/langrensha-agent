@@ -1262,14 +1262,18 @@ function buildChoiceChip(choice) {
   chip.type = "button";
   chip.dataset.tool = choice.tool;
   chip.setAttribute("aria-pressed", "false");
+  const label = choice.label || choice.tool;
+  chip.setAttribute(
+    "aria-label",
+    choice.description ? `${label}：${choice.description}` : label,
+  );
+  if (choice.description) chip.title = choice.description;
   const iconKey = TOOL_ICON[choice.tool];
   if (iconKey) {
     const icon = node("span", undefined, "choice-chip__icon");
     if (worldart.paintWorldIcon(icon, activeWorld, iconKey)) chip.append(icon);
   }
-  chip.append(
-    node("span", choice.label || choice.tool, "choice-chip__label"),
-  );
+  chip.append(node("span", label, "choice-chip__label"));
   chip.addEventListener("click", () => {
     const select = $("choice");
     if (select.value === choice.tool) return;
@@ -1288,6 +1292,10 @@ function syncChoiceChips() {
 
 function choiceChanged() {
   const c = view?.choices.find((c) => c.tool === $("choice").value);
+  const description = $("choice-description");
+  const note = c?.description || "";
+  description.textContent = note;
+  description.hidden = !note;
   $("speech-wrap").hidden = !c?.text;
   $("target-wrap").hidden = !c?.targets;
   const selected = $("target").value;

@@ -1020,6 +1020,12 @@ textarea::placeholder {
   letter-spacing: 0.4px;
   overflow-wrap: anywhere;
 }
+.choice-description {
+  margin: -4px 0 12px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.55;
+}
 /* 技能/状态图集统一按 4×4 帧切片；缺失时元素隐藏，调用方退回纯文字。 */
 .world-icon {
   display: inline-block;

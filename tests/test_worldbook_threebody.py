@@ -209,9 +209,9 @@ def test_standard_skill_semantics_are_not_changed():
     assert "平票或无人选择则当夜无袭击" in roles["wolf"]
     assert "没有夜间能力" in roles["villager"]
     assert "不可询问自己或连续两夜同一人" in roles["seer"]
-    assert "一瓶解药和一瓶毒药" in roles["witch"]
+    assert "一份修复预案和一份清除预案" in roles["witch"]
     assert "不可解救自己" in roles["witch"]
-    assert "毒药使你无法开枪" in roles["hunter"]
+    assert "清除预案使你无法开枪" in roles["hunter"]
     assert "永久失去选票" in roles["idiot"]
 
 

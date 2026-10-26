@@ -79,6 +79,11 @@ THEMES = {
             "default": "雾中的等待",
         },
         "labels": dict(LABELS),
+        "resource_labels": {"antidote": "解药", "poison": "毒药"},
+        "skill_notes": {
+            "antidote": "救回当夜遇袭者；不能自救。",
+            "poison": "清除一名存活者；用药记录不会自动公开。",
+        },
         "endings": {
             "village": "夜裔尽散，镇上的灯火终于安稳。",
             "wolves": "雾吞没了最后的守护，夜裔留在镇中。",
@@ -167,6 +172,11 @@ THEMES = {
             "transfer_badge": "把灯盏交给他",
             "explode": "撕下伪装离去",
         },
+        "resource_labels": {"antidote": "修复剂", "poison": "神经毒素"},
+        "skill_notes": {
+            "antidote": "修复剂只能救当夜被献祭者，不能自救。",
+            "poison": "神经毒素清除一名存活者；被毒者无法开枪。",
+        },
         "endings": {
             "village": "荆棘退去，朝圣者在冢门前等到了天亮。",
             "wolves": "伯劳收下了朝圣队，冢间的金属声彻夜未停。",
@@ -244,8 +254,8 @@ THEMES = {
             "speak": "提交证词",
             "abstain": "暂且保持静默",
             "inspect": "推演信号归属",
-            "antidote": "注射解药",
-            "poison": "注射毒药",
+            "antidote": "执行修复预案",
+            "poison": "执行清除预案",
             "shoot": "最后一次广播",
             "reveal": "启动冬眠舱",
             "signup": "举手争取执剑权限",
@@ -254,6 +264,11 @@ THEMES = {
             "exile_vote": "决定谁被逐离",
             "transfer_badge": "移交执剑权限",
             "explode": "撕下伪装离去",
+        },
+        "resource_labels": {"antidote": "修复预案", "poison": "清除预案"},
+        "skill_notes": {
+            "antidote": "修复预案只能救当夜被袭击者，不能自救。",
+            "poison": "清除预案清除一名存活者；被清除者无法广播。",
         },
         "endings": {
             "village": "潜伏者被清除，监听站的警报第一次安静下来。",
@@ -343,6 +358,11 @@ THEMES = {
             "transfer_badge": "交出潮钟钥匙",
             "explode": "撕下伪装离岛",
         },
+        "resource_labels": {"antidote": "返名盐", "poison": "蚀名盐"},
+        "skill_notes": {
+            "antidote": "返名盐只能救当夜被刮名者，不能自救。",
+            "poison": "蚀名盐抹去一名存活者；被蚀名者无法击发。",
+        },
         "endings": {
             "village": "噬名者离岛，《生民册》上的名字重新有了归处。",
             "wolves": "潮水合拢，最后一页名字被盐霜抹平。",
@@ -357,7 +377,17 @@ THEMES = {
     },
 }
 
-_MERGE_KEYS = ("palette", "role_labels", "scene", "chapters", "labels", "endings", "jargon")
+_MERGE_KEYS = (
+    "palette",
+    "role_labels",
+    "scene",
+    "chapters",
+    "labels",
+    "resource_labels",
+    "skill_notes",
+    "endings",
+    "jargon",
+)
 
 
 def _theme_for(worldbook_id):
@@ -457,8 +487,8 @@ def _line(e, theme, personas):
             text = labels.get(tool, "暂且不作选择") + "。"
         effect = {
             "inspect": "vision",
-            "poison": "potion",
-            "antidote": "potion",
+            "poison": "harm",
+            "antidote": "heal",
             "shoot": "shot",
             "reveal": "oath",
             "explode": "shadow",
@@ -558,12 +588,18 @@ def present(view):
         "players": people,
         "note": (f"今夜遇袭的是{own['attack']}号。" if own.get("attack") else ""),
         "resources": (
-            {"解药": own["antidote"], "毒药": own["poison"]} if "antidote" in own else {}
+            {
+                theme["resource_labels"]["antidote"]: own["antidote"],
+                theme["resource_labels"]["poison"]: own["poison"],
+            }
+            if "antidote" in own
+            else {}
         ),
         "choices": [
             {
                 "tool": t,
                 "label": theme["labels"][t],
+                "description": theme["skill_notes"].get(t, ""),
                 "targets": view["targets"].get(t),
                 "text": t in {"speak", "wolf_chat"},
             }
