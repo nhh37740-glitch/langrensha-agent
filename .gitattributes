@@ -4,3 +4,6 @@
 *.yaml text eol=lf
 *.json text eol=lf
 *.html text eol=lf
+
+# 编曲脚本生成的数据；评审以脚本、清单及核验结果为主。
+制作/配乐/乐谱/*.json linguist-generated=true

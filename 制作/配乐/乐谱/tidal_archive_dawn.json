@@ -1,0 +1,79 @@
+{
+  "id": "tidal_archive_dawn",
+  "title": "天光过门",
+  "world": "tidal_archive",
+  "world_title": "潮汐档案馆",
+  "scene": "dawn",
+  "usage": "公开的昼夜切换：夜晚结束、白天开始",
+  "priority": "P3",
+  "bpm": 72,
+  "loop": false,
+  "bars": 2,
+  "length_beats": 6.72,
+  "tail_seconds": 0,
+  "notes": [
+    {
+      "beat": 0.0,
+      "duration": 1.02,
+      "pitch": 57,
+      "velocity": 44,
+      "channel": 0,
+      "program": 12,
+      "pan": -0.15
+    },
+    {
+      "beat": 0.576,
+      "duration": 1.02,
+      "pitch": 60,
+      "velocity": 47,
+      "channel": 0,
+      "program": 12,
+      "pan": -0.15
+    },
+    {
+      "beat": 1.152,
+      "duration": 1.02,
+      "pitch": 62,
+      "velocity": 43,
+      "channel": 0,
+      "program": 12,
+      "pan": -0.15
+    },
+    {
+      "beat": 1.728,
+      "duration": 1.02,
+      "pitch": 64,
+      "velocity": 39,
+      "channel": 0,
+      "program": 12,
+      "pan": -0.15
+    },
+    {
+      "beat": 2.16,
+      "duration": 1.44,
+      "pitch": 57,
+      "velocity": 32,
+      "channel": 2,
+      "program": 24,
+      "pan": 0.2
+    },
+    {
+      "beat": 2.16,
+      "duration": 1.44,
+      "pitch": 64,
+      "velocity": 30,
+      "channel": 2,
+      "program": 24,
+      "pan": 0.2
+    },
+    {
+      "beat": 2.16,
+      "duration": 1.44,
+      "pitch": 71,
+      "velocity": 28,
+      "channel": 2,
+      "program": 24,
+      "pan": 0.2
+    }
+  ]
+}
