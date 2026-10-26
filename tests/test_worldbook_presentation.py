@@ -225,3 +225,31 @@ def test_worldbook_roles_switch_without_exposing_hidden_identity():
         assert all(
             player["role"] is None for player in villager["players"] if player["seat"] != 1
         )
+
+
+def test_scene_speech_markers_keep_phase_and_private_event_boundaries():
+    current = state("threebody", "villager")
+    wolves = game.wolves(current)
+    secret = "这句狼队密谈不可用来高亮普通玩家的场景人物。"
+    game.event(
+        current, "action", {"tool": "wolf_chat", "text": secret},
+        actor=wolves[0], audience=wolves, now=NOW,
+    )
+    wolf_story = present(game.player_view(current, wolves[0]))["story"]
+    assert wolf_story[-1]["is_speech"] is True
+    assert wolf_story[-1]["phase_id"] == current["phase_id"]
+    ordinary = present(game.player_view(current, 1))
+    assert secret not in json.dumps(ordinary, ensure_ascii=False)
+    assert not ordinary["story"]
+
+    game.event(current, "action", {"tool": "abstain"}, actor=2, now=NOW)
+    line = present(game.player_view(current, 1))["story"][-1]
+    assert line["actor"] == 2 and line["is_speech"] is False
+
+    current["phase_id"] = "public-speech-phase"
+    game.event(current, "action", {"tool": "speak", "text": "公开证词"}, actor=3, now=NOW)
+    current["phase_id"] = "following-vote-phase"
+    result = present(game.player_view(current, 1))
+    assert result["phase_id"] == "following-vote-phase"
+    assert result["story"][-1]["is_speech"] is True
+    assert result["story"][-1]["phase_id"] == "public-speech-phase"

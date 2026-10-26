@@ -1,8 +1,4 @@
 import Phaser from "phaser";
-import frameHyperion from "./assets/kenney/frame-hyperion.webp";
-import frameMist from "./assets/kenney/frame-mist.webp";
-import frameThreebody from "./assets/kenney/frame-threebody.webp";
-import frameTidal from "./assets/kenney/frame-tidal.webp";
 import skyHyperion from "./assets/kenney/sky-hyperion.webp";
 import skyMist from "./assets/kenney/sky-mist.webp";
 import skyThreebody from "./assets/kenney/sky-threebody.webp";
@@ -15,10 +11,11 @@ import {
   sceneTextureKey,
   worldAsset,
 } from "./worlds/assets.js";
-import { personaSlot } from "./worlds/personas.js";
+import { personaSlot, publicPersonas } from "./worlds/personas.js";
+import PERFORMANCES from "./worlds/performances.json";
 
 // 四套世界共用一块固定舞台，只按 state.worldbook 切换天空、建筑、地面、
-// 环境动效与头像框。所有人物颜色只取服务器公开的 player.color，绝不按身份着色。
+// 环境动效与人物。人物只按公开席位/姓名绑定，绝不按身份着色。
 const WIDTH = 840;
 const HEIGHT = 570;
 const FALLBACK_COLORS = [
@@ -26,7 +23,6 @@ const FALLBACK_COLORS = [
   0xd99ab2, 0xa9c78b, 0xd6a0cf, 0xc9907e, 0x82b9b4,
 ];
 // 人物胸像在席位框内的显示尺寸；图集按图片实际像素推导后等比裁切，不拉伸。
-const PERSONA_DISPLAY = Object.freeze({ width: 50, height: 64, y: -5 });
 // 只保留最近两个世界的纹理：当前世界 + 上一个世界，切回时无需重新下载。
 const TEXTURE_WORLD_LIMIT = 2;
 // 昼夜真实背景交叉淡化的时长；减少动效时直接切换。
@@ -57,21 +53,11 @@ const SKY_KEYS = {
   threebody: "sky-threebody",
   tidal_archive: "sky-tidal",
 };
-const FRAME_KEYS = {
-  mist: "frame-mist",
-  hyperion: "frame-hyperion",
-  threebody: "frame-threebody",
-  tidal_archive: "frame-tidal",
-};
 const TEXTURE_URLS = {
   "sky-mist": skyMist,
   "sky-hyperion": skyHyperion,
   "sky-threebody": skyThreebody,
   "sky-tidal": skyTidal,
-  "frame-mist": frameMist,
-  "frame-hyperion": frameHyperion,
-  "frame-threebody": frameThreebody,
-  "frame-tidal": frameTidal,
 };
 
 const WORLD = {
@@ -125,30 +111,12 @@ function pseudo(index, salt = 0) {
   const value = Math.sin(index * 127.1 + salt * 311.7) * 43758.5453;
   return value - Math.floor(value);
 }
-function colorOf(value, fallback) {
-  if (typeof value === "number" && Number.isFinite(value)) return value;
-  try {
-    const parsed = Phaser.Display.Color.HexStringToColor(String(value || ""));
-    return parsed && parsed.color !== undefined ? parsed.color : fallback;
-  } catch {
-    return fallback;
-  }
-}
-function shade(color, factor) {
-  const parsed = Phaser.Display.Color.IntegerToColor(color);
-  const clamp = (value) => Math.max(0, Math.min(255, Math.round(value * factor)));
-  return Phaser.Display.Color.GetColor(
-    clamp(parsed.red),
-    clamp(parsed.green),
-    clamp(parsed.blue),
-  );
-}
 function normalizeWorld(value) {
   return typeof value === "string" && WORLD[value] ? value : "mist";
 }
 
 class WorldScene extends Phaser.Scene {
-  constructor(reducedMotion = false) {
+  constructor(reducedMotion = false, onSelectSeat = () => {}) {
     super("town");
     this.people = [];
     this.motionTweens = [];
@@ -172,6 +140,8 @@ class WorldScene extends Phaser.Scene {
     this.textureWorlds = [];
     this.effectTimers = [];
     this.destroyed = false;
+    this.onSelectSeat = onSelectSeat;
+    this.focusedSeat = null;
   }
 
   preload() {
@@ -202,6 +172,7 @@ class WorldScene extends Phaser.Scene {
       ["day", sceneTextureKey(id, false), asset.day, "scene"],
       ["night", sceneTextureKey(id, true), asset.night, "scene"],
       ["personas", atlasTextureKey(id, "personas"), asset.personas, "personas"],
+      ["bodies", atlasTextureKey(id, "bodies"), asset.bodies, "bodies"],
       ["icons", atlasTextureKey(id, "icons"), asset.icons, "icons"],
       ["effects", atlasTextureKey(id, "effects"), asset.effects, "effects"],
     ];
@@ -233,7 +204,13 @@ class WorldScene extends Phaser.Scene {
       let texture = null;
       try {
         const spec = ATLAS_PARTS[mode];
-        if (spec) {
+        if (mode === "bodies") {
+          // 清理后的全身图仍按实际透明内容取边界；不假设生成器严格等格。
+          texture = this.textures.addImage(key, image);
+          (PERFORMANCES.worlds[worldId] || []).forEach((frame, slot) => {
+            texture.add(slot, 0, frame.x, frame.y, frame.width, frame.height);
+          });
+        } else if (spec) {
           // 交接图集可能不是接口示例的标称尺寸（如 1086×1448 → 362/格）；
           // 一律按实际像素推导单元格，避免硬编码切片错位。
           const frameWidth = Math.max(1, Math.floor(image.naturalWidth / spec.columns));
@@ -271,8 +248,9 @@ class WorldScene extends Phaser.Scene {
     if (this.destroyed || !this.ready || worldId !== this.worldId) return;
     if (kind === "day" || kind === "night") {
       this.drawWorld(Boolean(this.night), false);
-    } else if (kind === "personas") {
+    } else if (["personas", "bodies"].includes(kind)) {
       this.refreshPeople();
+      this.updateFocus();
     } else if (kind === "icons") {
       this.refreshPeople();
       this.updatePhaseIcon();
@@ -302,6 +280,7 @@ class WorldScene extends Phaser.Scene {
       sceneTextureKey(worldId, false),
       sceneTextureKey(worldId, true),
       atlasTextureKey(worldId, "personas"),
+      atlasTextureKey(worldId, "bodies"),
       atlasTextureKey(worldId, "icons"),
       atlasTextureKey(worldId, "effects"),
     ];
@@ -323,6 +302,7 @@ class WorldScene extends Phaser.Scene {
     this.people.forEach((person) => {
       [
         person.portrait,
+        person.figure,
         person.statusIcon,
         person.youIcon,
         person.sheriffIcon,
@@ -337,6 +317,7 @@ class WorldScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor("#050b10");
     this.buildLayers();
     this.buildPeople();
+    this.buildFocus();
     this.ready = true;
     this.setWorld(
       normalizeWorld(this.previewWorld || this.state?.worldbook),
@@ -359,6 +340,8 @@ class WorldScene extends Phaser.Scene {
       });
       this.loadingTextures.clear();
       if (this.backgroundTween) this.backgroundTween.stop();
+      this.focusPanel?.remove();
+      this.focusObserver?.disconnect();
     });
   }
 
@@ -411,81 +394,143 @@ class WorldScene extends Phaser.Scene {
   }
 
   buildPeople() {
-    const anyFrame = Object.values(FRAME_KEYS).find((key) => this.hasTexture(key));
-    for (let i = 0; i < 12; i++) {
+    for (let index = 0; index < 12; index++) {
       const aura = this.add.graphics();
-      const halo = this.add.graphics();
-      const body = this.add.graphics();
-      // 人物图集是懒加载的，先建占位 Image（默认纹理隐藏）；加载完成或切世界
-      // 时由 drawPerson 按公开席位/姓名换成对应帧。
-      const portrait = this.add.image(0, 0).setVisible(false);
-      let frame = null;
-      if (anyFrame) {
-        frame = this.add
-          .image(0, -5, anyFrame)
-          .setDisplaySize(50, 68)
-          .setVisible(false);
-      }
-      const frameG = this.add.graphics();
-      const badge = this.add.graphics();
-      const statusIcon = this.add.image(0, 0).setVisible(false);
-      const youIcon = this.add.image(0, 0).setVisible(false);
-      const sheriffIcon = this.add.image(0, 0).setVisible(false);
-      const thinkG = this.add.graphics();
-      const stateIcon = this.add.image(0, -58).setVisible(false);
-      const limbs = this.add.graphics();
-      const emote = this.add
-        .text(0, -72, "", {
-          fontFamily: '"Songti SC", "Noto Serif CJK SC", serif',
-          fontSize: 15,
-          color: "#f6e6b8",
-          fontStyle: "bold",
-        })
-        .setOrigin(0.5)
-        .setVisible(false);
-      const label = this.add
-        .text(0, 54, "", {
-          fontFamily: '"Songti SC", "Noto Serif CJK SC", serif',
-          fontSize: 11,
-          color: "#cdbf9c",
-        })
-        .setOrigin(0.5);
-      const children = [aura, halo, body, portrait, limbs];
-      if (frame) children.push(frame);
-      children.push(
-        frameG,
-        badge,
-        statusIcon,
-        youIcon,
-        sheriffIcon,
-        thinkG,
-        stateIcon,
-        emote,
-        label,
-      );
-      const container = this.add.container(0, 0, children);
-      this.people.push({
-        container,
-        aura,
-        halo,
-        body,
-        portrait,
-        limbs,
-        frame,
-        frameG,
-        badge,
-        statusIcon,
-        youIcon,
-        sheriffIcon,
-        thinkG,
-        stateIcon,
-        emote,
-        label,
-        seat: i + 1,
-        idleTween: null,
-        spot: null,
+      const shadow = this.add.graphics();
+      const figure = this.add.image(0, 0).setOrigin(0.5, 1).setVisible(false);
+      const portrait = this.add.image(0, -32).setVisible(false);
+      const rig = this.add.container(0, 0, [figure, portrait]);
+      const statusIcon = this.add.image(-25, 10).setVisible(false);
+      const youIcon = this.add.image(0, -150).setVisible(false);
+      const sheriffIcon = this.add.image(20, 10).setVisible(false);
+      const label = this.add.text(0, 14, "", {
+        fontFamily: '"Songti SC", "Noto Serif CJK SC", serif',
+        fontSize: 11,
+        color: "#efe6d4",
+        backgroundColor: "#0b171bcf",
+        padding: { x: 4, y: 3 },
+      }).setOrigin(0.5, 0).setDepth(85);
+      label.setInteractive({ useHandCursor: true });
+      label.on("pointerdown", (_pointer, _x, _y, event) => {
+        event.stopPropagation();
+        this.selectSeat(index + 1);
+      });
+      const container = this.add.container(0, 0, [shadow, aura, rig, statusIcon, youIcon, sheriffIcon]);
+      container.setSize(80, 150);
+      container.setInteractive(new Phaser.Geom.Rectangle(-40, -140, 80, 172), Phaser.Geom.Rectangle.Contains);
+      container.input.cursor = "pointer";
+      container.on("pointerdown", () => this.selectSeat(index + 1));
+      this.people.push({ container, aura, shadow, rig, figure, portrait,
+        statusIcon, youIcon, sheriffIcon, label, seat: index + 1,
+        idleTween: null, spot: null, state: "neutral" });
+    }
+  }
+
+  buildFocus() {
+    const wrap = document.getElementById("scene-wrap");
+    if (!wrap) return;
+    const panel = document.createElement("section");
+    panel.id = "scene-focus";
+    panel.className = "scene-focus";
+    panel.setAttribute("aria-label", "人物神态特写");
+    panel.hidden = true;
+    const face = document.createElement("div");
+    face.className = "scene-focus__face";
+    face.setAttribute("aria-hidden", "true");
+    const clip = document.createElement("div");
+    clip.className = "scene-focus__clip";
+    const portrait = document.createElement("img");
+    portrait.alt = "";
+    clip.append(portrait);
+    face.append(clip);
+    const copy = document.createElement("div");
+    copy.className = "scene-focus__copy";
+    const title = document.createElement("strong");
+    title.id = "scene-focus-name";
+    const state = document.createElement("span");
+    state.id = "scene-focus-state";
+    const description = document.createElement("p");
+    description.id = "scene-focus-description";
+    const controls = document.createElement("nav");
+    controls.setAttribute("aria-label", "查看人物");
+    for (const [text, action] of [
+      ["上一位", () => this.selectSeat(((this.focusSeatValue || 1) + 10) % 12 + 1)],
+      ["下一位", () => this.selectSeat((this.focusSeatValue || 1) % 12 + 1)],
+      ["跟随发言", () => { this.focusedSeat = null; this.updateFocus(); }],
+    ]) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "quiet";
+      button.textContent = text;
+      button.addEventListener("click", action);
+      controls.append(button);
+    }
+    copy.append(title, state, description, controls);
+    panel.append(face, copy);
+    wrap.insertAdjacentElement("afterend", panel);
+    this.focusPanel = panel;
+    this.focusFace = face;
+    this.focusClip = clip;
+    this.focusPortrait = portrait;
+    this.focusTitle = title;
+    this.focusState = state;
+    this.focusDescription = description;
+    this.focusObserver = new ResizeObserver(() => this.updateFocus());
+    this.focusObserver.observe(face);
+  }
+
+  selectSeat(seat) {
+    if (!Number.isInteger(seat) || seat < 1 || seat > 12) return;
+    this.focusedSeat = seat;
+    this.updateFocus();
+    this.onSelectSeat(seat);
+  }
+
+  updateFocus() {
+    if (!this.focusPanel) return;
+    const players = this.state?.players;
+    const mood = this.peopleState(this.state);
+    const seat = this.focusedSeat || mood.speakingSeat || this.state?.seat || 1;
+    const player = players?.find((item) => item.seat === seat);
+    if (!player || this.worldId !== this.state?.worldbook) {
+      this.focusPanel.hidden = true;
+      return;
+    }
+    const slot = personaSlot(this.worldId, seat, player.name);
+    const state = !player.alive ? "neutral" : seat === mood.speakingSeat ? "speaking" : mood.waiting || mood.voting ? "thinking" : "neutral";
+    const stateIndex = { neutral: 0, speaking: 1, thinking: 2 }[state];
+    const frame = slot === null ? -1 : slot * 3 + stateIndex;
+    const url = worldAsset(this.worldId).expressions;
+    this.focusPanel.hidden = false;
+    this.focusPanel.dataset.world = this.worldId;
+    this.focusPanel.dataset.seat = String(seat);
+    this.focusPanel.dataset.expression = state;
+    this.focusPanel.dataset.frame = String(frame);
+    // 生成图的行基线不等距；按逐格复核的主轮廓边界展示，避免上一行肩衣碎条。
+    const sheet = PERFORMANCES.expressions[this.worldId];
+    const rect = sheet?.frames[frame];
+    this.focusPortrait.hidden = !url || !rect;
+    if (url && rect) {
+      this.focusPortrait.src = url;
+      const width = this.focusFace.clientWidth;
+      const height = this.focusFace.clientHeight;
+      const scale = Math.min(width / rect.width, height / rect.height);
+      Object.assign(this.focusClip.style, {
+        width: `${rect.width * scale}px`, height: `${rect.height * scale}px`,
+        left: `${(width - rect.width * scale) / 2}px`,
+        top: `${(height - rect.height * scale) / 2}px`,
+      });
+      Object.assign(this.focusPortrait.style, {
+        width: `${sheet.width * scale}px`, height: `${sheet.height * scale}px`,
+        left: `${-rect.x * scale}px`,
+        top: `${-rect.y * scale}px`,
       });
     }
+    this.focusFace.classList.toggle("departed", !player.alive);
+    this.focusTitle.textContent = `${seat}号 · ${player.name}`;
+    this.focusState.textContent = !player.alive ? "已经离场" : state === "speaking" ? "正在发言" : mood.voting ? "表决中的思索" : state === "thinking" ? "凝神思索" : "静候下一句证词";
+    this.focusDescription.textContent = player.description || "";
+    this.focusSeatValue = seat;
   }
 
   clearGraphics() {
@@ -646,14 +691,15 @@ class WorldScene extends Phaser.Scene {
     const previous = this.worldId;
     this.worldId = id;
     this.profile = WORLD[id];
+    this.focusedSeat = null;
     this.ensureWorldAssets(id);
     this.drawWorld(Boolean(this.night), false);
     this.positionPeople();
     this.buildAmbient(id);
-    this.applyFrames();
     this.refreshPeople();
     this.updateWorldTag();
     this.updatePhaseIcon();
+    this.updateFocus();
     this.retainWorldTextures(id);
     if (this.ready && previous && animate && !this.reducedMotion) {
       this.flash(this.profile.flash, 0.26);
@@ -735,25 +781,13 @@ class WorldScene extends Phaser.Scene {
   positionPeople() {
     const spots = this.layoutFor(this.worldId);
     this.people.forEach((person, index) => {
-      const spot = spots[index] || spots[0];
-      const pose = this.poseFor(index, spot);
-      person.spot = pose;
-      person.container.setPosition(pose.x, pose.y);
-      person.container.setScale(pose.scale);
-      person.container.setRotation(pose.rotation);
-      person.container.setDepth(10 + Math.round(pose.y / 8));
+      person.spot = spots[index];
+      person.container.setPosition(person.spot.x, person.spot.y).setScale(1).setRotation(0);
+      person.container.setDepth(10 + person.spot.y / 8);
       this.startIdle(person);
     });
     const host = document.getElementById("scene");
     if (host) host.dataset.layout = this.worldId;
-  }
-
-  poseFor(index, spot) {
-    // 同一世界内按席位稳定地变化站姿/倾身方向，不依赖随机数，刷新后不变。
-    const sway = (pseudo(index, 13) - 0.5) * 0.035;
-    const bob = (pseudo(index, 17) - 0.5) * 3;
-    const scale = spot.scale * (0.98 + pseudo(index, 19) * 0.04);
-    return { ...spot, y: spot.y + bob, scale, rotation: spot.rotation + sway };
   }
 
   startIdle(person) {
@@ -763,111 +797,43 @@ class WorldScene extends Phaser.Scene {
       this.idleTweens = this.idleTweens.filter((tween) => tween !== old);
       person.idleTween = null;
     }
-    if (!person.aura) return;
-    if (this.reducedMotion) {
-      person.aura.setAlpha(0.5).setScale(0.94);
-      return;
-    }
-    person.aura.setAlpha(0.35).setScale(0.9);
+    person.rig.setScale(1);
+    if (this.reducedMotion) return;
+    // 只对人物上身作轻微呼吸形变；脚底和姓名不随动画漂移。
     const tween = this.tweens.add({
-      targets: person.aura,
-      alpha: { from: 0.24, to: 0.62 },
-      scale: { from: 0.88, to: 1.08 },
-      duration: 2400 + (person.seat % 5) * 260,
-      yoyo: true,
-      repeat: -1,
-      ease: "Sine.easeInOut",
+      targets: person.rig, scaleY: { from: 1, to: 1.007 + person.seat % 3 * 0.002 },
+      duration: 2200 + person.seat % 5 * 280, yoyo: true, repeat: -1, ease: "Sine.easeInOut",
     });
     person.idleTween = tween;
     this.idleTweens.push(tween);
   }
 
   layoutFor(worldId) {
-    // 三层景深：前排大、后排小；每层错位，避免十二人排成矩阵。
+    // 坐标是完整人物的脚底；按场景地面/台阶/石径分组，不再按4×3人墙排列。
+    // 最低脚底512 + 姓名32 < 550，且给底部场景说明留出空间。
     const layouts = {
       mist: [
-        [210, 497, 1.0, -0.03],
-        [350, 507, 1.04, 0.0],
-        [490, 507, 1.04, 0.0],
-        [630, 497, 1.0, 0.03],
-        [150, 440, 0.92, 0.05],
-        [325, 450, 0.96, 0.02],
-        [515, 450, 0.96, -0.02],
-        [690, 440, 0.92, -0.05],
-        [255, 392, 0.84, 0.07],
-        [390, 384, 0.86, 0.03],
-        [530, 384, 0.86, -0.03],
-        [665, 392, 0.84, -0.07],
+        [124, 471, 134], [226, 397, 116], [659, 465, 135], [567, 391, 112],
+        [710, 531, 151], [436, 530, 153], [94, 547-32, 145], [302, 478, 138],
+        [373, 387, 112], [537, 493, 140], [731, 388, 108], [262, 535-14, 148],
       ],
       hyperion: [
-        [230, 500, 1.0, 0.06],
-        [360, 510, 1.04, 0.02],
-        [480, 510, 1.04, -0.02],
-        [610, 500, 1.0, -0.06],
-        [160, 448, 0.92, 0.1],
-        [320, 454, 0.96, 0.05],
-        [520, 454, 0.96, -0.05],
-        [680, 448, 0.92, -0.1],
-        [270, 399, 0.84, 0.12],
-        [395, 392, 0.86, 0.06],
-        [515, 392, 0.86, -0.06],
-        [640, 399, 0.84, -0.12],
+        [129, 443, 132], [246, 392, 116], [690, 445, 135], [342, 491, 142],
+        [555, 391, 112], [701, 526, 151], [744, 367, 106], [129, 527, 148],
+        [434, 419, 120], [310, 357, 106], [537, 525, 148], [345, 544-23, 146],
       ],
       threebody: [
-        [190, 504, 1.0, 0.0],
-        [340, 512, 1.04, 0.0],
-        [500, 512, 1.04, 0.0],
-        [650, 504, 1.0, 0.0],
-        [130, 447, 0.92, 0.08],
-        [300, 440, 0.94, 0.03],
-        [540, 440, 0.94, -0.03],
-        [710, 447, 0.92, -0.08],
-        [240, 384, 0.82, 0.12],
-        [370, 374, 0.84, 0.05],
-        [530, 374, 0.84, -0.05],
-        [660, 384, 0.82, -0.12],
+        [110, 475, 130], [244, 414, 120], [397, 383, 110], [526, 485, 142],
+        [719, 424, 124], [310, 519, 150], [594, 371, 106], [699, 524, 151],
+        [111, 380, 110], [436, 532-12, 150], [606, 444, 129], [187, 529-5, 145],
       ],
       tidal_archive: [
-        [250, 502, 1.0, 0.04],
-        [370, 512, 1.05, 0.01],
-        [470, 512, 1.05, -0.01],
-        [590, 502, 1.0, -0.04],
-        [170, 444, 0.92, 0.1],
-        [330, 450, 0.96, 0.04],
-        [510, 450, 0.96, -0.04],
-        [670, 444, 0.92, -0.1],
-        [270, 392, 0.83, 0.14],
-        [390, 382, 0.85, 0.07],
-        [510, 382, 0.85, -0.07],
-        [630, 392, 0.83, -0.14],
+        [496, 515, 142], [652, 484, 130], [366, 523, 143], [485, 411, 114],
+        [588, 365, 100], [701, 528, 145], [124, 508, 134], [276, 445, 124],
+        [386, 359, 101], [709, 402, 115], [231, 526, 144], [505, 325, 91],
       ],
     };
-    return (layouts[worldId] || layouts.mist).map(([x, y, scale, rotation]) => ({
-      x,
-      y,
-      scale,
-      rotation,
-    }));
-  }
-
-  applyFrames() {
-    // 人物改为身体+头像的场景化呈现；装饰框保留资源但不再盖在人物上。
-    this.people.forEach((person) => {
-      if (person.frame) person.frame.setVisible(false);
-      person.frameG.clear();
-    });
-  }
-
-  drawFrameFallback(g) {
-    const color = this.profile.frame;
-    g.lineStyle(2, color, 0.82);
-    g.strokeRoundedRect(-31, -43, 62, 78, 9);
-    g.lineStyle(1, color, 0.42);
-    g.strokeRoundedRect(-26, -38, 52, 68, 7);
-    g.lineBetween(-31, -30, -31, -20);
-    g.lineBetween(31, -30, 31, -20);
-    g.lineBetween(-31, 25, -31, 35);
-    g.lineBetween(31, 25, 31, 35);
+    return (layouts[worldId] || layouts.mist).map(([x, y, height]) => ({ x, y: Math.min(512, y), height }));
   }
 
   updateWorldTag() {
@@ -1991,339 +1957,56 @@ class WorldScene extends Phaser.Scene {
     this.flash(night ? this.profile.flash : 0xf1e6c8, 0.3);
   }
 
-  personaStyle(name, description, seat) {
-    // 公开姓名/描述只用于姿态与注视方向，不读取身份或阵营。
-    const text = `${name || ""} ${description || ""}`;
-    const rules = [
-      { pattern: /外交|使节|领事/, lean: -0.025, gaze: -2.2, bob: 0.8 },
-      { pattern: /军官|退役|守林|执剑|守卫|枪/, lean: 0.015, gaze: 0, bob: 0.4 },
-      { pattern: /诗人|行吟|乐师|唱|画|绘/, lean: 0.03, gaze: 2, bob: 2.2 },
-      { pattern: /译者|档案|抄册|书|调查|研究|分析|记录/, lean: -0.015, gaze: -1, bob: 0.9 },
-      { pattern: /看护|医|药|厨|茶|灯婆|盐/, lean: 0.02, gaze: 0, bob: 1.4 },
-      { pattern: /船|舰|潮|海|守灯|摆渡/, lean: -0.02, gaze: 2, bob: 1.6 },
-      { pattern: /学徒|年轻|学生|星图|新/, lean: 0.01, gaze: 2, bob: 1.8 },
-      { pattern: /匠|工程|石|铁|修|遗迹/, lean: -0.01, gaze: -1, bob: 0.6 },
-    ];
-    const found = rules.find((rule) => rule.pattern.test(text)) || {
-      lean: 0,
-      gaze: 0,
-      bob: 0,
-    };
-    return {
-      lean: found.lean + (pseudo(seat, 23) - 0.5) * 0.02,
-      gaze: found.gaze,
-      bob: found.bob + (pseudo(seat, 29) - 0.5) * 1.2,
-    };
-  }
-
   drawPerson(seat, info) {
-    const parts = this.people[seat - 1];
-    if (!parts) return;
-    const {
-      aura,
-      body,
-      halo,
-      badge,
-      label,
-      container,
-      frame,
-      frameG,
-      portrait,
-      statusIcon,
-      youIcon,
-      sheriffIcon,
-      thinkG,
-      stateIcon,
-      limbs,
-      emote,
-    } = parts;
-    const base = colorOf(info.color, FALLBACK_COLORS[(seat - 1) % 12]);
-    const dark = shade(base, 0.42);
-    const mid = shade(base, 0.7);
-    const light = shade(base, 1.22);
+    const person = this.people[seat - 1];
+    if (!person) return;
+    const { container, figure, portrait, shadow, aura, label, rig } = person;
+    const spot = person.spot || { x: 0, y: 450, height: 120 };
+    const name = typeof info.name === "string" ? info.name : "";
+    const slot = personaSlot(this.worldId, seat, name, { allowSeatOnly: Boolean(info.preview) });
+    const key = atlasTextureKey(this.worldId, "bodies");
     const speaking = Boolean(info.speaking && info.alive);
-    const thinking = Boolean(info.thinking && info.alive);
-    const voting = Boolean(info.voting && info.alive);
-    const seated = Boolean(parts.spot && parts.spot.scale < 0.9);
-    body.clear();
-    halo.clear();
-    badge.clear();
+    const thinking = Boolean(info.thinking && info.alive && !speaking);
+    const state = speaking ? "speaking" : thinking ? "thinking" : "neutral";
+    shadow.clear().fillStyle(0x071012, info.alive ? 0.38 : 0.16).fillEllipse(0, 2, 44, 9);
     aura.clear();
-    thinkG.clear();
-    limbs.clear();
-    stateIcon.setVisible(false);
-    emote.setVisible(false);
-    aura.fillStyle(base, info.alive ? 0.13 : 0.05);
-    aura.fillCircle(0, 4, 40);
-    aura.lineStyle(1.2, base, info.alive ? 0.24 : 0.09);
-    aura.strokeCircle(0, 4, 40);
-
-    body.fillStyle(0x06100f, 0.45);
-    body.fillEllipse(0, 34, 50, 14);
-    if (info.alive) {
-      body.fillStyle(dark, 0.98);
-      body.fillPoints(
-        [
-          { x: -17, y: -4 },
-          { x: -24, y: 20 },
-          { x: -12, y: 31 },
-          { x: 12, y: 31 },
-          { x: 24, y: 20 },
-          { x: 17, y: -4 },
-        ],
-        true,
-      );
-      body.fillStyle(mid, 0.75);
-      body.fillPoints(
-        [
-          { x: -13, y: -2 },
-          { x: -17, y: 22 },
-          { x: 0, y: 29 },
-          { x: 17, y: 22 },
-          { x: 13, y: -2 },
-        ],
-        true,
-      );
-      body.fillStyle(light, 0.3);
-      body.fillPoints(
-        [
-          { x: -5, y: -2 },
-          { x: -3, y: 27 },
-          { x: 3, y: 27 },
-          { x: 5, y: -2 },
-        ],
-        true,
-      );
-      body.fillStyle(mid, 1);
-      body.fillEllipse(0, -8, 38, 18);
-      body.fillStyle(0xd9c6a8, 1);
-      body.fillCircle(0, -25, 11);
-      body.fillStyle(0xb99f81, 0.32);
-      body.fillCircle(3, -22, 8);
-      this.drawCostume(seat, dark, mid);
-      body.lineStyle(2, light, 0.65);
-      body.beginPath();
-      body.moveTo(-9, -12);
-      body.lineTo(0, -4);
-      body.lineTo(9, -12);
-      body.strokePath();
-      body.fillStyle(0xe9cf94, 0.9);
-      body.fillCircle(0, -2, 2.2);
-      body.fillStyle(dark, 0.98);
-      body.fillPoints(
-        [
-          { x: -18, y: 16 },
-          { x: -23, y: 54 },
-          { x: 23, y: 54 },
-          { x: 18, y: 16 },
-        ],
-        true,
-      );
-      body.fillStyle(mid, 0.52);
-      body.fillPoints(
-        [
-          { x: -11, y: 18 },
-          { x: -15, y: 54 },
-          { x: 15, y: 54 },
-          { x: 11, y: 18 },
-        ],
-        true,
-      );
-      if (seated) {
-        body.fillStyle(0x0a1110, 0.35);
-        body.fillRoundedRect(-27, 48, 54, 7, 3);
-      }
-      label.setColor(this.profile.tagColor);
-    } else {
-      body.fillStyle(0x657b73, 0.92);
-      body.fillPoints(
-        [
-          { x: -15, y: -4 },
-          { x: -21, y: 20 },
-          { x: -11, y: 30 },
-          { x: 11, y: 30 },
-          { x: 21, y: 20 },
-          { x: 15, y: -4 },
-        ],
-        true,
-      );
-      body.fillStyle(0x8ca79b, 0.82);
-      body.fillEllipse(0, -9, 32, 16);
-      body.fillStyle(0xb9c6ba, 0.92);
-      body.fillCircle(0, -25, 11);
-      body.lineStyle(1, 0xd6e2d8, 0.38);
-      body.strokeCircle(0, -25, 16);
-      label.setColor("#8ca39a");
+    if (speaking || info.you) {
+      aura.lineStyle(speaking ? 2 : 1, this.profile.accent, speaking ? 0.95 : 0.65);
+      aura.strokeEllipse(0, 3, speaking ? 58 : 50, 12);
     }
-
-    const personName = typeof info.name === "string" ? info.name : "";
-    const personaKey = atlasTextureKey(this.worldId, "personas");
-    // 只按服务器公开的 seat + 姓名绑定；姓名不匹配或素材缺失都回退程序化头像。
-    const slot = personaSlot(this.worldId, seat, personName, {
-      allowSeatOnly: Boolean(info.preview),
-    });
-    if (slot !== null && this.hasTexture(personaKey)) {
-      this.fitPersonaPortrait(portrait, personaKey, slot, info.alive);
-    } else {
-      // 姓名未知或图集缺失：直接回退到既有程序化头像，不保留旧版单张立绘。
+    const ready = slot !== null && this.hasTexture(key) && this.textures.get(key).has(slot);
+    if (ready) {
+      const frame = this.textures.get(key).get(slot);
+      const scale = Math.min(spot.height / frame.height, 113 / frame.width);
+      figure.setTexture(key, slot).setScale(scale).setPosition(0, 0).setVisible(true);
       this.clearImageTexture(portrait);
+      if (info.alive) figure.clearTint(); else figure.setTint(0x71858d);
+    } else {
+      this.clearImageTexture(figure);
+      const fallback = atlasTextureKey(this.worldId, "personas");
+      if (slot !== null && this.hasTexture(fallback)) {
+        portrait.setTexture(fallback, slot).setDisplaySize(44, 60).setPosition(0, -34).setVisible(true);
+      } else this.clearImageTexture(portrait);
     }
-    const style = this.personaStyle(personName, info.description, seat);
-    if (portrait.visible) portrait.setX(style.gaze);
-
-    if (frame) frame.setVisible(false);
-    frameG.clear();
-
-    label.setText(String(seat));
-    label.setFontFamily(this.profile.font);
-    const iconKey = this.hasWorldTexture(this.worldId, "icons")
-      ? atlasTextureKey(this.worldId, "icons")
-      : "";
-    const hasYouIcon = this.setSeatIcon(
-      youIcon,
-      iconKey,
-      "you",
-      -21,
-      -44,
-      17,
-      Boolean(info.you),
-    );
-    const hasSheriffIcon = this.setSeatIcon(
-      sheriffIcon,
-      iconKey,
-      "sheriff",
-      21,
-      -44,
-      17,
-      Boolean(info.sheriff),
-    );
-    const hasStatusIcon = this.setSeatIcon(
-      statusIcon,
-      iconKey,
-      info.alive ? "alive" : "dead",
-      -20,
-      22,
-      13,
-      true,
-    );
-    if (hasStatusIcon) {
-      statusIcon.setAlpha(info.alive ? 0.82 : 0.68);
-    }
-    // 图标未命中时才用原有的光环/圆点，保证缺图世界仍能看出本人与执铃人。
-    halo.setVisible(Boolean(info.you) && Boolean(info.alive) && !hasYouIcon);
-    if (info.you && info.alive && !hasYouIcon) {
-      const accent = this.profile.accent;
-      halo.lineStyle(2, accent, 0.9);
-      halo.strokeCircle(0, 2, 38);
-      halo.fillStyle(accent, 0.3);
-      halo.fillCircle(0, 48, 3);
-    }
-    badge.setVisible(
-      Boolean(info.sheriff) && Boolean(info.alive) && !hasSheriffIcon,
-    );
-    if (info.sheriff && info.alive && !hasSheriffIcon) {
-      const accent = this.profile.accent;
-      badge.fillStyle(accent, 0.95);
-      badge.fillCircle(19, -45, 5);
-      badge.lineStyle(1.5, accent, 0.9);
-      badge.lineBetween(19, -50, 19, -53);
-    }
-    const emoteText = speaking ? "!" : voting ? "✓" : thinking ? "…" : "";
-    if (emoteText) {
-      thinkG.fillStyle(0x081012, 0.82);
-      thinkG.fillRoundedRect(-15, -86, 30, 22, 8);
-      thinkG.fillTriangle(-4, -65, 4, -65, 0, -58);
-      thinkG.lineStyle(1, this.profile.accent, 0.6);
-      thinkG.strokeRoundedRect(-15, -86, 30, 22, 8);
-      emote
-        .setText(emoteText)
-        .setColor(speaking ? "#f6e6b8" : voting ? "#f0dfbd" : "#cfd8e8")
-        .setVisible(true);
-    }
-    if (speaking) {
-      aura.lineStyle(2.4, this.profile.accent, 0.92);
-      aura.strokeCircle(0, 2, 44 + (seat % 3) * 2);
-      aura.fillStyle(this.profile.accent, 0.16);
-      aura.fillCircle(0, 2, 42);
-      aura.fillStyle(this.profile.accent, 0.95);
-      aura.fillTriangle(-6, -74, 6, -74, 0, -66);
-    }
-    if (voting) {
-      aura.lineStyle(1.4, 0xf0dfbd, 0.45);
-      aura.lineBetween(-17, 47, 17, 47);
-      aura.lineBetween(-17, 47, -17, 42);
-      aura.lineBetween(17, 47, 17, 42);
-    }
-    if (info.alive) {
-      const rightHand = speaking
-        ? [26, -16]
-        : thinking
-          ? [14, -26]
-          : voting
-            ? [24, -28]
-            : [21, 18];
-      const leftHand = thinking
-        ? [-12, -24]
-        : speaking
-          ? [-22, 14]
-          : [-19, 18];
-      limbs.lineStyle(6, dark, 0.96);
-      limbs.beginPath();
-      limbs.moveTo(13, 2);
-      limbs.lineTo(rightHand[0], rightHand[1]);
-      limbs.strokePath();
-      limbs.beginPath();
-      limbs.moveTo(-13, 2);
-      limbs.lineTo(leftHand[0], leftHand[1]);
-      limbs.strokePath();
-      limbs.fillStyle(0xd9c6a8, 1);
-      limbs.fillCircle(rightHand[0], rightHand[1], 2.8);
-      limbs.fillCircle(leftHand[0], leftHand[1], 2.8);
-      if (voting) {
-        limbs.fillStyle(0xf0dfbd, 0.9);
-        limbs.fillRoundedRect(rightHand[0] - 4, rightHand[1] - 5, 8, 10, 1);
-      }
-    }
-    const pose = parts.spot || { y: 0, scale: 1, rotation: 0 };
-    const lift = speaking ? -4 : 0;
-    container.setPosition(pose.x ?? container.x, (pose.y ?? container.y) + lift + style.bob);
-    container.setScale(pose.scale * (speaking ? 1.1 : 1));
-    container.setRotation(
-      pose.rotation +
-        style.lean +
-        (speaking ? (seat % 2 ? 0.02 : -0.02) : info.alive ? 0 : seat % 2 ? -0.04 : 0.04),
-    );
-    container.setDepth(10 + Math.round(((pose.y ?? container.y) + lift) / 8));
-    container.setAlpha(info.alive ? (speaking ? 1 : 0.9) : 0.48);
-    label.setText(speaking && personName ? `${seat} · ${personName}` : String(seat));
-    label.setColor(speaking ? "#f6e6b8" : this.profile.tagColor);
+    const publicName = name || publicPersonas(this.worldId)[slot]?.name || "旅人";
+    label.setText(`${seat} ${publicName}`).setFontFamily(this.profile.font);
+    label.setPosition(spot.x, spot.y + 12).setAlpha(info.alive ? 1 : 0.65);
+    label.setColor(speaking ? "#fff0c9" : info.alive ? "#e4e1d7" : "#9baaad");
     label.setFontStyle(speaking ? "bold" : "normal");
-  }
-
-  // 图集实际尺寸由图片推导；这里按单元格等比 cover 到席位框，避免拉伸。
-  fitPersonaPortrait(image, key, frameIndex, alive) {
-    const texture = this.textures.get(key);
-    if (!texture || !texture.has(frameIndex)) {
-      this.clearImageTexture(image);
-      return;
+    // 状态只控制公开演出，不按角色/阵营选择素材。减少动效下仍保留姿态差别。
+    rig.setAngle(speaking ? (seat % 2 ? -1.5 : 1.5) : thinking ? 0.65 : 0);
+    if (person.state !== state && !this.reducedMotion && info.alive) {
+      this.tweens.add({ targets: rig, angle: rig.angle + (speaking ? 1.4 : -0.4), duration: 460, yoyo: true, ease: "Sine.easeInOut" });
     }
-    image.setTexture(key, frameIndex);
-    const frame = image.frame;
-    if (!frame || !frame.width || !frame.height) {
-      this.clearImageTexture(image);
-      return;
-    }
-    const scale = Math.max(
-      PERSONA_DISPLAY.width / frame.width,
-      PERSONA_DISPLAY.height / frame.height,
-    );
-    image
-      .setScale(scale)
-      .setPosition(0, PERSONA_DISPLAY.y)
-      .setAlpha(alive ? 1 : 0.5)
-      .setVisible(true);
-    if (alive) image.clearTint();
-    else image.setTint(0x77837e);
+    person.state = state;
+    const iconKey = this.hasWorldTexture(this.worldId, "icons") ? atlasTextureKey(this.worldId, "icons") : "";
+    this.setSeatIcon(person.youIcon, iconKey, "you", -29, -spot.height + 12, 15, Boolean(info.you));
+    this.setSeatIcon(person.sheriffIcon, iconKey, "sheriff", 27, 7, 14, Boolean(info.sheriff));
+    this.setSeatIcon(person.statusIcon, iconKey, "dead", -27, 7, 14, !info.alive);
+    container.setPosition(spot.x, spot.y).setAlpha(info.alive ? 1 : 0.42);
+    container.setDepth(10 + spot.y / 8);
+    const frameWidth = ready ? Math.min(113, figure.displayWidth) : 60;
+    container.input.hitArea.setTo(-frameWidth / 2, -spot.height, frameWidth, spot.height + 34);
   }
 
   setSeatIcon(image, key, frameName, x, y, size, visible) {
@@ -2332,110 +2015,15 @@ class WorldScene extends Phaser.Scene {
       this.clearImageTexture(image);
       return false;
     }
-    image
-      .setTexture(key, frame)
-      .setDisplaySize(size, size)
-      .setPosition(x, y)
-      .setVisible(true);
+    image.setTexture(key, frame).setDisplaySize(size, size).setPosition(x, y).setVisible(true);
     return true;
-  }
-
-  drawCostume(seat, dark, mid) {
-    const body = this.people[seat - 1]?.body;
-    if (!body) return;
-    if (this.worldId === "mist") {
-      const variant = seat % 4;
-      if (variant === 0) {
-        body.fillStyle(dark, 1);
-        body.fillTriangle(-13, -27, 13, -27, 0, -47);
-        body.fillStyle(mid, 1);
-        body.fillCircle(0, -40, 5);
-      } else if (variant === 1) {
-        body.fillStyle(dark, 1);
-        body.fillEllipse(0, -38, 34, 9);
-        body.fillCircle(0, -31, 9);
-      } else if (variant === 2) {
-        body.fillStyle(dark, 1);
-        body.fillCircle(0, -33, 8);
-        body.fillCircle(-7, -31, 5);
-      } else {
-        body.fillStyle(dark, 1);
-        body.fillPoints(
-          [
-            { x: -12, y: -8 },
-            { x: 0, y: 4 },
-            { x: 12, y: -8 },
-            { x: 0, y: -2 },
-          ],
-          true,
-        );
-      }
-      body.fillStyle(0xe9cf94, 0.7);
-      body.fillCircle(0, -2, 2.2);
-      return;
-    }
-    if (this.worldId === "hyperion") {
-      body.fillStyle(dark, 0.95);
-      body.fillRect(-15, -15, 30, 5);
-      body.fillPoints(
-        [
-          { x: -13, y: -8 },
-          { x: -2, y: 2 },
-          { x: 7, y: -12 },
-          { x: 15, y: -8 },
-          { x: 16, y: 16 },
-          { x: 4, y: 20 },
-          { x: -10, y: 17 },
-        ],
-        true,
-      );
-      body.fillStyle(0xd8a657, 0.42);
-      body.fillRect(-12, -21, 24, 3);
-      body.lineStyle(1, 0xf0c987, 0.4);
-      body.lineBetween(-13, -16, 13, -16);
-      return;
-    }
-    if (this.worldId === "threebody") {
-      body.fillStyle(dark, 1);
-      body.fillRect(-14, -13, 28, 6);
-      body.fillRect(-19, -8, 6, 13);
-      body.fillRect(13, -8, 6, 13);
-      body.fillStyle(0x6fd3e8, 0.55);
-      body.fillRect(-9, -12, 18, 2);
-      body.lineStyle(1, 0x9fd8e8, 0.65);
-      body.lineBetween(-12, -28, -17, -20);
-      body.fillCircle(-17, -19, 2.2);
-      body.fillStyle(0xe2574c, 0.85);
-      body.fillCircle(11, 8, 1.8);
-      return;
-    }
-    // 潮汐档案馆：雨披领口、铜扣与纸签
-    body.fillStyle(dark, 0.95);
-    body.fillPoints(
-      [
-        { x: -16, y: -10 },
-        { x: -8, y: -2 },
-        { x: 0, y: -9 },
-        { x: 8, y: -2 },
-        { x: 16, y: -10 },
-        { x: 15, y: 17 },
-        { x: -15, y: 17 },
-      ],
-      true,
-    );
-    body.fillStyle(0xce9560, 0.85);
-    body.fillCircle(0, 1, 3);
-    body.fillStyle(0xf0eadb, 0.62);
-    body.fillRect(9, 6, 8, 11);
-    body.lineStyle(1, 0xce9560, 0.55);
-    body.lineBetween(10, 10, 15, 10);
   }
 
   peopleState(state) {
     const story = Array.isArray(state?.story) ? state.story : [];
     const last = [...story]
       .reverse()
-      .find((entry) => Number.isInteger(entry.actor) && entry.actor > 0);
+      .find((entry) => entry.is_speech && entry.phase_id === state.phase_id && Number.isInteger(entry.actor) && entry.actor > 0);
     const phase = typeof state?.phase === "string" ? state.phase : "";
     const waiting = Boolean(
       state &&
@@ -2486,6 +2074,7 @@ class WorldScene extends Phaser.Scene {
     if (effects.length) this.playEffect(effects.at(-1));
     this.lastEffect = story.at(-1)?.id || 0;
     this.updateWorldTag();
+    this.updateFocus();
   }
 
   playEffect(entry) {
@@ -2611,8 +2200,8 @@ class WorldScene extends Phaser.Scene {
   }
 }
 
-export function makeScene({ reducedMotion = false } = {}) {
-  const scene = new WorldScene(reducedMotion);
+export function makeScene({ reducedMotion = false, onSelectSeat = () => {} } = {}) {
+  const scene = new WorldScene(reducedMotion, onSelectSeat);
   const instance = new Phaser.Game({
     type: Phaser.AUTO,
     parent: "scene",
@@ -2639,6 +2228,7 @@ export function makeScene({ reducedMotion = false } = {}) {
       scene.previewWorld = previewWorld;
       if (scene.ready) scene.setWorld(previewWorld, false);
     },
+    focusSeat: (seat) => scene.selectSeat(seat),
     setReducedMotion: (reduced) => scene.setReducedMotion(reduced),
     destroy: () => instance.destroy(true),
   };

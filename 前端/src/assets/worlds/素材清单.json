@@ -13,6 +13,10 @@
     "effects": {
       "columns": 6,
       "rows": 5
+    },
+    "expressions": {
+      "columns": 6,
+      "rows": 6
     }
   },
   "worlds": {
@@ -209,6 +213,201 @@
         "generator": "ChatGPT image generation tool",
         "notes": "",
         "received_at": "2026-10-26T05:22:09+08:00"
+      },
+      "bodies": {
+        "issue": 78,
+        "file": "bodies.png",
+        "source": "/workspace/generated_images/exec-74581e0e-cbef-49d0-b1e6-58fcb895f944.png",
+        "sha256": "df188b7bef2314785a925b9183e2205eef3bd924b2517ea1a5bb22641e258214",
+        "width": 1536,
+        "height": 1024,
+        "mode": "RGBA",
+        "alpha_extrema": [
+          0,
+          254
+        ],
+        "frames": [
+          {
+            "seat": 1,
+            "x": 130,
+            "y": 14,
+            "width": 191,
+            "height": 339
+          },
+          {
+            "seat": 2,
+            "x": 478,
+            "y": 12,
+            "width": 192,
+            "height": 341
+          },
+          {
+            "seat": 3,
+            "x": 828,
+            "y": 19,
+            "width": 202,
+            "height": 338
+          },
+          {
+            "seat": 4,
+            "x": 1228,
+            "y": 19,
+            "width": 159,
+            "height": 338
+          },
+          {
+            "seat": 5,
+            "x": 108,
+            "y": 363,
+            "width": 227,
+            "height": 312
+          },
+          {
+            "seat": 6,
+            "x": 486,
+            "y": 361,
+            "width": 201,
+            "height": 313
+          },
+          {
+            "seat": 7,
+            "x": 825,
+            "y": 371,
+            "width": 223,
+            "height": 290
+          },
+          {
+            "seat": 8,
+            "x": 1216,
+            "y": 360,
+            "width": 238,
+            "height": 312
+          },
+          {
+            "seat": 9,
+            "x": 96,
+            "y": 701,
+            "width": 254,
+            "height": 288
+          },
+          {
+            "seat": 10,
+            "x": 464,
+            "y": 687,
+            "width": 250,
+            "height": 307
+          },
+          {
+            "seat": 11,
+            "x": 862,
+            "y": 675,
+            "width": 193,
+            "height": 318
+          },
+          {
+            "seat": 12,
+            "x": 1179,
+            "y": 685,
+            "width": 242,
+            "height": 307
+          }
+        ],
+        "frame_mapping": "seat-1",
+        "base_poses_per_person": 1,
+        "notes": "实际矩形边界已用48格浏览器渲染目视核对，无邻人碎片；不把生成排列当等格坐标。",
+        "prompt_file": "文档/版本/v0.7.0/素材提示词/人物演出/全身重排.md",
+        "bytes": 2284338,
+        "generator": "ChatGPT image generation tool",
+        "received_at": "2026-10-26T21:54:39.921169+08:00",
+        "alpha": true
+      },
+      "expressions": {
+        "issue": 78,
+        "world": "mist",
+        "kind": "expressions",
+        "source_path": "/workspace/generated_images/exec-c2a14a77-1e85-41dd-966d-b73bbcf529e0.png",
+        "handoff_path": "/workspace/langrensha-agent/临时/技能与人物场景验收/人物演出/美术交接/mist-expressions.png",
+        "generator": "ChatGPT image generation tool",
+        "prompt_file": "文档/版本/v0.7.0/素材提示词/人物演出/mist-expressions-提示词.txt",
+        "width": 1278,
+        "height": 1230,
+        "mode": "RGBA",
+        "alpha_extrema": [
+          0,
+          255
+        ],
+        "sha256": "f8cd7dd7e0202f8c052c557639f66ce780855baa2381dd5364bb3afcffbc523a",
+        "grid": {
+          "columns": 6,
+          "rows": 6,
+          "cell_width": 213.0,
+          "cell_height": 205.0
+        },
+        "frames": {
+          "columns": 6,
+          "rows": 6,
+          "cell_width": 213,
+          "cell_height": 205,
+          "remainder_x": 0,
+          "remainder_y": 0,
+          "layout": "row-major",
+          "slots": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26,
+            27,
+            28,
+            29,
+            30,
+            31,
+            32,
+            33,
+            34,
+            35
+          ]
+        },
+        "frame_mapping": "(seat - 1) * 3 + state_index",
+        "states": {
+          "neutral": 0,
+          "speaking": 1,
+          "thinking": 2
+        },
+        "review_status": "开发者144帧普通浏览器逐格复核，旧上缘碎条已清除；监督者最终PR验收另行记录",
+        "prompt_history": [
+          "文档/版本/v0.7.0/素材提示词/人物演出/mist-expressions-提示词.txt"
+        ],
+        "file": "expressions.png",
+        "bytes": 2994730,
+        "received_at": "2026-10-26T21:54:39.921169+08:00",
+        "alpha": true,
+        "notes": "6×6只声明语义顺序；实际显示必须用performances.json逐帧轮廓边界，避免行基线差异带入邻格。",
+        "source": "/workspace/generated_images/exec-c2a14a77-1e85-41dd-966d-b73bbcf529e0.png",
+        "handoff": "/workspace/langrensha-agent/临时/技能与人物场景验收/人物演出/美术交接/mist-expressions.png",
+        "display_rectangles": "前端/src/worlds/performances.json#expressions.mist"
       }
     },
     "hyperion": {
@@ -404,6 +603,202 @@
         "generator": "ChatGPT image generation tool",
         "notes": "",
         "received_at": "2026-10-26T05:22:25+08:00"
+      },
+      "bodies": {
+        "issue": 78,
+        "file": "bodies.png",
+        "source": "/workspace/generated_images/exec-384dacc4-ce0b-45ee-842c-621c3e53bfff.png",
+        "sha256": "4f494c1f64f58200f17493924daf0434c3ce6f8ad4d54e8f6883812fad40c52e",
+        "width": 1536,
+        "height": 1024,
+        "mode": "RGBA",
+        "alpha_extrema": [
+          0,
+          254
+        ],
+        "frames": [
+          {
+            "seat": 1,
+            "x": 133,
+            "y": 15,
+            "width": 177,
+            "height": 338
+          },
+          {
+            "seat": 2,
+            "x": 484,
+            "y": 23,
+            "width": 176,
+            "height": 330
+          },
+          {
+            "seat": 3,
+            "x": 820,
+            "y": 18,
+            "width": 230,
+            "height": 338
+          },
+          {
+            "seat": 4,
+            "x": 1180,
+            "y": 68,
+            "width": 239,
+            "height": 284
+          },
+          {
+            "seat": 5,
+            "x": 136,
+            "y": 364,
+            "width": 188,
+            "height": 320
+          },
+          {
+            "seat": 6,
+            "x": 473,
+            "y": 416,
+            "width": 217,
+            "height": 265
+          },
+          {
+            "seat": 7,
+            "x": 865,
+            "y": 359,
+            "width": 188,
+            "height": 330
+          },
+          {
+            "seat": 8,
+            "x": 1182,
+            "y": 403,
+            "width": 242,
+            "height": 271
+          },
+          {
+            "seat": 9,
+            "x": 107,
+            "y": 713,
+            "width": 215,
+            "height": 279
+          },
+          {
+            "seat": 10,
+            "x": 481,
+            "y": 683,
+            "width": 228,
+            "height": 316
+          },
+          {
+            "seat": 11,
+            "x": 829,
+            "y": 720,
+            "width": 239,
+            "height": 270
+          },
+          {
+            "seat": 12,
+            "x": 1218,
+            "y": 683,
+            "width": 201,
+            "height": 314
+          }
+        ],
+        "frame_mapping": "seat-1",
+        "base_poses_per_person": 1,
+        "notes": "实际矩形边界已用48格浏览器渲染目视核对，无邻人碎片；不把生成排列当等格坐标。",
+        "prompt_file": "文档/版本/v0.7.0/素材提示词/人物演出/全身重排.md",
+        "bytes": 2336330,
+        "generator": "ChatGPT image generation tool",
+        "received_at": "2026-10-26T21:54:39.921169+08:00",
+        "alpha": true
+      },
+      "expressions": {
+        "issue": 78,
+        "world": "hyperion",
+        "kind": "expressions",
+        "source_path": "/workspace/generated_images/exec-88203069-8215-460e-b37f-e26c1b977d98.png",
+        "handoff_path": "/workspace/langrensha-agent/临时/技能与人物场景验收/人物演出/美术交接/hyperion-expressions.png",
+        "generator": "ChatGPT image generation tool",
+        "prompt_file": "文档/版本/v0.7.0/素材提示词/人物演出/hyperion-expressions-提示词.txt",
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "alpha_extrema": [
+          0,
+          255
+        ],
+        "sha256": "e8b1df0a891a7568b1523d23a4a1faff6917a35991eedfb36f5724eda90f1429",
+        "grid": {
+          "columns": 6,
+          "rows": 6,
+          "cell_width": 209.0,
+          "cell_height": 209.0
+        },
+        "frames": {
+          "columns": 6,
+          "rows": 6,
+          "cell_width": 209,
+          "cell_height": 209,
+          "remainder_x": 0,
+          "remainder_y": 0,
+          "layout": "row-major",
+          "slots": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26,
+            27,
+            28,
+            29,
+            30,
+            31,
+            32,
+            33,
+            34,
+            35
+          ]
+        },
+        "frame_mapping": "(seat - 1) * 3 + state_index",
+        "states": {
+          "neutral": 0,
+          "speaking": 1,
+          "thinking": 2
+        },
+        "review_status": "开发者144帧普通浏览器逐格复核，旧上缘碎条已清除；监督者最终PR验收另行记录",
+        "prompt_history": [
+          "文档/版本/v0.7.0/素材提示词/人物演出/hyperion-expressions-提示词.txt",
+          "文档/版本/v0.7.0/素材提示词/人物演出/hyperion-expressions-身份修正提示词.txt"
+        ],
+        "file": "expressions.png",
+        "bytes": 2883435,
+        "received_at": "2026-10-26T21:54:39.921169+08:00",
+        "alpha": true,
+        "notes": "6×6只声明语义顺序；实际显示必须用performances.json逐帧轮廓边界，避免行基线差异带入邻格。",
+        "source": "/workspace/generated_images/exec-88203069-8215-460e-b37f-e26c1b977d98.png",
+        "handoff": "/workspace/langrensha-agent/临时/技能与人物场景验收/人物演出/美术交接/hyperion-expressions.png",
+        "display_rectangles": "前端/src/worlds/performances.json#expressions.hyperion"
       }
     },
     "threebody": {
@@ -599,6 +994,202 @@
         "generator": "ChatGPT image generation tool",
         "notes": "",
         "received_at": "2026-10-26T05:22:00+08:00"
+      },
+      "bodies": {
+        "issue": 78,
+        "file": "bodies.png",
+        "source": "/workspace/generated_images/exec-061cd721-b308-4691-a524-35434133ecfe.png",
+        "sha256": "32f8983a2d922086a10f9ca5cb1b0aeb2a9f26f01fea27148ed463e6cc791eb8",
+        "width": 1536,
+        "height": 1024,
+        "mode": "RGBA",
+        "alpha_extrema": [
+          0,
+          254
+        ],
+        "frames": [
+          {
+            "seat": 1,
+            "x": 107,
+            "y": 56,
+            "width": 246,
+            "height": 308
+          },
+          {
+            "seat": 2,
+            "x": 501,
+            "y": 14,
+            "width": 166,
+            "height": 369
+          },
+          {
+            "seat": 3,
+            "x": 846,
+            "y": 16,
+            "width": 200,
+            "height": 362
+          },
+          {
+            "seat": 4,
+            "x": 1212,
+            "y": 71,
+            "width": 253,
+            "height": 298
+          },
+          {
+            "seat": 5,
+            "x": 141,
+            "y": 375,
+            "width": 163,
+            "height": 335
+          },
+          {
+            "seat": 6,
+            "x": 456,
+            "y": 400,
+            "width": 246,
+            "height": 282
+          },
+          {
+            "seat": 7,
+            "x": 856,
+            "y": 385,
+            "width": 206,
+            "height": 335
+          },
+          {
+            "seat": 8,
+            "x": 1234,
+            "y": 408,
+            "width": 231,
+            "height": 293
+          },
+          {
+            "seat": 9,
+            "x": 130,
+            "y": 714,
+            "width": 206,
+            "height": 295
+          },
+          {
+            "seat": 10,
+            "x": 481,
+            "y": 682,
+            "width": 176,
+            "height": 331
+          },
+          {
+            "seat": 11,
+            "x": 844,
+            "y": 728,
+            "width": 227,
+            "height": 269
+          },
+          {
+            "seat": 12,
+            "x": 1253,
+            "y": 704,
+            "width": 174,
+            "height": 310
+          }
+        ],
+        "frame_mapping": "seat-1",
+        "base_poses_per_person": 1,
+        "notes": "实际矩形边界已用48格浏览器渲染目视核对，无邻人碎片；不把生成排列当等格坐标。",
+        "prompt_file": "文档/版本/v0.7.0/素材提示词/人物演出/全身重排.md",
+        "bytes": 2191652,
+        "generator": "ChatGPT image generation tool",
+        "received_at": "2026-10-26T21:54:39.921169+08:00",
+        "alpha": true
+      },
+      "expressions": {
+        "issue": 78,
+        "world": "threebody",
+        "kind": "expressions",
+        "source_path": "/workspace/generated_images/exec-9cc95439-ff5e-441d-95a7-8c64f9191d3e.png",
+        "handoff_path": "/workspace/langrensha-agent/临时/技能与人物场景验收/人物演出/美术交接/threebody-expressions.png",
+        "generator": "ChatGPT image generation tool",
+        "prompt_file": "文档/版本/v0.7.0/素材提示词/人物演出/threebody-expressions-提示词.txt",
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "alpha_extrema": [
+          0,
+          255
+        ],
+        "sha256": "26c8ec070ce136f4a3afae3eed769629321b19b01419d6ee4d89634fa6bf7426",
+        "grid": {
+          "columns": 6,
+          "rows": 6,
+          "cell_width": 209.0,
+          "cell_height": 209.0
+        },
+        "frames": {
+          "columns": 6,
+          "rows": 6,
+          "cell_width": 209,
+          "cell_height": 209,
+          "remainder_x": 0,
+          "remainder_y": 0,
+          "layout": "row-major",
+          "slots": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26,
+            27,
+            28,
+            29,
+            30,
+            31,
+            32,
+            33,
+            34,
+            35
+          ]
+        },
+        "frame_mapping": "(seat - 1) * 3 + state_index",
+        "states": {
+          "neutral": 0,
+          "speaking": 1,
+          "thinking": 2
+        },
+        "review_status": "开发者144帧普通浏览器逐格复核，旧上缘碎条已清除；监督者最终PR验收另行记录",
+        "prompt_history": [
+          "文档/版本/v0.7.0/素材提示词/人物演出/threebody-expressions-提示词.txt",
+          "文档/版本/v0.7.0/素材提示词/人物演出/threebody-expressions-身份修正提示词.txt"
+        ],
+        "file": "expressions.png",
+        "bytes": 2518956,
+        "received_at": "2026-10-26T21:54:39.921169+08:00",
+        "alpha": true,
+        "notes": "6×6只声明语义顺序；实际显示必须用performances.json逐帧轮廓边界，避免行基线差异带入邻格。",
+        "source": "/workspace/generated_images/exec-9cc95439-ff5e-441d-95a7-8c64f9191d3e.png",
+        "handoff": "/workspace/langrensha-agent/临时/技能与人物场景验收/人物演出/美术交接/threebody-expressions.png",
+        "display_rectangles": "前端/src/worlds/performances.json#expressions.threebody"
       }
     },
     "tidal_archive": {
@@ -643,38 +1234,36 @@
         "received_at": "2026-10-26T05:20:57+08:00"
       },
       "scene_day": {
+        "issue": 78,
+        "file": "scene-day.png",
+        "source": "/workspace/generated_images/exec-82dfe8e7-3fcb-416f-bf30-2b16966fd3ca.png",
+        "source_reference_sha256": "d5a987b0dd288aa0ab314a95742af809914a41d0996626ad8744f02c671b9fce",
         "width": 1672,
         "height": 941,
-        "source_mode": "RGB",
-        "alpha": false,
-        "bytes": 480772,
-        "sha256": "d5a987b0dd288aa0ab314a95742af809914a41d0996626ad8744f02c671b9fce",
         "mode": "RGB",
-        "file": "scene-day.webp",
-        "slug": "tidal_archive-scene-day",
-        "source": "/workspace/langrensha-agent/临时/世界书视觉Issue/完整美术包/tidal_archive-scene-day.png",
-        "handoff": "/workspace/langrensha-agent/临时/世界书视觉Issue/完整美术包/tidal_archive-scene-day.png",
-        "prompt_file": "文档/版本/v0.7.0/素材提示词/tidal_archive-scene_day.txt",
+        "alpha": false,
+        "bytes": 3634988,
+        "sha256": "25959d9b905fdb8dd78f26b0a111fc4aba61d414041fb7caf39a9336e2b4b16c",
+        "notes": "保留原档案馆、海天与昼夜主题，将下方约40%前景改为连续干燥玄武岩会合台，人物脚底实际落地。",
+        "prompt_file": "文档/版本/v0.7.0/素材提示词/人物演出/潮汐-day-地面.txt",
         "generator": "ChatGPT image generation tool",
-        "notes": "",
-        "received_at": "2026-10-26T05:20:03+08:00"
+        "received_at": "2026-10-26T21:54:39.921169+08:00"
       },
       "scene_night": {
+        "issue": 78,
+        "file": "scene-night.png",
+        "source": "/workspace/generated_images/exec-e7c27b6f-e8c0-4b8d-ac06-e6f46cebdad4.png",
+        "source_reference_sha256": "ca70ce92734bcb1447bf8a0d2276c95d831a14d3eb9fad35781224fb409f8a28",
         "width": 1672,
         "height": 941,
-        "source_mode": "RGB",
-        "alpha": false,
-        "bytes": 409386,
-        "sha256": "ca70ce92734bcb1447bf8a0d2276c95d831a14d3eb9fad35781224fb409f8a28",
         "mode": "RGB",
-        "file": "scene-night.webp",
-        "slug": "tidal_archive-scene-night",
-        "source": "/workspace/langrensha-agent/临时/世界书视觉Issue/完整美术包/tidal_archive-scene-night.png",
-        "handoff": "/workspace/langrensha-agent/临时/世界书视觉Issue/完整美术包/tidal_archive-scene-night.png",
-        "prompt_file": "文档/版本/v0.7.0/素材提示词/tidal_archive-scene_night.txt",
+        "alpha": false,
+        "bytes": 3253505,
+        "sha256": "46362c4bc1713cb2c53448e17a4b43eb755c5c7f9803f562804b18122ffb066b",
+        "notes": "保留原档案馆、海天与昼夜主题，将下方约40%前景改为连续干燥玄武岩会合台，人物脚底实际落地。",
+        "prompt_file": "文档/版本/v0.7.0/素材提示词/人物演出/潮汐-night-地面.txt",
         "generator": "ChatGPT image generation tool",
-        "notes": "",
-        "received_at": "2026-10-26T05:20:05+08:00"
+        "received_at": "2026-10-26T21:54:39.921169+08:00"
       },
       "cover": {
         "width": 1586,
@@ -794,6 +1383,201 @@
         "generator": "ChatGPT image generation tool",
         "notes": "",
         "received_at": "2026-10-26T05:22:24+08:00"
+      },
+      "bodies": {
+        "issue": 78,
+        "file": "bodies.png",
+        "source": "/workspace/generated_images/exec-3fd06605-729c-48e1-a40a-4062f7a8c7aa.png",
+        "sha256": "d8edee6c4c3b5f1bbd5cf41803c396b26e8f9ab483384c2c4ff3fd8a88bd3285",
+        "width": 1536,
+        "height": 1024,
+        "mode": "RGBA",
+        "alpha_extrema": [
+          0,
+          254
+        ],
+        "frames": [
+          {
+            "seat": 1,
+            "x": 157,
+            "y": 14,
+            "width": 201,
+            "height": 357
+          },
+          {
+            "seat": 2,
+            "x": 537,
+            "y": 19,
+            "width": 202,
+            "height": 352
+          },
+          {
+            "seat": 3,
+            "x": 880,
+            "y": 20,
+            "width": 182,
+            "height": 352
+          },
+          {
+            "seat": 4,
+            "x": 1192,
+            "y": 42,
+            "width": 231,
+            "height": 323
+          },
+          {
+            "seat": 5,
+            "x": 191,
+            "y": 372,
+            "width": 200,
+            "height": 326
+          },
+          {
+            "seat": 6,
+            "x": 546,
+            "y": 386,
+            "width": 179,
+            "height": 313
+          },
+          {
+            "seat": 7,
+            "x": 843,
+            "y": 386,
+            "width": 277,
+            "height": 299
+          },
+          {
+            "seat": 8,
+            "x": 1187,
+            "y": 391,
+            "width": 229,
+            "height": 282
+          },
+          {
+            "seat": 9,
+            "x": 172,
+            "y": 695,
+            "width": 221,
+            "height": 297
+          },
+          {
+            "seat": 10,
+            "x": 521,
+            "y": 706,
+            "width": 234,
+            "height": 273
+          },
+          {
+            "seat": 11,
+            "x": 835,
+            "y": 705,
+            "width": 262,
+            "height": 285
+          },
+          {
+            "seat": 12,
+            "x": 1200,
+            "y": 683,
+            "width": 207,
+            "height": 307
+          }
+        ],
+        "frame_mapping": "seat-1",
+        "base_poses_per_person": 1,
+        "notes": "实际矩形边界已用48格浏览器渲染目视核对，无邻人碎片；不把生成排列当等格坐标。",
+        "prompt_file": "文档/版本/v0.7.0/素材提示词/人物演出/全身重排.md",
+        "bytes": 2420541,
+        "generator": "ChatGPT image generation tool",
+        "received_at": "2026-10-26T21:54:39.921169+08:00",
+        "alpha": true
+      },
+      "expressions": {
+        "issue": 78,
+        "world": "tidal_archive",
+        "kind": "expressions",
+        "source_path": "/workspace/generated_images/exec-a7b81022-6a61-432d-aad0-28bc671147c7.png",
+        "handoff_path": "/workspace/langrensha-agent/临时/技能与人物场景验收/人物演出/美术交接/tidal_archive-expressions.png",
+        "generator": "ChatGPT image generation tool",
+        "prompt_file": "文档/版本/v0.7.0/素材提示词/人物演出/tidal_archive-expressions-提示词.txt",
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "alpha_extrema": [
+          0,
+          255
+        ],
+        "sha256": "3307ddaa38013b7f49a5febaae3683c01f7379b72061f319b12f0512b01512e1",
+        "grid": {
+          "columns": 6,
+          "rows": 6,
+          "cell_width": 209.0,
+          "cell_height": 209.0
+        },
+        "frames": {
+          "columns": 6,
+          "rows": 6,
+          "cell_width": 209,
+          "cell_height": 209,
+          "remainder_x": 0,
+          "remainder_y": 0,
+          "layout": "row-major",
+          "slots": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26,
+            27,
+            28,
+            29,
+            30,
+            31,
+            32,
+            33,
+            34,
+            35
+          ]
+        },
+        "frame_mapping": "(seat - 1) * 3 + state_index",
+        "states": {
+          "neutral": 0,
+          "speaking": 1,
+          "thinking": 2
+        },
+        "review_status": "开发者144帧普通浏览器逐格复核，旧上缘碎条已清除；监督者最终PR验收另行记录",
+        "prompt_history": [
+          "文档/版本/v0.7.0/素材提示词/人物演出/tidal_archive-expressions-提示词.txt"
+        ],
+        "file": "expressions.png",
+        "bytes": 3377970,
+        "received_at": "2026-10-26T21:54:39.921169+08:00",
+        "alpha": true,
+        "notes": "6×6只声明语义顺序；实际显示必须用performances.json逐帧轮廓边界，避免行基线差异带入邻格。",
+        "source": "/workspace/generated_images/exec-a7b81022-6a61-432d-aad0-28bc671147c7.png",
+        "handoff": "/workspace/langrensha-agent/临时/技能与人物场景验收/人物演出/美术交接/tidal_archive-expressions.png",
+        "display_rectangles": "前端/src/worlds/performances.json#expressions.tidal_archive"
       }
     }
   },

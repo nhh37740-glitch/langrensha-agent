@@ -275,11 +275,82 @@ main {
 #scene canvas {
   display: block;
 }
+.scene-focus {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 12px;
+  min-width: 0;
+  padding: 10px 14px 10px 8px;
+  background: rgba(9, 23, 28, 0.82);
+  border-left: 2px solid var(--gold);
+}
+.scene-focus[hidden] {
+  display: none;
+}
+.scene-focus__face {
+  flex: 0 0 112px;
+  height: 112px;
+  position: relative;
+  overflow: hidden;
+}
+.scene-focus__clip {
+  position: absolute;
+  overflow: hidden;
+}
+.scene-focus__clip img {
+  position: absolute;
+  max-width: none;
+}
+.scene-focus__face.departed {
+  filter: grayscale(1);
+  opacity: 0.55;
+}
+.scene-focus__copy {
+  min-width: 0;
+}
+.scene-focus__copy strong {
+  color: var(--paper);
+  font-size: 14px;
+  font-weight: 500;
+}
+#scene-focus-state {
+  display: block;
+  font-size: 11px;
+  color: var(--gold);
+  margin-top: 5px;
+}
+.scene-focus__copy p {
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--text-dim);
+  margin: 7px 0;
+  overflow-wrap: anywhere;
+}
+.scene-focus nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.scene-focus nav .quiet {
+  padding: 5px 8px;
+  min-height: 30px;
+  font-size: 10px;
+  letter-spacing: 0;
+}
+.person[role="button"] {
+  cursor: pointer;
+}
+.person[role="button"]:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
 .scene-atmosphere {
   position: absolute;
   inset: 0;
   pointer-events: none;
   z-index: 2;
+  opacity: 0.3;
 }
 .fog-band {
   position: absolute;
@@ -1412,7 +1483,17 @@ footer span {
   }
   .scene-wrap {
     order: 0;
-    aspect-ratio: 1.55;
+    aspect-ratio: 840/570;
+  }
+  .scene-focus {
+    order: 0;
+    gap: 8px;
+    padding-right: 8px;
+    margin-top: 0;
+  }
+  .scene-focus__face {
+    flex-basis: 88px;
+    height: 88px;
   }
   .scene-title {
     top: 16px;

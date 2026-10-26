@@ -10,6 +10,8 @@
 //   scene-day.webp   白昼对局场景
 //   scene-night.webp 夜晚对局场景
 //   personas.webp    3 列 × 4 行透明人物图集，slot 0..11 对应 seat 1..12
+//   bodies.png       十二幅全身人物，实际帧矩形见 performances.json
+//   expressions.png  每人三状态；6×6仅表语义顺序，显示用实际矩形
 //   icons.webp       4 列 × 4 行透明技能/状态图标
 //   effects.webp     6 列 × 5 行透明动效帧
 const FILES = import.meta.glob("../assets/worlds/*/*.{webp,png}", {
@@ -30,6 +32,8 @@ const SLOT_FILES = Object.freeze({
   day: "scene-day",
   night: "scene-night",
   personas: "personas",
+  bodies: "bodies",
+  expressions: "expressions",
   icons: "icons",
   effects: "effects",
 });
@@ -39,6 +43,7 @@ const SLOT_FILES = Object.freeze({
 // 推导切片，不依赖这里的标称值，避免硬编码错位。
 export const ATLAS = Object.freeze({
   personas: Object.freeze({ columns: 3, rows: 4, width: 384, height: 512 }),
+  expressions: Object.freeze({ columns: 6, rows: 6 }),
   icons: Object.freeze({ columns: 4, rows: 4, width: 128, height: 128 }),
   effects: Object.freeze({ columns: 6, rows: 5, width: 256, height: 256 }),
 });
@@ -100,7 +105,8 @@ function urlFor(worldId, file) {
 /**
  * 返回某世界的资源 URL。未交接的槽位为 null，调用方必须显式回退。
  * @returns {{cover: string|null, day: string|null, night: string|null,
- *   personas: string|null, icons: string|null, effects: string|null}}
+ *   personas: string|null, bodies: string|null, expressions: string|null,
+ *   icons: string|null, effects: string|null}}
  */
 export function worldAsset(worldId) {
   const id = worldIdOr(worldId, "");
@@ -110,6 +116,8 @@ export function worldAsset(worldId) {
       day: null,
       night: null,
       personas: null,
+      bodies: null,
+      expressions: null,
       icons: null,
       effects: null,
     };
