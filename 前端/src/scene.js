@@ -152,6 +152,7 @@ class WorldScene extends Phaser.Scene {
     super("town");
     this.people = [];
     this.motionTweens = [];
+    this.idleTweens = [];
     this.failedTextures = new Set();
     this.state = null;
     this.lastEffect = 0;
@@ -348,6 +349,8 @@ class WorldScene extends Phaser.Scene {
       this.destroyed = true;
       this.motionTweens.forEach((tween) => tween.stop());
       this.motionTweens = [];
+      this.idleTweens.forEach((tween) => tween.stop());
+      this.idleTweens = [];
       this.effectTimers.forEach((timer) => timer.remove(false));
       this.effectTimers = [];
       this.loadingTextures.forEach((image) => {
@@ -742,7 +745,9 @@ class WorldScene extends Phaser.Scene {
 
   startIdle(person) {
     if (person.idleTween) {
-      person.idleTween.stop();
+      const old = person.idleTween;
+      old.stop();
+      this.idleTweens = this.idleTweens.filter((tween) => tween !== old);
       person.idleTween = null;
     }
     if (!person.aura) return;
@@ -761,7 +766,7 @@ class WorldScene extends Phaser.Scene {
       ease: "Sine.easeInOut",
     });
     person.idleTween = tween;
-    this.motionTweens.push(tween);
+    this.idleTweens.push(tween);
   }
 
   layoutFor(worldId) {
@@ -2548,6 +2553,7 @@ class WorldScene extends Phaser.Scene {
     if (this.ready && this.ambient) {
       this.ambient.setAlpha(reduced ? 0.85 : 1);
     }
+    this.people.forEach((person) => this.startIdle(person));
   }
 }
 
