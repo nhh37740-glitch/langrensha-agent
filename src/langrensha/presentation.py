@@ -580,6 +580,7 @@ def present(view):
         "identity": theme["role_labels"][view["role"]],
         "round": view["round"],
         "night": night,
+        "phase": view["phase"],
         "chapter": chapter,
         "phase_id": view["phase_id"],
         "version": view["version"],
