@@ -1,0 +1,79 @@
+{
+  "id": "hyperion_dawn",
+  "title": "天光过门",
+  "world": "hyperion",
+  "world_title": "海伯利安",
+  "scene": "dawn",
+  "usage": "公开的昼夜切换：夜晚结束、白天开始",
+  "priority": "P3",
+  "bpm": 72,
+  "loop": false,
+  "bars": 2,
+  "length_beats": 6.72,
+  "tail_seconds": 0,
+  "notes": [
+    {
+      "beat": 0.0,
+      "duration": 1.02,
+      "pitch": 64,
+      "velocity": 44,
+      "channel": 0,
+      "program": 4,
+      "pan": -0.15
+    },
+    {
+      "beat": 0.576,
+      "duration": 1.02,
+      "pitch": 65,
+      "velocity": 47,
+      "channel": 0,
+      "program": 4,
+      "pan": -0.15
+    },
+    {
+      "beat": 1.152,
+      "duration": 1.02,
+      "pitch": 71,
+      "velocity": 43,
+      "channel": 0,
+      "program": 4,
+      "pan": -0.15
+    },
+    {
+      "beat": 1.728,
+      "duration": 1.02,
+      "pitch": 69,
+      "velocity": 39,
+      "channel": 0,
+      "program": 4,
+      "pan": -0.15
+    },
+    {
+      "beat": 2.16,
+      "duration": 1.44,
+      "pitch": 64,
+      "velocity": 32,
+      "channel": 2,
+      "program": 48,
+      "pan": 0.2
+    },
+    {
+      "beat": 2.16,
+      "duration": 1.44,
+      "pitch": 71,
+      "velocity": 30,
+      "channel": 2,
+      "program": 48,
+      "pan": 0.2
+    },
+    {
+      "beat": 2.16,
+      "duration": 1.44,
+      "pitch": 78,
+      "velocity": 28,
+      "channel": 2,
+      "program": 48,
+      "pan": 0.2
+    }
+  ]
+}

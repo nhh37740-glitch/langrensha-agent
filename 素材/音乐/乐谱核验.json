@@ -1,0 +1,324 @@
+{
+  "issue": 76,
+  "all_pass": true,
+  "tracks": [
+    {
+      "id": "common_menu",
+      "notes": 100,
+      "score_sha256": "54f8e7813590d7d5a28299e3a4a988fcaa6df20381e7148deca8fe01572c77b6",
+      "midi_sha256": "db925a61efb642359bdc1f1c1dee3a3ddefb5b00d22e84806cad07b4a82ac75c"
+    },
+    {
+      "id": "mist_theme",
+      "notes": 100,
+      "score_sha256": "a2c1107ba05d84c0e28122acf12caf1e3c8ea87c4f1c73891742c4adb58d2d7e",
+      "midi_sha256": "e13548376a4d3bb5b901ee48853df512bc6090b1c60662d536344768b36dd475"
+    },
+    {
+      "id": "mist_day",
+      "notes": 108,
+      "score_sha256": "2ae9c841d49b93257a13c544adc43668d19300c62e39090d264d275e872b71b7",
+      "midi_sha256": "6105a8d5cb9b71b6f93901ddb6652401d72e4f5aca77f048680a9a688ddfb86d"
+    },
+    {
+      "id": "mist_debate",
+      "notes": 132,
+      "score_sha256": "61f74a68e254f7674bfe86e79ce3a8624837ae29522b439c41b70d0734a205ee",
+      "midi_sha256": "49f88a788bdd80e36caa054f0c086798f628cc56172b0d6ffcf46235879983c5"
+    },
+    {
+      "id": "mist_night",
+      "notes": 52,
+      "score_sha256": "22e6f9deeec6949eb70d1ecdca266461919098b038dc30bd59fa0539c00ebe4b",
+      "midi_sha256": "a9491045d05d035756d2cd071551c65649ee95c8a8ea8ba6bf849a3b414c5b12"
+    },
+    {
+      "id": "mist_vote",
+      "notes": 172,
+      "score_sha256": "27ec4c02ac9dfefcd6dfcca765a9e62f111b5aaf71e5804c7a4bd1f0b3fd32ab",
+      "midi_sha256": "b01934ecfed0d5c98276d71940e120eb4f295ae77985ba1cd9891c001f78551e"
+    },
+    {
+      "id": "mist_farewell",
+      "notes": 76,
+      "score_sha256": "db781ebe74fcc3cb911d61ad97bd204f98475c18f8b781829945cd694aceffc5",
+      "midi_sha256": "54e05cf3ab91d1e370b7c39fecc0b57859afae67b41ce3cf9335e05dc32038a1"
+    },
+    {
+      "id": "mist_reading",
+      "notes": 68,
+      "score_sha256": "f2d91273d0299c83319cbb6f7d689c04eac5e94e151572c4a9b1ae7ac38d5a28",
+      "midi_sha256": "27a065700c6f6ac3f85b7445c10a543bfab24b889ccbfdbd57dd3db57a292314"
+    },
+    {
+      "id": "mist_light_end",
+      "notes": 57,
+      "score_sha256": "9d39be591496e26236adc460475b438cfa9bc669853db500584153e3146aad10",
+      "midi_sha256": "23e75f1ee0734602907811e9d097a73a8a640313c03f0dcef1a879633e6934d7"
+    },
+    {
+      "id": "mist_shadow_end",
+      "notes": 49,
+      "score_sha256": "d3f8d24b9241b80b4b061dd62de0025230f9a256574be5352609e381e24ca1c1",
+      "midi_sha256": "75f481e32661f297be79864eaccc313651272df31755a254a2443fff33ff8fe6"
+    },
+    {
+      "id": "mist_draw_end",
+      "notes": 25,
+      "score_sha256": "bd0c917e1c5597c793d87a31c560d2c32c2919f3004f8f22bbdb4dd4a75b9c63",
+      "midi_sha256": "a3a0d8244d7dd9de2e019252cbae08b1752aeb45a9df760e1eb1e1cb8c1f605b"
+    },
+    {
+      "id": "hyperion_theme",
+      "notes": 100,
+      "score_sha256": "c9aed76ee5d01bd2a9f875cf0030985d6c736314d410a31ff14a6869bcdd926c",
+      "midi_sha256": "b4edbe7ca0aa1ac260df695f6f9123f682b518f0b6df5c749d172fcda0294f63"
+    },
+    {
+      "id": "hyperion_day",
+      "notes": 108,
+      "score_sha256": "98afbd4a72c5eed7fd9f535f1c5ee6408b438b0ba41df6b822a0dc9e3b2c4c10",
+      "midi_sha256": "6ea9adebff37fc99d2bd3bb2e62e145cd7f41c6d0a58f6f0718ff4e65494d97e"
+    },
+    {
+      "id": "hyperion_debate",
+      "notes": 132,
+      "score_sha256": "0df68188f132cfa9aef0fba0c2a64b5be8b796ba7fcd9b7389b06a167e587f47",
+      "midi_sha256": "0524b07e545467a80ed96f24f0bb1cf9b0b62b84d7aa5894024abd2aafca19f7"
+    },
+    {
+      "id": "hyperion_night",
+      "notes": 52,
+      "score_sha256": "1d08106d3523bd4782448f23e0ef9b68a183e24f9d9a368cf0cbab352165cccf",
+      "midi_sha256": "9c6ccc5cfb9719d234cc228eb96e99d06ab5b70d68630972bd24f7fdf90b9b0f"
+    },
+    {
+      "id": "hyperion_vote",
+      "notes": 172,
+      "score_sha256": "08f7cc526e956e32a866e14c7ec39c99675e108fd8b7a636c170e0ce2d5b2d78",
+      "midi_sha256": "1022876bf92487db089b7a4464008bd13dd7fc5162b9ec9840b7b530fc7045e4"
+    },
+    {
+      "id": "hyperion_farewell",
+      "notes": 76,
+      "score_sha256": "4bf635d62491a2fc434ddfd4c1f4e8be5d0ea06c477810aadd49e05ae12e11ce",
+      "midi_sha256": "a1e6f3b63273e6b48785136759d46a90f8103e8f0296d9fc1f24d6675a2c3492"
+    },
+    {
+      "id": "hyperion_reading",
+      "notes": 68,
+      "score_sha256": "8886ab5f52bfbf60a2234fa86358389230e797043f9a4b53fb925cde2738a597",
+      "midi_sha256": "002f769603c2c1f267b214bf7e71c1eee2e61cd5a802c85427f65c7c1aa16ec0"
+    },
+    {
+      "id": "hyperion_light_end",
+      "notes": 57,
+      "score_sha256": "a931e1a737c1fa6e8b5f82fad023f44446f95c223c9a20e4e706d89ce378208e",
+      "midi_sha256": "9742046eabdd9a9b8c4bc0894d90586e84b168bf70c41f9d40d3ece0ff720b1b"
+    },
+    {
+      "id": "hyperion_shadow_end",
+      "notes": 38,
+      "score_sha256": "6b4a9decf231d9a306e945dd889e282dd23f0a000506eef071ff38a4728ed033",
+      "midi_sha256": "04a8bf3fdc6faabf02eaebf384cb6517b8ce59dca53297c1a5d1c1fff2147893"
+    },
+    {
+      "id": "hyperion_draw_end",
+      "notes": 25,
+      "score_sha256": "d330b8aedf05d9c353a94f4977b653a3bc7ab77820e8d7f78204accf96072891",
+      "midi_sha256": "2e5d29538f64aa66a775d653d00fcd309050bfaf86ccbe876fc17923cd818d2b"
+    },
+    {
+      "id": "threebody_theme",
+      "notes": 100,
+      "score_sha256": "ab0d103d5779414aacab776e88f6b8c5b803a83f7048ab5fbc38d256f3e0e8e2",
+      "midi_sha256": "7511d4eac72fb8bd7652b2be24c115fdfc43534897ccc7b87a417d53a06872f8"
+    },
+    {
+      "id": "threebody_day",
+      "notes": 108,
+      "score_sha256": "d926d1715cbe0d6a3a31a164213ab02c8d6b49f5da6fce1f1432de9b25d7b1ed",
+      "midi_sha256": "9a3acfc29f103a0ff54669f3ac6ac1551b71aaa97e7c770cf9838213cdad2777"
+    },
+    {
+      "id": "threebody_debate",
+      "notes": 132,
+      "score_sha256": "f29562c40876189be4f7498930bc8f0895dfa237874e01167cd481d2d6aa7216",
+      "midi_sha256": "2e765f91c5e6b729102d9272d5e1eb9515a0040d7bfaa56d67081f53dc19ebef"
+    },
+    {
+      "id": "threebody_night",
+      "notes": 52,
+      "score_sha256": "439056404c822e512500f10c8f5cacf39be1c99e023f2b94b2cdc895802592c8",
+      "midi_sha256": "7c58ad8b414eb6645d7451bdc2393f7d1d6bf2347a53bea5e0a12bf1cd7323dc"
+    },
+    {
+      "id": "threebody_vote",
+      "notes": 172,
+      "score_sha256": "ba1faabccd662f1c6310b1f833b334f8131f39f050eaf7f7af47cf0925ddbdde",
+      "midi_sha256": "0a1bc628072c44244f709fbca2889cbf324fe8a73a01f723a170fa7b56ebd492"
+    },
+    {
+      "id": "threebody_farewell",
+      "notes": 76,
+      "score_sha256": "f423f5fde0e9c1d7b18829a8333ac006cee288654b6914682fafc9b6f1249015",
+      "midi_sha256": "426ac9cbb31ff637c8e33212f78ab320446db87c34e059ad8c42bba2c072ce95"
+    },
+    {
+      "id": "threebody_reading",
+      "notes": 68,
+      "score_sha256": "86fac84868d6cf08ffdccd7f92b0301e7eff828c29637383e1e2497fa5fc8e4f",
+      "midi_sha256": "5ae2641568698491b35a239b6fb5a1cb9aa023f62f850d2f46beba8c8dff3d6f"
+    },
+    {
+      "id": "threebody_light_end",
+      "notes": 57,
+      "score_sha256": "f9ea26b995e123fded6af16a3be144e87bf1639032ef988e752f637567ccfb3f",
+      "midi_sha256": "34dab56599fe9aea7da1ded4097e39a4f5ee130dc63a94c184f450df3a876eff"
+    },
+    {
+      "id": "threebody_shadow_end",
+      "notes": 49,
+      "score_sha256": "32c2e53e38c33fefd7b508f48c3a122d20af490e748321ea7e1bd5df5b66f0eb",
+      "midi_sha256": "de1f22abc988edeaee912a6d61cfabc61567adb247c9964cf15b6b30c8ffeeb7"
+    },
+    {
+      "id": "threebody_draw_end",
+      "notes": 25,
+      "score_sha256": "fc0e762af6bf59dd85fb5ab392477fb45eb30a9920efb4883152299d38336b37",
+      "midi_sha256": "ddf17e4cf42679aa0622170328e127b4e8767bf16b34fcb82a8184e53b141a9a"
+    },
+    {
+      "id": "tidal_archive_theme",
+      "notes": 100,
+      "score_sha256": "2bcc8e71f90bc3f73ad1bf77fbd4df2a0ab6be0e715623bf33a43cff94a57a78",
+      "midi_sha256": "72bdb8d2271fff3bd6ba8291c2b76236f89a2197c4e79deee48e9d424e526a40"
+    },
+    {
+      "id": "tidal_archive_day",
+      "notes": 108,
+      "score_sha256": "03a9c2b3e56175fc423519e4462018ca816741171d795df79193af4bde2fbe90",
+      "midi_sha256": "62e08df6c9ac2c2a98710c103012873b5b9f7a49b3582f2c5ec671822233d8e1"
+    },
+    {
+      "id": "tidal_archive_debate",
+      "notes": 132,
+      "score_sha256": "758f3f467307ca06042baee06ac348ca434758b75f338c817b9624bbe49addd0",
+      "midi_sha256": "0d0edd854dc5780166c1a59853b5efbc9747888073f1b180d9bb84fabe7c4338"
+    },
+    {
+      "id": "tidal_archive_night",
+      "notes": 52,
+      "score_sha256": "192d1495ab7f81805bd215b49532d73b34e91cbfe280c4ec5e843d9d941ebedb",
+      "midi_sha256": "3f6d86ada7ebe58b91f35414436a19400c1e715cc3045b70e35c0f1fec3076c2"
+    },
+    {
+      "id": "tidal_archive_vote",
+      "notes": 172,
+      "score_sha256": "0967795a278d07203ac18ef75fb573eb09866112d7a68a91c936405c7c86c8f6",
+      "midi_sha256": "2add364d421d889cd1b4dae9542c87c4005277addef34b23b21f60d2b2417720"
+    },
+    {
+      "id": "tidal_archive_farewell",
+      "notes": 76,
+      "score_sha256": "e00ff121260a332de7a7ca54ff88d95d3d54f90a008831d8bb0163b7e6c0b9da",
+      "midi_sha256": "5455ec0bc590b9cc27e98619b583c44233bbc8dbb6ad2fff9777cceece2c24d5"
+    },
+    {
+      "id": "tidal_archive_reading",
+      "notes": 68,
+      "score_sha256": "efc103612fe0147a461ecae527eba0b02ce81d8c74482f725c9f5f2a4790708d",
+      "midi_sha256": "aaa9a720e398b5f936c9bfa0085464c3c9be9475a5fc0de659fe9be3bbfd2357"
+    },
+    {
+      "id": "tidal_archive_light_end",
+      "notes": 57,
+      "score_sha256": "b428d34a54740ff5629d5805e726ae7932a0ba93d186817909c93e76c7e44cac",
+      "midi_sha256": "41f65e8790ce16e70aa6ad563ba8391c7fb5f7d743ca2f03d18edf887a36e0f4"
+    },
+    {
+      "id": "tidal_archive_shadow_end",
+      "notes": 38,
+      "score_sha256": "1caf5a5b7c30d66e0cc69c221e90c4558047d430e546d60f11fe78f1c0ad6f86",
+      "midi_sha256": "c6bb89ee0b1a03bc6ba20eb159b68655316591b4683119ffaf198848a8c04bd3"
+    },
+    {
+      "id": "tidal_archive_draw_end",
+      "notes": 25,
+      "score_sha256": "a759b592a6cdf308556c0608b4fb44b7a1e0d0167a0ecd4f0bd20a3a6ac34d83",
+      "midi_sha256": "51c88a0ba1b8d46b4cbc99da21b1619c58a1b0abbae8aed835ec655e87207f67"
+    },
+    {
+      "id": "mist_dawn",
+      "notes": 7,
+      "score_sha256": "ba1554be124bc529452dd0a840e6c58b7a2702fc89cafc93d5ef74a729ef2e18",
+      "midi_sha256": "3f6fadefcb34158bda11dd4b7b0dc9a5b2c4066893893980258bb290539d9d6d"
+    },
+    {
+      "id": "mist_dusk",
+      "notes": 7,
+      "score_sha256": "9014edcab6eb69eeddb98cfc04865781021a0846afae6b8b13f0606cda0ea9c6",
+      "midi_sha256": "8113c4127a5fd75a70078c9f89c841572dfbc6fc9e4950c8e47fbd88f1751f44"
+    },
+    {
+      "id": "mist_verdict",
+      "notes": 7,
+      "score_sha256": "ac172cb47385df51165661a643188fe6da3409c9887833b70cf8fb24f507ccc2",
+      "midi_sha256": "35299a589ae8bd11aa734ce032b41864529d0ddf80b654644668a82a339a0231"
+    },
+    {
+      "id": "hyperion_dawn",
+      "notes": 7,
+      "score_sha256": "e3fc7cf6495c36da6a997b7bdee9311a6f2f864e28ae4aa3fb49ba12ee94068a",
+      "midi_sha256": "ef46f3d97a6e8242181982e2d11ccfaa6ab39f8764ee45b491cc942e04624112"
+    },
+    {
+      "id": "hyperion_dusk",
+      "notes": 7,
+      "score_sha256": "205a239e0dc767721ca71813380bde9f31d524dae8490a6f1e6c06bdb7b23a74",
+      "midi_sha256": "ff370e11cc1d7c506e8436392f9c96f9e0ce7742c9c8908ec0f361bfc7b3c74f"
+    },
+    {
+      "id": "hyperion_verdict",
+      "notes": 7,
+      "score_sha256": "dbc13b9dc97da8a5993d7f4889da1d45e8aea570f2de50eeb765183915fd7bf8",
+      "midi_sha256": "8e6390b9d2567301a272c0778f921fd4521417f532fc6ea94d2309e8ff13ee8f"
+    },
+    {
+      "id": "threebody_dawn",
+      "notes": 7,
+      "score_sha256": "25deba32159ffa71acc2168dd963129162f8ea07b2c3a813ff3ae614d6631ed1",
+      "midi_sha256": "89ab8479f6040148c56fe3276c6216ba1501c38e98f0e06c22f7fca62a505eeb"
+    },
+    {
+      "id": "threebody_dusk",
+      "notes": 7,
+      "score_sha256": "8ec48bbecfe0ee1c87ae83c0abfacbd6dca90056449410721f39c97f9c35781d",
+      "midi_sha256": "a99a5de431689b546bb151f607387b362c3c77742d53eeb780c7c6b6b58646c7"
+    },
+    {
+      "id": "threebody_verdict",
+      "notes": 7,
+      "score_sha256": "db1d0008412a2edb0f2afd43eb4763f09bcf3a949a2fff13ccdf873b2a4b2efd",
+      "midi_sha256": "d252045f63d53e1da9c37c40793f1c21089de8842f100da3966567e5b1c7cfb6"
+    },
+    {
+      "id": "tidal_archive_dawn",
+      "notes": 7,
+      "score_sha256": "88eb44fb20094a7b986e43dc442df92643e348f92566eec56220c4f458e1b560",
+      "midi_sha256": "683a231d9ebded26837b1295448a9b54ad66a46da7355919090cb96628e4900d"
+    },
+    {
+      "id": "tidal_archive_dusk",
+      "notes": 7,
+      "score_sha256": "6ca50853ff96823347edf6e6208662574fde7d3cad05834a03023a24f9c39bc6",
+      "midi_sha256": "ee5e1a36a88ee5fc89933cf6290f4ae4ae6c125e74c30b5a4f8147ff8967cf84"
+    },
+    {
+      "id": "tidal_archive_verdict",
+      "notes": 7,
+      "score_sha256": "af31543a74f3bd6c2ddea1fb6117c7ac3e1f741874e92ae4996aa9a110b796f8",
+      "midi_sha256": "64cc2789450823bc9b60eeeada253aca54d4d734016a7446e59eb178e52530ab"
+    }
+  ]
+}

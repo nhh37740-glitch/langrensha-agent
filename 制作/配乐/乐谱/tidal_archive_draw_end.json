@@ -1,0 +1,241 @@
+{
+  "id": "tidal_archive_draw_end",
+  "title": "同归静海",
+  "world": "tidal_archive",
+  "world_title": "潮汐档案馆",
+  "scene": "draw_end",
+  "usage": "平局／无人获胜结局",
+  "priority": "P2",
+  "bpm": 48,
+  "loop": false,
+  "bars": 6,
+  "length_beats": 24,
+  "tail_seconds": 4,
+  "notes": [
+    {
+      "beat": 0.04,
+      "duration": 5.6,
+      "pitch": 43,
+      "velocity": 31,
+      "channel": 1,
+      "program": 71,
+      "pan": -0.12
+    },
+    {
+      "beat": 0.08,
+      "duration": 6.1,
+      "pitch": 47,
+      "velocity": 26,
+      "channel": 2,
+      "program": 24,
+      "pan": -0.23
+    },
+    {
+      "beat": 0.115,
+      "duration": 6.1,
+      "pitch": 50,
+      "velocity": 24,
+      "channel": 2,
+      "program": 24,
+      "pan": 0.0
+    },
+    {
+      "beat": 0.15,
+      "duration": 6.1,
+      "pitch": 54,
+      "velocity": 22,
+      "channel": 2,
+      "program": 24,
+      "pan": 0.23
+    },
+    {
+      "beat": 1.513,
+      "duration": 0.85,
+      "pitch": 55,
+      "velocity": 33,
+      "channel": 3,
+      "program": 45,
+      "pan": 0.35
+    },
+    {
+      "beat": 5.025,
+      "duration": 0.85,
+      "pitch": 59,
+      "velocity": 31,
+      "channel": 3,
+      "program": 45,
+      "pan": -0.35
+    },
+    {
+      "beat": 1.0,
+      "duration": 2.4,
+      "pitch": 62,
+      "velocity": 41,
+      "channel": 0,
+      "program": 12,
+      "pan": -0.18
+    },
+    {
+      "beat": 5.0,
+      "duration": 2.4,
+      "pitch": 64,
+      "velocity": 38,
+      "channel": 0,
+      "program": 12,
+      "pan": -0.18
+    },
+    {
+      "beat": 8.04,
+      "duration": 5.6,
+      "pitch": 38,
+      "velocity": 36,
+      "channel": 1,
+      "program": 71,
+      "pan": -0.12
+    },
+    {
+      "beat": 8.08,
+      "duration": 6.1,
+      "pitch": 54,
+      "velocity": 24,
+      "channel": 2,
+      "program": 24,
+      "pan": -0.23
+    },
+    {
+      "beat": 8.115,
+      "duration": 6.1,
+      "pitch": 57,
+      "velocity": 22,
+      "channel": 2,
+      "program": 24,
+      "pan": 0.0
+    },
+    {
+      "beat": 9.513,
+      "duration": 0.85,
+      "pitch": 66,
+      "velocity": 33,
+      "channel": 3,
+      "program": 45,
+      "pan": 0.35
+    },
+    {
+      "beat": 13.025,
+      "duration": 0.85,
+      "pitch": 69,
+      "velocity": 31,
+      "channel": 3,
+      "program": 45,
+      "pan": -0.35
+    },
+    {
+      "beat": 9.0,
+      "duration": 2.4,
+      "pitch": 60,
+      "velocity": 41,
+      "channel": 5,
+      "program": 24,
+      "pan": 0.16
+    },
+    {
+      "beat": 13.0,
+      "duration": 2.4,
+      "pitch": 57,
+      "velocity": 38,
+      "channel": 5,
+      "program": 24,
+      "pan": 0.16
+    },
+    {
+      "beat": 16.04,
+      "duration": 5.6,
+      "pitch": 45,
+      "velocity": 36,
+      "channel": 1,
+      "program": 71,
+      "pan": -0.12
+    },
+    {
+      "beat": 16.08,
+      "duration": 6.1,
+      "pitch": 52,
+      "velocity": 24,
+      "channel": 2,
+      "program": 24,
+      "pan": -0.23
+    },
+    {
+      "beat": 16.115,
+      "duration": 6.1,
+      "pitch": 59,
+      "velocity": 22,
+      "channel": 2,
+      "program": 24,
+      "pan": 0.0
+    },
+    {
+      "beat": 17.513,
+      "duration": 0.85,
+      "pitch": 71,
+      "velocity": 33,
+      "channel": 3,
+      "program": 45,
+      "pan": 0.35
+    },
+    {
+      "beat": 21.025,
+      "duration": 0.85,
+      "pitch": 57,
+      "velocity": 31,
+      "channel": 3,
+      "program": 45,
+      "pan": -0.35
+    },
+    {
+      "beat": 17.0,
+      "duration": 2.4,
+      "pitch": 62,
+      "velocity": 41,
+      "channel": 0,
+      "program": 12,
+      "pan": -0.18
+    },
+    {
+      "beat": 21.0,
+      "duration": 2.4,
+      "pitch": 64,
+      "velocity": 38,
+      "channel": 0,
+      "program": 12,
+      "pan": -0.18
+    },
+    {
+      "beat": 22.0,
+      "duration": 2.5,
+      "pitch": 45,
+      "velocity": 34,
+      "channel": 6,
+      "program": 12,
+      "pan": 0.0
+    },
+    {
+      "beat": 22.0,
+      "duration": 2.5,
+      "pitch": 52,
+      "velocity": 32,
+      "channel": 6,
+      "program": 12,
+      "pan": 0.0
+    },
+    {
+      "beat": 22.0,
+      "duration": 2.5,
+      "pitch": 59,
+      "velocity": 30,
+      "channel": 6,
+      "program": 12,
+      "pan": 0.0
+    }
+  ]
+}
