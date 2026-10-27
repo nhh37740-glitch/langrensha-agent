@@ -7,7 +7,17 @@ import { makeScene } from "./scene.js";
 const $ = (id) => document.getElementById(id);
 const root = document.documentElement;
 const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
-const scene = makeScene({ reducedMotion: motionQuery.matches });
+const scene = makeScene({
+  reducedMotion: motionQuery.matches,
+  onSelectSeat: (seat) => {
+    const target = $("target");
+    const choice = view?.choices.find((item) => item.tool === $("choice").value);
+    if (!busy && choice?.targets?.includes(seat) && target) {
+      target.value = String(seat);
+      target.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+  },
+});
 let view = null,
   auto = true,
   busy = false,
@@ -1174,6 +1184,16 @@ function render(state) {
         stateLine,
       );
       n.title = p.description;
+      n.setAttribute("role", "button");
+      n.tabIndex = 0;
+      n.setAttribute("aria-label", `查看${p.seat}号${p.name}的神态；可作为目标时同步选择`);
+      n.addEventListener("click", () => scene.focusSeat(p.seat));
+      n.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          scene.focusSeat(p.seat);
+        }
+      });
       return n;
     }),
   );

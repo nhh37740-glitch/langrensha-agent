@@ -537,6 +537,9 @@ def _line(e, theme, personas):
         ),
         "effect": effect,
         "actor": actor,
+        # 只给已经通过玩家权限过滤的事件标记公开演出，不暴露当前暗牌操作者。
+        "is_speech": kind == "action" and d.get("tool") in {"speak", "wolf_chat"},
+        "phase_id": e.get("phase_id", ""),
     }
 
 
@@ -580,6 +583,7 @@ def present(view):
         "identity": theme["role_labels"][view["role"]],
         "round": view["round"],
         "night": night,
+        "phase": view["phase"],
         "chapter": chapter,
         "phase_id": view["phase_id"],
         "version": view["version"],

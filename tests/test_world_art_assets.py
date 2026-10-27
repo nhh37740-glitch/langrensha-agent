@@ -5,7 +5,7 @@
 
 * cover / scene_day / scene_night / personas / icons / effects 六个槽位齐全；
 * 文件存在、字节数与 SHA-256 与清单一致；
-* WebP 实际宽高与清单一致，透明槽位确实带 alpha；
+* WebP/PNG 实际宽高与清单一致，透明槽位确实带 alpha；
 * 人物图集 3×4、图标 4×4、动效 6×5，且实际像素可被行列整除；
 * 来源、生成方式、提示词可追溯，不能是复用占位图。
 
@@ -32,13 +32,16 @@ SLOTS = {
     "personas": "personas.webp",
     "icons": "icons.webp",
     "effects": "effects.webp",
+    "bodies": "bodies.png",
+    "expressions": "expressions.png",
 }
 LAYOUT = {
     "personas": (3, 4, 12),
     "icons": (4, 4, 16),
     "effects": (6, 5, 30),
+    "expressions": (6, 6, 36),
 }
-ALPHA_REQUIRED = {"personas", "icons", "effects"}
+ALPHA_REQUIRED = {"personas", "icons", "effects", "bodies", "expressions"}
 SHA256 = re.compile(r"^[0-9a-f]{64}$")
 
 
@@ -79,6 +82,26 @@ def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def _asset_path(world: str, slot: str, record: dict) -> Path:
+    filename = str(record.get("file") or SLOTS[slot])
+    name = Path(filename)
+    assert name.name == filename and name.stem == Path(SLOTS[slot]).stem
+    assert name.suffix in {".webp", ".png"}
+    return ASSET_ROOT / world / filename
+
+
+def _image_info(path: Path) -> tuple[int, int, bool]:
+    if path.suffix == ".png":
+        data = path.read_bytes()
+        assert data[:8] == b"\x89PNG\r\n\x1a\n" and data[12:16] == b"IHDR"
+        return (
+            int.from_bytes(data[16:20], "big"),
+            int.from_bytes(data[20:24], "big"),
+            data[25] in {4, 6},
+        )
+    return _webp_info(path)
+
+
 def test_manifest_covers_four_worlds_and_declares_atlas_layout():
     manifest = _load_manifest()
     assert manifest.get("issue") == 67
@@ -110,24 +133,22 @@ def test_asset_files_match_manifest_hashes_and_dimensions():
     errors = []
     all_hashes = {}
     for world in WORLDS:
-        for slot, filename in SLOTS.items():
+        for slot in SLOTS:
             record = (manifest["worlds"].get(world) or {}).get(slot)
             if record is None:
                 continue
-            path = ASSET_ROOT / world / filename
+            path = _asset_path(world, slot, record)
             label = f"{world}/{slot}"
             if not path.is_file():
                 errors.append(f"{label} 文件不存在：{path.relative_to(ROOT)}")
                 continue
-            if record.get("file") != filename:
-                errors.append(f"{label} 清单文件名应为 {filename}，实际 {record.get('file')!r}")
             if record.get("bytes") != path.stat().st_size:
                 errors.append(f"{label} 字节数不一致")
             actual_sha = _sha256(path)
             if record.get("sha256") != actual_sha:
                 errors.append(f"{label} SHA-256 不一致")
             all_hashes[label] = actual_sha
-            width, height, has_alpha = _webp_info(path)
+            width, height, has_alpha = _image_info(path)
             if (record.get("width"), record.get("height")) != (width, height):
                 errors.append(
                     f"{label} 清单尺寸 {record.get('width')}×{record.get('height')} "
@@ -143,7 +164,7 @@ def test_asset_files_match_manifest_hashes_and_dimensions():
                     errors.append(f"{label} 清单通道应为 RGBA，实际 {mode!r}")
             else:
                 if has_alpha:
-                    errors.append(f"{label} 应为不透明 WebP，实际带透明通道")
+                    errors.append(f"{label} 应为不透明背景，实际带透明通道")
                 if record.get("alpha") is True:
                     errors.append(f"{label} 清单把不透明资产标成了 alpha=true")
     assert not errors, "素材清单与实际文件不一致：\n" + "\n".join(errors)
@@ -160,11 +181,11 @@ def test_atlas_frames_match_actual_layout():
             record = (manifest["worlds"].get(world) or {}).get(kind)
             if record is None:
                 continue
-            path = ASSET_ROOT / world / SLOTS[kind]
+            path = _asset_path(world, kind, record)
             if not path.is_file():
                 errors.append(f"{world}/{kind} 文件缺失，无法核对图集")
                 continue
-            width, height, _alpha = _webp_info(path)
+            width, height, _alpha = _image_info(path)
             # 图集允许最多 3px 的透明余量（运行时 floor 切片，不重采样）；
             # 余量更大或单元格与总尺寸对不上都视为错位。
             remainder_x = width - (width // columns) * columns
@@ -222,7 +243,7 @@ def test_records_are_traceable_and_not_reused_placeholders():
     manifest = _load_manifest()
     errors = []
     for world in WORLDS:
-        for slot, filename in SLOTS.items():
+        for slot in SLOTS:
             record = (manifest["worlds"].get(world) or {}).get(slot)
             if record is None:
                 continue
@@ -245,7 +266,26 @@ def test_records_are_traceable_and_not_reused_placeholders():
             notes = str(record.get("notes") or "").lower()
             if "placeholder" in notes or "占位" in notes:
                 errors.append(f"{label} 备注表明仍是占位图")
-            path = ASSET_ROOT / world / filename
+            path = _asset_path(world, slot, record)
             if path.is_file() and path.stat().st_size < 2048:
                 errors.append(f"{label} 文件过小，疑似占位图")
     assert not errors, "素材可追溯性不足：\n" + "\n".join(errors)
+
+
+def test_performance_rectangles_match_assets_and_public_frame_count():
+    data = json.loads((ROOT / "前端/src/worlds/performances.json").read_text())
+    manifest = _load_manifest()
+    for world in WORLDS:
+        for kind, count in [("bodies", 12), ("expressions", 36)]:
+            record = manifest["worlds"][world][kind]
+            width, height, _alpha = _image_info(_asset_path(world, kind, record))
+            sheet = data["expressions"][world] if kind == "expressions" else None
+            frames = sheet["frames"] if sheet else data["worlds"][world]
+            assert len(frames) == count
+            assert [r["frame"] if sheet else r["seat"] - 1 for r in frames] == list(range(count))
+            if sheet:
+                assert (sheet["width"], sheet["height"]) == (width, height)
+            for rect in frames:
+                assert rect["width"] > 0 and rect["height"] > 0
+                assert 0 <= rect["x"] < rect["x"] + rect["width"] <= width
+                assert 0 <= rect["y"] < rect["y"] + rect["height"] <= height
