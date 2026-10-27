@@ -43,6 +43,24 @@ jobs:
               "文档/版本/$diagram_path.html" \
               "临时/版本图检查/$diagram_path.$diagram_type.html"
           done
+      - name: 核对当前后端导读图与源码
+        run: |
+          for diagram_name in '后端结构.architecture' '一次行动.sequence'; do
+            diagram_type="${diagram_name##*.}"
+            diagram_path="${diagram_name%.*}"
+            source_path="文档/架构/后端源码导读/$diagram_name.json"
+            revision=$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["meta"]["repository"]["revision"])' "$source_path")
+            git cat-file -e "$revision^{commit}"
+            git merge-base --is-ancestor "$revision" HEAD
+            output_path="临时/版本图检查/后端源码导读/$diagram_path.html"
+            node .agents/skills/archify/bin/archify.mjs finalize "$diagram_type" \
+              "$source_path" "$output_path" --repo-root . --quality showcase \
+              --out-dir "临时/版本图检查/后端源码导读/$diagram_path-证据" --json
+            python .github/scripts/校验版本图.py "$source_path" \
+              "文档/架构/后端源码导读/$diagram_path.html" "$output_path"
+            node .agents/skills/archify/bin/archify.mjs visual-check "$output_path" \
+              --out-dir "临时/版本图检查/后端源码导读/$diagram_path-截图" --summary --require-provenance
+          done
       - name: 保存版本图验证证据
         if: always()
         uses: actions/upload-artifact@v4

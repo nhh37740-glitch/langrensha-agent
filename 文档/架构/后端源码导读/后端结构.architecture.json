@@ -1,0 +1,443 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "后端结构｜main 182133f · 主调用路径",
+    "locale": "zh-CN",
+    "output": "文档/架构/后端源码导读/后端结构.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/nhh37740-glitch/langrensha-agent.git",
+      "revision": "182133f294a5eed10460b097f9f5e6e5a8ffb9e9"
+    }
+  },
+  "components": [
+    {
+      "id": "caller",
+      "type": "external",
+      "label": "外部请求者",
+      "sublabel": "仅展示 HTTP 边界",
+      "pos": [
+        40,
+        40
+      ],
+      "size": [
+        190,
+        76
+      ],
+      "sources": [
+        {
+          "path": "src/langrensha/web.py",
+          "line": 216,
+          "end_line": 232
+        }
+      ]
+    },
+    {
+      "id": "web",
+      "type": "backend",
+      "label": "认证与窗口调度",
+      "sublabel": "web / presentation",
+      "pos": [
+        360,
+        40
+      ],
+      "size": [
+        190,
+        76
+      ],
+      "sources": [
+        {
+          "path": "src/langrensha/web.py",
+          "line": 23,
+          "end_line": 101
+        },
+        {
+          "path": "src/langrensha/web.py",
+          "line": 176,
+          "end_line": 259
+        },
+        {
+          "path": "src/langrensha/presentation.py",
+          "line": 525,
+          "end_line": 592
+        }
+      ],
+      "tag": "调试默认开"
+    },
+    {
+      "id": "ai",
+      "type": "backend",
+      "label": "AI 决策编排",
+      "sublabel": "ai.DecisionRunner",
+      "pos": [
+        690,
+        40
+      ],
+      "size": [
+        190,
+        76
+      ],
+      "sources": [
+        {
+          "path": "src/langrensha/ai.py",
+          "line": 231,
+          "end_line": 345
+        },
+        {
+          "path": "src/langrensha/ai.py",
+          "line": 347,
+          "end_line": 421
+        },
+        {
+          "path": "src/langrensha/ai.py",
+          "line": 33,
+          "end_line": 42
+        }
+      ],
+      "tag": "轮数与工具数有上限"
+    },
+    {
+      "id": "provider",
+      "type": "external",
+      "label": "DeepSeek 模型",
+      "sublabel": "返回文本与工具意图",
+      "pos": [
+        1020,
+        40
+      ],
+      "size": [
+        190,
+        76
+      ],
+      "sources": [
+        {
+          "path": "src/langrensha/ai.py",
+          "line": 33,
+          "end_line": 42
+        },
+        {
+          "path": "src/langrensha/ai.py",
+          "line": 253,
+          "end_line": 281
+        }
+      ]
+    },
+    {
+      "id": "session",
+      "type": "security",
+      "label": "绑定玩家能力",
+      "sublabel": "service.PlayerSession",
+      "pos": [
+        690,
+        245
+      ],
+      "size": [
+        190,
+        76
+      ],
+      "sources": [
+        {
+          "path": "src/langrensha/service.py",
+          "line": 132,
+          "end_line": 153
+        }
+      ]
+    },
+    {
+      "id": "service",
+      "type": "backend",
+      "label": "主持与事务编排",
+      "sublabel": "service.GameService",
+      "pos": [
+        360,
+        245
+      ],
+      "size": [
+        190,
+        76
+      ],
+      "sources": [
+        {
+          "path": "src/langrensha/service.py",
+          "line": 29,
+          "end_line": 110
+        },
+        {
+          "path": "src/langrensha/service.py",
+          "line": 112,
+          "end_line": 129
+        }
+      ]
+    },
+    {
+      "id": "store",
+      "type": "database",
+      "label": "SQLite 持久化",
+      "sublabel": "store.Store + 数据库文件",
+      "pos": [
+        40,
+        245
+      ],
+      "size": [
+        190,
+        76
+      ],
+      "sources": [
+        {
+          "path": "src/langrensha/store.py",
+          "line": 9,
+          "end_line": 53
+        },
+        {
+          "path": "src/langrensha/web.py",
+          "line": 28,
+          "end_line": 34
+        },
+        {
+          "path": "src/langrensha/web.py",
+          "line": 73,
+          "end_line": 82
+        }
+      ]
+    },
+    {
+      "id": "rules",
+      "type": "backend",
+      "label": "规则裁定与可见视图",
+      "sublabel": "full_game / rules",
+      "pos": [
+        360,
+        455
+      ],
+      "size": [
+        190,
+        76
+      ],
+      "sources": [
+        {
+          "path": "src/langrensha/full_game.py",
+          "line": 412,
+          "end_line": 522
+        },
+        {
+          "path": "src/langrensha/full_game.py",
+          "line": 161,
+          "end_line": 214
+        },
+        {
+          "path": "src/langrensha/full_game.py",
+          "line": 273,
+          "end_line": 327
+        }
+      ],
+      "tag": "不调用模型或数据库"
+    },
+    {
+      "id": "query",
+      "type": "backend",
+      "label": "可见资料检索",
+      "sublabel": "retrieval.query",
+      "pos": [
+        1020,
+        245
+      ],
+      "size": [
+        190,
+        76
+      ],
+      "sources": [
+        {
+          "path": "src/langrensha/retrieval.py",
+          "line": 182,
+          "end_line": 221
+        },
+        {
+          "path": "src/langrensha/retrieval.py",
+          "line": 232,
+          "end_line": 330
+        },
+        {
+          "path": "src/langrensha/retrieval.py",
+          "line": 116,
+          "end_line": 174
+        }
+      ]
+    },
+    {
+      "id": "world",
+      "type": "backend",
+      "label": "世界书与角色条目",
+      "sublabel": "worldbooks",
+      "pos": [
+        1320,
+        245
+      ],
+      "size": [
+        190,
+        76
+      ],
+      "sources": [
+        {
+          "path": "src/langrensha/worldbooks/__init__.py",
+          "line": 63,
+          "end_line": 117
+        }
+      ]
+    },
+    {
+      "id": "embedding",
+      "type": "backend",
+      "label": "本地向量评分",
+      "sublabel": "semantic · ONNX CPU",
+      "pos": [
+        1020,
+        455
+      ],
+      "size": [
+        190,
+        76
+      ],
+      "sources": [
+        {
+          "path": "src/langrensha/semantic.py",
+          "line": 108,
+          "end_line": 151
+        },
+        {
+          "path": "src/langrensha/semantic.py",
+          "line": 185,
+          "end_line": 237
+        },
+        {
+          "path": "src/langrensha/semantic.py",
+          "line": 71,
+          "end_line": 105
+        }
+      ],
+      "tag": "失败退回词项检索"
+    }
+  ],
+  "connections": [
+    {
+      "id": "caller-web",
+      "from": "caller",
+      "to": "web",
+      "label": "HTTP",
+      "variant": "default"
+    },
+    {
+      "id": "web-ai",
+      "from": "web",
+      "to": "ai",
+      "label": "非真人窗口",
+      "variant": "default"
+    },
+    {
+      "id": "ai-provider",
+      "from": "ai",
+      "to": "provider",
+      "label": "调用模型",
+      "variant": "default"
+    },
+    {
+      "id": "web-session",
+      "from": "web",
+      "to": "session",
+      "label": "真人绑定",
+      "variant": "security"
+    },
+    {
+      "id": "ai-session",
+      "from": "ai",
+      "to": "session",
+      "label": "查询 / 行动",
+      "variant": "default"
+    },
+    {
+      "id": "session-service",
+      "from": "session",
+      "to": "service",
+      "label": "查看 / 提交",
+      "variant": "default"
+    },
+    {
+      "id": "service-store",
+      "from": "service",
+      "to": "store",
+      "label": "事务读写",
+      "variant": "default"
+    },
+    {
+      "id": "service-rules",
+      "from": "service",
+      "to": "rules",
+      "label": "裁定 / 过滤",
+      "variant": "default"
+    },
+    {
+      "id": "session-query",
+      "from": "session",
+      "to": "query",
+      "label": "受限视图",
+      "variant": "security"
+    },
+    {
+      "id": "query-world",
+      "from": "query",
+      "to": "world",
+      "label": "角色过滤",
+      "variant": "security"
+    },
+    {
+      "id": "query-embedding",
+      "from": "query",
+      "to": "embedding",
+      "label": "可见文本",
+      "variant": "default"
+    },
+    {
+      "id": "web-service",
+      "from": "web",
+      "to": "service",
+      "label": "主持读取",
+      "variant": "default"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "先抓住三个角色",
+      "items": [
+        "web 接住请求并确定操作者；service 管事务；full_game 决定能否行动。",
+        "这些是同一 Python 进程内的模块，箭头是主要调用，不是微服务，也不是完整导入图。"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "权限有明确例外",
+      "items": [
+        "普通 view → player_view 先过滤，再检索或呈现；模型只接收受限上下文与工具结果。",
+        "GET /api/debug 在会话开关开启时读取主持快照与决策报告；默认开启，可见秘密身份和狼队记录。",
+        "PlayerSession 是进程内能力约定，不是对恶意 Python 代码的沙箱。"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "读写归属与省略支路",
+      "items": [
+        "Store 执行快照 SQL；GameService 写审计 SQL；web 经 service.store 操作会话 SQL。",
+        "查询没有对局写操作。semantic 可下载校验过的模型文件并缓存向量，不是向量数据库。",
+        "真人札记：web.safe_query 先检索，再可选交 assistant 整理；不代发言。世界称谓与呈现支路详见阅读指南。"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "版本与证据",
+      "items": [
+        "绑定 2026-10-27 的 main 182133f；不表示新版本发布。点节点可定位已提交源码。",
+        "前端源码未纳入本次分析。程序入口、失败路径和结构问题见同目录阅读指南。"
+      ]
+    }
+  ]
+}

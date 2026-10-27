@@ -1,0 +1,295 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "一次真人行动｜调用与事务顺序 · 182133f",
+    "locale": "zh-CN",
+    "output": "文档/架构/后端源码导读/一次行动.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/nhh37740-glitch/langrensha-agent.git",
+      "revision": "182133f294a5eed10460b097f9f5e6e5a8ffb9e9"
+    }
+  },
+  "participants": [
+    {
+      "id": "web",
+      "label": "HTTP 入口",
+      "sublabel": "web.action",
+      "sources": [
+        {
+          "path": "src/langrensha/web.py",
+          "line": 73,
+          "end_line": 88
+        },
+        {
+          "path": "src/langrensha/web.py",
+          "line": 216,
+          "end_line": 224
+        }
+      ],
+      "type": "backend"
+    },
+    {
+      "id": "session",
+      "label": "玩家会话",
+      "sublabel": "PlayerSession",
+      "sources": [
+        {
+          "path": "src/langrensha/service.py",
+          "line": 132,
+          "end_line": 147
+        }
+      ],
+      "type": "security"
+    },
+    {
+      "id": "service",
+      "label": "事务服务",
+      "sublabel": "GameService",
+      "sources": [
+        {
+          "path": "src/langrensha/service.py",
+          "line": 108,
+          "end_line": 129
+        }
+      ],
+      "type": "backend"
+    },
+    {
+      "id": "store",
+      "label": "数据库适配",
+      "sublabel": "Store / SQLite",
+      "sources": [
+        {
+          "path": "src/langrensha/store.py",
+          "line": 27,
+          "end_line": 53
+        }
+      ],
+      "type": "database"
+    },
+    {
+      "id": "rules",
+      "label": "规则与视图",
+      "sublabel": "full_game",
+      "sources": [
+        {
+          "path": "src/langrensha/full_game.py",
+          "line": 412,
+          "end_line": 522
+        }
+      ],
+      "type": "backend"
+    },
+    {
+      "id": "present",
+      "label": "数据呈现",
+      "sublabel": "presentation",
+      "sources": [
+        {
+          "path": "src/langrensha/presentation.py",
+          "line": 525,
+          "end_line": 592
+        }
+      ],
+      "type": "backend"
+    }
+  ],
+  "messages": [
+    {
+      "id": "m1",
+      "from": "web",
+      "to": "session",
+      "y": 170,
+      "label": "① submit(command)",
+      "variant": "security",
+      "note": "已认证并绑定 game/seat；HTTP 不接收 actor"
+    },
+    {
+      "id": "m2",
+      "from": "session",
+      "to": "service",
+      "y": 240,
+      "label": "② _submit(固定操作者, command)",
+      "variant": "default"
+    },
+    {
+      "id": "m3",
+      "from": "service",
+      "to": "store",
+      "y": 285,
+      "label": "③ transaction + load",
+      "variant": "default",
+      "note": "BEGIN IMMEDIATE；读取完整快照"
+    },
+    {
+      "id": "m4",
+      "from": "store",
+      "to": "service",
+      "y": 350,
+      "label": "当前 state",
+      "variant": "return"
+    },
+    {
+      "id": "m5",
+      "from": "service",
+      "to": "rules",
+      "y": 390,
+      "label": "④ reduce_action(state, actor, command)",
+      "variant": "default",
+      "note": "校验回执、阶段、版本、工具与目标"
+    },
+    {
+      "id": "m6",
+      "from": "rules",
+      "to": "service",
+      "y": 455,
+      "label": "updated + receipt",
+      "variant": "return",
+      "note": "首次成功才推进版本；重复请求返回原回执"
+    },
+    {
+      "id": "m7",
+      "from": "service",
+      "to": "store",
+      "y": 520,
+      "label": "⑤ save(updated) 并提交",
+      "variant": "default",
+      "note": "事件与 receipts 同在 games.state 的 JSON 中"
+    },
+    {
+      "id": "m8",
+      "from": "service",
+      "to": "session",
+      "y": 585,
+      "label": "提交结果",
+      "variant": "return"
+    },
+    {
+      "id": "m9",
+      "from": "session",
+      "to": "web",
+      "y": 625,
+      "label": "submit 完成",
+      "variant": "return"
+    },
+    {
+      "id": "m10",
+      "from": "web",
+      "to": "session",
+      "y": 665,
+      "label": "⑥ view() 重新读取",
+      "variant": "default"
+    },
+    {
+      "id": "m11",
+      "from": "session",
+      "to": "service",
+      "y": 705,
+      "label": "_view(固定操作者)",
+      "variant": "default"
+    },
+    {
+      "id": "m12",
+      "from": "service",
+      "to": "store",
+      "y": 745,
+      "label": "新事务 load",
+      "variant": "default"
+    },
+    {
+      "id": "m13",
+      "from": "store",
+      "to": "service",
+      "y": 785,
+      "label": "最新 state",
+      "variant": "return"
+    },
+    {
+      "id": "m14",
+      "from": "service",
+      "to": "rules",
+      "y": 825,
+      "label": "player_view(state, actor)",
+      "variant": "security",
+      "note": "事件受众、死亡时间、身份及技能过滤"
+    },
+    {
+      "id": "m15",
+      "from": "rules",
+      "to": "service",
+      "y": 890,
+      "label": "受限 view",
+      "variant": "return"
+    },
+    {
+      "id": "m16",
+      "from": "service",
+      "to": "session",
+      "y": 930,
+      "label": "受限 view",
+      "variant": "return"
+    },
+    {
+      "id": "m17",
+      "from": "session",
+      "to": "web",
+      "y": 970,
+      "label": "受限 view",
+      "variant": "return"
+    },
+    {
+      "id": "m18",
+      "from": "web",
+      "to": "present",
+      "y": 1010,
+      "label": "⑦ present(view)",
+      "variant": "default"
+    },
+    {
+      "id": "m19",
+      "from": "present",
+      "to": "web",
+      "y": 1050,
+      "label": "供 HTTP 返回的数据",
+      "variant": "return",
+      "note": "返回时的状态可能已比本次行动回执更新"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "例子与范围",
+      "items": [
+        "合成示例：已绑定的 4 号玩家在合法投票阶段选择 7 号；不是实测时延图。",
+        "图从完成认证和绑定后开始；HTTP 响应返回 present(view)，没有直接返回 action receipt。"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "拒绝分支发生在④",
+      "items": [
+        "Rejected → GameService 写 rejections 审计并提交，然后抛出；web 返回 409。",
+        "此分支不调用 save，不增加游戏版本；不继续到⑥。其他数据库异常由 transaction 回滚。"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "不要混淆的三个编号",
+      "items": [
+        "request_id 保证相同请求重试不重复生效；同编号不同内容拒绝。",
+        "phase_id 标记行动窗口；expected_version 防止基于旧状态的新行动。",
+        "回执检查先于阶段/版本检查，因此合法重试可以取回旧结果。"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "AI 复用相同裁定入口",
+      "items": [
+        "DecisionRunner 的行动同样 session.submit；查询走 session.query，不经过④写入。",
+        "图中 Store 包括连接与 SQL 操作，纯规则函数只接收和返回内存字典。"
+      ]
+    }
+  ]
+}
