@@ -1,4 +1,5 @@
 // 四世界美术资源的唯一注册表。
+import SKILL_ICONS from "./skill-icons.json";
 //
 // 资源按世界分目录存放于 ../assets/worlds/<world>/，在构建时由 Vite 发现；
 // 尚未交接的文件不会进入打包结果，世界继续使用 scene.js / worldart.js 的
@@ -100,6 +101,15 @@ export function worldIdOr(value, fallback = "mist") {
 
 function urlFor(worldId, file) {
   return FILE_INDEX.get(`${worldId}/${file}`) || null;
+}
+
+/** 技能专用图集与状态图标分开：没有覆盖时由调用方使用原世界图标。 */
+export function skillIconAsset(worldId, tool) {
+  const id = worldIdOr(worldId, "");
+  const sheet = SKILL_ICONS[id];
+  const frame = sheet && Object.hasOwn(sheet.frames, tool) ? sheet.frames[tool] : null;
+  const url = sheet && frame ? urlFor(id, sheet.file) : null;
+  return url ? { url, width: sheet.width, height: sheet.height, frame } : null;
 }
 
 /**

@@ -1109,6 +1109,17 @@ textarea::placeholder {
 .world-icon.is-missing {
   display: none;
 }
+.world-icon--skill {
+  position: relative;
+}
+.world-icon__clip {
+  position: absolute;
+  overflow: hidden;
+}
+.world-icon__clip img {
+  position: absolute;
+  max-width: none;
+}
 .day-icon {
   width: 12px;
   height: 12px;

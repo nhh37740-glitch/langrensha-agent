@@ -1190,6 +1190,72 @@
         "source": "/workspace/generated_images/exec-9cc95439-ff5e-441d-95a7-8c64f9191d3e.png",
         "handoff": "/workspace/langrensha-agent/临时/技能与人物场景验收/人物演出/美术交接/threebody-expressions.png",
         "display_rectangles": "前端/src/worlds/performances.json#expressions.threebody"
+      },
+      "skill_icons": {
+        "issue": 83,
+        "generator": "ChatGPT image generation",
+        "source_path": "/workspace/generated_images/exec-1d89457c-2fd0-477f-806e-bdc00a9c37c1.png",
+        "handoff_path": "/workspace/langrensha-agent/临时/技能与人物场景验收/三体技能图标/threebody-skill-icons.png",
+        "width": 1254,
+        "height": 1254,
+        "mode": "RGBA",
+        "sha256": "03aa483171e2eb3222692d93c14155cae8dbec62dbbcd0fa4f330f4789da074e",
+        "alpha_extrema": [
+          0,
+          255
+        ],
+        "grid": {
+          "columns": 2,
+          "rows": 2,
+          "cell_width": 627,
+          "cell_height": 627,
+          "order": "row-major"
+        },
+        "slots": {
+          "antidote": 0,
+          "poison": 1,
+          "shoot": 2,
+          "reveal": 3
+        },
+        "semantics": {
+          "antidote": "修复预案：电路修复控制模块",
+          "poison": "清除预案：红色隔离靶向控制模块",
+          "shoot": "最后一次广播：无线电天线",
+          "reveal": "启动冬眠舱：低温休眠舱"
+        },
+        "prompt_file": "文档/版本/v0.7.0/素材提示词/threebody-skill-icons.txt",
+        "file": "skill-icons.png",
+        "source": "/workspace/generated_images/exec-1d89457c-2fd0-477f-806e-bdc00a9c37c1.png",
+        "bytes": 1818252,
+        "alpha": true,
+        "received_at": "2026-10-27T09:38:51.601354+08:00",
+        "display_rectangles": {
+          "antidote": {
+            "x": 80,
+            "y": 52,
+            "width": 520,
+            "height": 496
+          },
+          "poison": {
+            "x": 654,
+            "y": 91,
+            "width": 532,
+            "height": 465
+          },
+          "shoot": {
+            "x": 96,
+            "y": 608,
+            "width": 540,
+            "height": 580
+          },
+          "reveal": {
+            "x": 731,
+            "y": 605,
+            "width": 410,
+            "height": 595
+          }
+        },
+        "notes": "只覆盖三体四项技能；普通alive/badge/sheriff等状态仍用原icons.webp。广播波纹略越过等分格，实际显示按独立轮廓rect严格裁切。"
       }
     },
     "tidal_archive": {
