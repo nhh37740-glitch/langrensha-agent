@@ -18,6 +18,7 @@ Codex 原生定时任务：当前会话没有 Automations 创建接口，独立 
 
 ```bash
 npm ci --prefix .github/deepseek-harness
+python .github/scripts/配置提交身份.py
 python .github/scripts/启动DeepSeek.py
 # 一次性无人值守任务；默认目录仍为 /workspace
 python .github/scripts/启动DeepSeek.py --profile headless '读取项目规范并汇报当前阶段'
@@ -68,3 +69,7 @@ python .github/scripts/启动DeepSeek.py --profile headless '读取项目规范�
 暂停任务：保存当前 Issue 的 worktree、分支与未完成证据，保留活动 Issue 供恢复，不派生代理。历史串行监督脚本的 `deepseek-ready`/`deepseek-active` 自动领取与“已有 PR 阻挡下一任务”行为不再适用。完全停止 GitHub 调度：保持工作流 395627924 为 `disabled_manually`，不重新启用。本机 UI 可向启动进程发送 SIGTERM。凭据到期、预算不足、网络失败、Codex 未启用或审查未完成均如实显示阻塞，不能跳过审查。
 
 部署时的真实冒烟验证：Harness 使用 `deepseek-flash` 调用工具，读取 `/workspace/langrensha-agent/AGENTS.md` 第一行并确认工作目录 `/workspace`，退出码 0。该验证只证明 Harness 和工具链可运行，不代表后续业务 Issue 已验收。
+
+## 提交身份修复（2026-10-27，Issue #85）
+
+新克隆执行上述配置命令；启动入口也会持久配置共享 Git 身份并覆盖继承的作者/提交者变量，再读取模型凭据。此修改不启动已停用的 DSH 或调度。合并署名及 GitHub API 的已验证邮箱限制遵守[开发规范第12节](../规范/开发流程与协作规范.md#12-提交身份与合并署名issue-852026-10-27)，历史错误归属仍在[修复记录](提交身份修复记录.md)列为未完成。
