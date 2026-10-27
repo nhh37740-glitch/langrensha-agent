@@ -1291,7 +1291,7 @@ function buildChoiceChip(choice) {
   const iconKey = TOOL_ICON[choice.tool];
   if (iconKey) {
     const icon = node("span", undefined, "choice-chip__icon");
-    if (worldart.paintWorldIcon(icon, activeWorld, iconKey)) chip.append(icon);
+    if (worldart.paintWorldSkillIcon(icon, activeWorld, choice.tool, iconKey)) chip.append(icon);
   }
   chip.append(node("span", label, "choice-chip__label"));
   chip.addEventListener("click", () => {

@@ -7,7 +7,7 @@ import skyHyperion from "./assets/kenney/sky-hyperion.webp";
 import skyMist from "./assets/kenney/sky-mist.webp";
 import skyThreebody from "./assets/kenney/sky-threebody.webp";
 import skyTidal from "./assets/kenney/sky-tidal.webp";
-import { ATLAS, iconFrame, worldAsset } from "./worlds/assets.js";
+import { ATLAS, iconFrame, skillIconAsset, worldAsset } from "./worlds/assets.js";
 import { personaSlot, publicPersonas } from "./worlds/personas.js";
 
 // 世界书封面与主题的唯一前端数据源。字段与 /api/worldbooks 的目录契约一致；
@@ -387,6 +387,40 @@ export function paintWorldIcon(element, worldId, key) {
     // 不依赖 isConnected。回调闭包只改自己这一枚元素，不会误改新节点。
     if (element.dataset.iconToken !== `${icons}|${frame}`) return;
     if (ok) return;
+    element.hidden = true;
+    element.classList.add("is-missing");
+  });
+  return true;
+}
+
+/** 技能按实际工具名取专用图，不把冬眠舱覆盖到普通 badge 状态。 */
+export function paintWorldSkillIcon(element, worldId, tool, fallbackKey) {
+  if (!element) return false;
+  const asset = skillIconAsset(worldId, tool);
+  if (!asset) return paintWorldIcon(element, worldId, fallbackKey);
+  const { url, width, height, frame } = asset;
+  const edge = Math.max(frame.width, frame.height);
+  const clip = document.createElement("span");
+  clip.className = "world-icon__clip";
+  Object.assign(clip.style, {
+    width: `${frame.width / edge * 100}%`, height: `${frame.height / edge * 100}%`,
+    left: `${(1 - frame.width / edge) * 50}%`, top: `${(1 - frame.height / edge) * 50}%`,
+  });
+  const image = document.createElement("img");
+  image.alt = "";
+  image.src = url;
+  Object.assign(image.style, {
+    width: `${width / frame.width * 100}%`, height: `${height / frame.height * 100}%`,
+    left: `${-frame.x / frame.width * 100}%`, top: `${-frame.y / frame.height * 100}%`,
+  });
+  clip.append(image);
+  element.replaceChildren(clip);
+  element.classList.add("world-icon", "world-icon--skill");
+  element.dataset.skillIcon = tool;
+  element.dataset.iconToken = `${url}|${tool}`;
+  element.setAttribute("aria-hidden", "true");
+  probeImage(url, (ok) => {
+    if (element.dataset.iconToken !== `${url}|${tool}` || ok) return;
     element.hidden = true;
     element.classList.add("is-missing");
   });

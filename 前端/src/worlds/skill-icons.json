@@ -1,0 +1,33 @@
+{
+  "threebody": {
+    "file": "skill-icons",
+    "width": 1254,
+    "height": 1254,
+    "frames": {
+      "antidote": {
+        "x": 80,
+        "y": 52,
+        "width": 520,
+        "height": 496
+      },
+      "poison": {
+        "x": 654,
+        "y": 91,
+        "width": 532,
+        "height": 465
+      },
+      "shoot": {
+        "x": 96,
+        "y": 608,
+        "width": 540,
+        "height": 580
+      },
+      "reveal": {
+        "x": 731,
+        "y": 605,
+        "width": 410,
+        "height": 595
+      }
+    }
+  }
+}

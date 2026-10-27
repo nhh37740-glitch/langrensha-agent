@@ -289,3 +289,21 @@ def test_performance_rectangles_match_assets_and_public_frame_count():
                 assert rect["width"] > 0 and rect["height"] > 0
                 assert 0 <= rect["x"] < rect["x"] + rect["width"] <= width
                 assert 0 <= rect["y"] < rect["y"] + rect["height"] <= height
+
+
+def test_threebody_skill_sheet_is_traceable_and_does_not_override_status_icons():
+    records = _load_manifest()["worlds"]["threebody"]
+    record = records["skill_icons"]
+    path = ASSET_ROOT / "threebody" / record["file"]
+    assert _sha256(path) == record["sha256"]
+    assert path.stat().st_size == record["bytes"]
+    assert _image_info(path) == (1254, 1254, True)
+    assert (ROOT / record["prompt_file"]).is_file()
+    sheet = json.loads((ROOT / "前端/src/worlds/skill-icons.json").read_text())["threebody"]
+    assert set(sheet["frames"]) == {"antidote", "poison", "shoot", "reveal"}
+    assert sheet["frames"] == record["display_rectangles"]
+    for rect in sheet["frames"].values():
+        assert 0 <= rect["x"] < rect["x"] + rect["width"] <= 1254
+        assert 0 <= rect["y"] < rect["y"] + rect["height"] <= 1254
+    assert records["icons"]["file"] == "icons.webp"
+    assert records["icons"]["sha256"] != record["sha256"]
