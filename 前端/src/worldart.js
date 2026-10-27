@@ -72,7 +72,7 @@ export const FALLBACK_BOOKS = Object.freeze([
       villager: "朝圣者",
       seer: "时隙观测者",
       witch: "随队医官",
-      hunter: "霸军老兵",
+      hunter: "军部老兵",
       idiot: "立誓者",
     },
     public_count: 18,
