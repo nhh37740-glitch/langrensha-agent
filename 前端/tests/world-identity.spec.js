@@ -4,6 +4,7 @@ import { mkdirSync, writeFileSync } from "node:fs";
 const output = "../临时/世界身份称谓验收";
 
 test("四世界24身份从入场选择到真实对局、刷新与手机保持一致", async ({ page }) => {
+  test.setTimeout(600000);
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
   // 验收身份的初始状态；所有NPC轮询只读真实状态，不调用模型。
@@ -35,6 +36,11 @@ test("四世界24身份从入场选择到真实对局、刷新与手机保持一
       await expect(page.locator("#role-title")).toHaveText(`${name} · 1号`);
       await page.reload();
       await expect(page.locator("#role-title")).toHaveText(`${name} · 1号`);
+      // 停止自动推进并等正在处理的请求结束，再重新启程。
+      if (await page.locator("#auto").getAttribute("aria-pressed") === "true") {
+        await page.locator("#auto").click();
+      }
+      await expect(page.locator("html")).toHaveAttribute("data-busy", "no");
       const restored = await (await page.request.get("/api/state")).json();
       expect(restored.game_id).toBe(state.game_id);
       expect(restored.identity).toBe(name);
@@ -46,6 +52,7 @@ test("四世界24身份从入场选择到真实对局、刷新与手机保持一
       if (role === "hunter") await page.screenshot({ path: `${output}/${book.id}-桌面.png`, fullPage: true });
       receipts.push({ world: book.id, role, name, created: true, refreshed: true, mobile: true });
       await page.locator("#reset").click();
+      await expect(page.locator("#world-picker")).toBeVisible();
     }
   }
   expect(errors).toEqual([]);
