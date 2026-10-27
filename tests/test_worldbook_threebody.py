@@ -205,7 +205,7 @@ def test_unknown_worldbook_is_rejected():
 
 
 def test_standard_skill_semantics_are_not_changed():
-    roles = BOOK["roles"]
+    roles = BOOK["guidance"]
     assert "平票或无人选择则当夜无袭击" in roles["wolf"]
     assert "没有夜间能力" in roles["villager"]
     assert "不可询问自己或连续两夜同一人" in roles["seer"]

@@ -1,6 +1,6 @@
 """仅消费受限玩家视图；将事实映射为当前世界书故事，不输出主持审计。"""
 
-from .content import PERSONAS, ROLE_NAMES
+from .content import PERSONAS
 from .content import story_language as _story_language
 from .worldbooks import get_worldbook, worldbook_ids
 
@@ -60,7 +60,7 @@ THEMES = {
             "paper": "#e9dfc6",
             "ink": "#081014",
         },
-        "role_labels": dict(ROLE_NAMES),
+        "role_labels": dict(get_worldbook("mist")["roles"]),
         "scene": {
             "eyebrow": "钟声之后 / CHAPTER OF THE MIST",
             "title": ["有人守着灯，", "有人藏在雾里。"],
@@ -113,14 +113,7 @@ THEMES = {
             "paper": "#f0dfbd",
             "ink": "#120b07",
         },
-        "role_labels": {
-            "wolf": "荆棘使徒",
-            "villager": "朝圣者",
-            "seer": "时隙观测者",
-            "witch": "随队医官",
-            "hunter": "霸军老兵",
-            "idiot": "立誓者",
-        },
+        "role_labels": dict(get_worldbook("hyperion")["roles"]),
         "scene": {
             "eyebrow": "冢门将启 / CHAPTER OF THE TOMBS",
             "title": ["有人向伯劳许愿，", "有人把名字藏进风里。"],
@@ -206,14 +199,7 @@ THEMES = {
             "paper": "#e8f0f6",
             "ink": "#03070d",
         },
-        "role_labels": {
-            "wolf": "潜伏者",
-            "villager": "地球公民",
-            "seer": "监听员",
-            "witch": "面壁者",
-            "hunter": "执剑人",
-            "idiot": "冬眠者",
-        },
+        "role_labels": dict(get_worldbook("threebody")["roles"]),
         "scene": {
             "eyebrow": "信号之后 / CHAPTER OF THE SIGNAL",
             "title": ["有人监听宇宙，", "有人替沉默传话。"],
@@ -299,14 +285,7 @@ THEMES = {
             "paper": "#f0eadb",
             "ink": "#041312",
         },
-        "role_labels": {
-            "wolf": "噬名者",
-            "villager": "守册人",
-            "seer": "验潮员",
-            "witch": "盐药师",
-            "hunter": "灯守",
-            "idiot": "誓痕人",
-        },
+        "role_labels": dict(get_worldbook("tidal_archive")["roles"]),
         "scene": {
             "eyebrow": "潮窗之内 / CHAPTER OF THE TIDE",
             "title": ["有人守着名字，", "有人把名字还给海。"],
