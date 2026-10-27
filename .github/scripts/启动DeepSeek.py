@@ -5,7 +5,11 @@ import os
 import sys
 from pathlib import Path
 
+from 配置提交身份 import configure_identity
+
 root = Path(__file__).resolve().parents[2]
+# 在读取模型凭据之前配置身份；启动失败不会调用模型。
+os.environ.update(configure_identity(root))
 config = Path.home() / ".config/deepseek-harness/credentials.json"
 if not os.environ.get("DEEPSEEK_API_KEY"):
     os.environ["DEEPSEEK_API_KEY"] = json.loads(config.read_text())["DEEPSEEK_API_KEY"]

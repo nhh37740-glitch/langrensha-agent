@@ -65,8 +65,7 @@ jobs:
           cp -a "$GITHUB_WORKSPACE" /workspace/langrensha-agent
           cd /workspace/langrensha-agent
           npm ci --prefix .github/deepseek-harness
-          git config user.name 'DeepSeek Harness'
-          git config user.email 'deepseek-harness@users.noreply.github.com'
+          python .github/scripts/配置提交身份.py
       - name: 串行工作并请求 GitHub Codex 审查
         if: steps.credentials.outputs.ready == 'true' && (github.event_name == 'schedule' || inputs.work)
         env:
