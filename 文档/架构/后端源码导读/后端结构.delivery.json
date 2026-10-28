@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "02fc344f-6ea8-4be1-af04-63a23da7e6ec",
+  "status": "current",
+  "command": "deliver",
+  "type": "architecture",
+  "input": "/workspace/issue-90/文档/架构/后端源码导读/后端结构.architecture.json",
+  "output": "/workspace/issue-90/文档/架构/后端源码导读/后端结构.html",
+  "specification": {
+    "sha256": "46b31c5468a33aae6ab3268929541461ff964370727c9c598e824f35112d1ffd",
+    "bytes": 9747
+  },
+  "artifact": {
+    "sha256": "dc75d63ba3f50b9c360d76f8d3dc03f63a0e40e3763a14b245f2d867d789d7a0",
+    "bytes": 836610
+  }
+}

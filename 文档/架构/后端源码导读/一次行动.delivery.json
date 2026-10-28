@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "940ab80f-f879-47ba-8e1a-7d674a3d1c4c",
+  "status": "current",
+  "command": "deliver",
+  "type": "sequence",
+  "input": "/workspace/issue-90/文档/架构/后端源码导读/一次行动.sequence.json",
+  "output": "/workspace/issue-90/文档/架构/后端源码导读/一次行动.html",
+  "specification": {
+    "sha256": "f7d53c83b9ac3b603b0f9d38573f2d2004af5301b4dd9a6b4fad8725d57a1fe9",
+    "bytes": 7051
+  },
+  "artifact": {
+    "sha256": "145689091a34d46a849c23ee613eb972dbc386010fe11d133d89ac41fff38827",
+    "bytes": 824773
+  }
+}
