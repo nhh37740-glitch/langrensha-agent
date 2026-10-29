@@ -1,17 +1,17 @@
 {
   "schemaVersion": 1,
-  "receiptId": "29d2afa5-b568-4a48-8445-34aa4ef60542",
+  "receiptId": "34fdd8a1-f15a-462a-918c-48b48d83f92d",
   "status": "current",
   "command": "deliver",
   "type": "workflow",
   "input": "/workspace/issue-92/文档/架构/后端运行流程/05-AI循环.workflow.json",
   "output": "/workspace/issue-92/文档/架构/后端运行流程/05-AI循环.html",
   "specification": {
-    "sha256": "9e88d54d5a35001720a3537077ea21ad406825ae7316689f661131070a29f6ab",
-    "bytes": 6600
+    "sha256": "10416861d8a02c52eebb5de54648e9ed7f1589078906ee4d4a36c89d8199cc95",
+    "bytes": 6795
   },
   "artifact": {
-    "sha256": "2d5850213159d038248fa5756bab6ff3002ec24ec62ed6bb38d6b407e0303fcf",
-    "bytes": 824953
+    "sha256": "ae12ed34bb6a19fc08f4fd889c8ce0590fd8dd993948138aa7dbcca55680e60c",
+    "bytes": 824665
   }
 }

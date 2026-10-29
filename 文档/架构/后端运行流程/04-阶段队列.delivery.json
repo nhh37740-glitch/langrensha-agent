@@ -1,17 +1,17 @@
 {
   "schemaVersion": 1,
-  "receiptId": "999b6901-b76e-47c1-b65d-6f80348abd27",
+  "receiptId": "55c478ba-cf45-40d5-91f9-9d43b5c3e268",
   "status": "current",
   "command": "deliver",
   "type": "workflow",
   "input": "/workspace/issue-92/文档/架构/后端运行流程/04-阶段队列.workflow.json",
   "output": "/workspace/issue-92/文档/架构/后端运行流程/04-阶段队列.html",
   "specification": {
-    "sha256": "3babf81a4d45f8f6ca3602de156d0d9cd845ce26dcf473860becf82361adf972",
-    "bytes": 6849
+    "sha256": "520737967fca4207241053fae60e5a3a9c09e5aefed87c42bc3e7b4003ff0df7",
+    "bytes": 7109
   },
   "artifact": {
-    "sha256": "698a612a35641819495867794e5bed1a8c01b42254c078acd1f5c492262d0cfd",
-    "bytes": 826000
+    "sha256": "9c49169057cf0fa26a9c74c2a3b8716e3a3e8512823cc44595cd2d5528011da4",
+    "bytes": 826039
   }
 }

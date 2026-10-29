@@ -9,6 +9,19 @@
     "repository": {
       "url": "https://github.com/nhh37740-glitch/langrensha-agent.git",
       "revision": "8a4a82a0d7710246574bee7cd0e237b4361b1fa2"
+    },
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Python 函数与条件"
+        },
+        "security": {
+          "label": "拒绝与异常"
+        },
+        "database": {
+          "label": "SQL 操作"
+        }
+      }
     }
   },
   "lanes": [
