@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>后端运行流程｜打开我</title><style>
+body{margin:0;background:#f4f6f9;color:#172238;font:17px/1.75 system-ui,"Noto Sans CJK SC","Microsoft YaHei",sans-serif}main{max-width:960px;margin:auto;padding:32px 24px 64px}h1{font-size:32px;line-height:1.3}h2{font-size:24px}h3{font-size:19px}section{padding:26px;margin:28px 0;background:#fff;border:1px solid #d8e0eb;border-radius:12px}a{color:#145aac;text-underline-offset:3px}.open{display:inline-block;font-weight:700;padding:9px 16px;border:1px solid #b7cee9;border-radius:6px;background:#edf5ff}nav{display:flex;gap:8px 20px;flex-wrap:wrap}pre{white-space:pre;overflow:auto;background:#eff3f7;padding:18px;border-radius:6px;font:14px/1.65 ui-monospace,Consolas,monospace}code{font-family:ui-monospace,Consolas,monospace}.caption,footer{font-size:14px;color:#526176}table{width:100%;border-collapse:collapse}td,th{border-bottom:1px solid #dce3eb;padding:10px;text-align:left;vertical-align:top}details{margin:18px 0}summary{cursor:pointer;font-weight:600}@media(max-width:600px){main{padding:18px 12px}section{padding:16px}h1{font-size:27px}table{font-size:14px}}
+</style></head><body><main><h1>后端究竟怎样运行</h1><p>它是一个 Python 网络程序：收到行动，读出一局字典，执行条件分支，保存字典，再返回玩家能看的内容。AI 的额外工作是请求模型，把回复转成同样的行动输入。</p><p>这里按函数实际执行顺序拆成六张图。先读 01→02→03→04，再看 AI 和检索两条支线。图内节点保留源码原名，点击节点可定位源码；返回本页用浏览器后退。图和文字均可离线打开，GitHub 源码链接需要联网。</p><nav>
+<a href="#s01">01 Web 请求</a><a href="#s02">02 事务与 SQL</a><a href="#s03">03 行动校验</a><a href="#s04">04 阶段队列</a><a href="#s05">05 AI 循环</a><a href="#s06">06 权限检索</a>
+</nav><section><h2>先把文件和数据对上</h2><p>启动命令 <code>langrensha-web</code> 指向 <code>web.main()</code>：创建模型、调用 <code>create_app()</code> 注册 FastAPI 接口，然后 <code>uvicorn.run(..., workers=1)</code>。这里没有“每个模块一个服务进程”。网页只是 HTTP 调用者。</p><table><thead><tr><th>源码里的名称</th><th>在这个程序里具体是什么</th></tr></thead><tbody><tr><td>GameService / Store</td><td><code>GameService</code> 持有一个 <code>Store</code>，把读取、规则计算、保存放进事务。<code>Store</code> 打开 SQLite 连接，执行 SQL 和 JSON 编解码。</td></tr><tr><td>PlayerSession</td><td>一个保存服务对象、局号和席位的 Python 对象。<code>submit/view/query</code> 使用这些固定值；它不是 Cookie，也不是数据库连接。</td></tr><tr><td>state / view</td><td>都是字典。<code>state</code> 是完整对局；<code>player_view(state, actor)</code> 生成这个席位可见的 <code>view</code>。AI 的 <code>LoopState</code> 是另一份循环数据，不能当作完整对局。</td></tr><tr><td>events / receipts</td><td><code>events</code> 是记录列表；<code>receipts</code> 是以“席位:请求编号”为键的字典。它们都嵌在整局 state 中，存成 games.state 的 JSON，不是两张独立 SQL 表。</td></tr><tr><td>task / queue / completed</td><td>当前阶段描述字典 / 后续阶段字典列表 / 已完成选择的字典。它们是普通内存数据，没有线程池或消息中间件。</td></tr></tbody></table><p class="caption">真实代码节选：<a href="https://github.com/nhh37740-glitch/langrensha-agent/blob/8a4a82a0d7710246574bee7cd0e237b4361b1fa2/src/langrensha/service.py#L132-L147">service.py:132–147</a>；省略部分请点源码。</p><pre><code>class PlayerSession:
+    &quot;&quot;&quot;操作者由受信层绑定；submit 只接受窗口、版本、工具和参数。&quot;&quot;&quot;
+
+    def __init__(self, service, game_id, actor):
+        self._service, self._game_id, self._actor = service, game_id, actor
+
+    def view(self):
+        return self._service._view(self._game_id, self._actor)
+
+    def query(self, name, payload):
+        from .retrieval import query
+
+        return query(self.view(), name, payload)
+
+    def submit(self, command):
+        return self._service._submit(self._game_id, self._actor, command)</code></pre><p class="caption">这些是运行时结构节选，不是完整字段清单。下文投票实例来自真实 TestClient、SQLite 和规则函数；AI 回复用脚本替身，语义评分使用实际 ONNX 模型。UUID、时间会随运行改变。源码固定在 8a4a82a，不会随 main 的后来变动跳到别的实现。</p></section>
+<section id="s01"><h2>01 · web.py：谁发来的行动？</h2><p><a class="open" href="01-Web请求.html">打开 Archify 流程图 ↗</a></p><p><code>boundary</code> 先检查请求。<code>action</code> 内调用 <code>session(request)</code>，后者由 <code>login(request)</code> 把 Cookie 做 SHA-256 摘要，查询 <code>web_sessions</code> 的 <code>game_id/seat/debug</code>；再调用 <code>service.bind_player(game_id, seat)</code> 得到 PlayerSession。玩家编号不由行动 JSON 指定。</p><p>这个教学局的会话绑定 seat=1；下面是完整请求体。<code>payload</code> 仅指行动参数；外面五个字段组成 <code>command</code>。</p><pre>{
+  &quot;method&quot;: &quot;POST&quot;,
+  &quot;path&quot;: &quot;/api/action&quot;,
+  &quot;json&quot;: {
+    &quot;request_id&quot;: &quot;8e4814d4-33bf-4094-ac93-e049f2d6c07e&quot;,
+    &quot;phase_id&quot;: &quot;f1f55f9e-7a54-420b-8011-6b745f6c58e9&quot;,
+    &quot;expected_version&quot;: 31,
+    &quot;tool&quot;: &quot;exile_vote&quot;,
+    &quot;payload&quot;: {
+      &quot;target&quot;: 7
+    }
+  }
+}</pre><p>submit 成功后重新读 <code>player.view()</code>，经 <code>presentation.present()</code> 整理成显示 JSON。内部 receipt 不直接作为 HTTP 响应；行动被拒绝则 HTTP 409，不再走 view。<code>/api/debug</code> 是默认开启的独立开发观察入口，会读主持快照，不能套用本图普通视图边界。</p><p class="caption">真实代码节选：<a href="https://github.com/nhh37740-glitch/langrensha-agent/blob/8a4a82a0d7710246574bee7cd0e237b4361b1fa2/src/langrensha/web.py#L216-L224">web.py:216–224</a>；省略部分请点源码。</p><pre><code>    @app.post(&quot;/api/action&quot;)
+    async def action(request: Request):
+        player = session(request)
+        data = await request.json()
+        try:
+            player.submit(data)
+        except Rejected as exc:
+            raise HTTPException(409, &quot;局势已变化，或这次选择无法实行。请重新查看。&quot;) from exc
+        return present(player.view())</code></pre></section>
+<section id="s02"><h2>02 · service.py / store.py：一次事务内做什么？</h2><p><a class="open" href="02-事务和SQL.html">打开 Archify 流程图 ↗</a></p><p><code>PlayerSession.submit(command)</code> 补上固定的 game_id、actor，调用 <code>GameService._submit</code>。<code>Store.transaction()</code> 创建 sqlite3.Connection，执行 <code>BEGIN IMMEDIATE</code>，把连接交给 with 内函数。<code>load</code> 用 SELECT 取文本并 json.loads；规则返回新字典与回执；<code>save</code> 用 json.dumps 后 UPDATE，建局时才 INSERT。</p><p>正常退出 with 才 commit。规则拒绝在 with 内被捕获，只 INSERT rejections，因此拒绝记录先提交，之后才向上 raise。其他未捕获异常由 transaction rollback，finally 关闭连接。成功后的 view 是另一事务读取，可能看见比本次回执更新的数据。</p><p class="caption">真实代码节选：<a href="https://github.com/nhh37740-glitch/langrensha-agent/blob/8a4a82a0d7710246574bee7cd0e237b4361b1fa2/src/langrensha/store.py#L40-L53">store.py:40–53</a>；省略部分请点源码。</p><pre><code>    @staticmethod
+    def load(db, game_id):
+        row = db.execute(&quot;SELECT state FROM games WHERE id=?&quot;, (game_id,)).fetchone()
+        if row is None:
+            raise KeyError(&quot;game_not_found&quot;)
+        return json.loads(row[0])
+
+    @staticmethod
+    def save(db, state, *, create=False):
+        encoded = json.dumps(state, ensure_ascii=False, sort_keys=True)
+        if create:
+            db.execute(&quot;INSERT INTO games(id,state) VALUES (?,?)&quot;, (state[&quot;id&quot;], encoded))
+        else:
+            db.execute(&quot;UPDATE games SET state=? WHERE id=?&quot;, (encoded, state[&quot;id&quot;]))</code></pre><p class="caption">真实代码节选：<a href="https://github.com/nhh37740-glitch/langrensha-agent/blob/8a4a82a0d7710246574bee7cd0e237b4361b1fa2/src/langrensha/service.py#L112-L129">service.py:112–129</a>；省略部分请点源码。</p><pre><code>    def _submit(self, game_id, actor, command):
+        error = None
+        with self.store.transaction() as db:
+            state = self.store.load(db, game_id)
+            try:
+                updated, result = reduce_action(state, actor, command, now=utc_now())
+            except Rejected as exc:
+                error = exc
+                db.execute(
+                    &quot;INSERT INTO rejections(game_id,actor,code,time) VALUES (?,?,?,?)&quot;,
+                    (game_id, actor, exc.code, utc_now()),
+                )
+            else:
+                self.store.save(db, updated)
+        # 拒绝审计先提交，再抛异常；不修改对局快照或递增版本。
+        if error is not None:
+            raise error
+        return result</code></pre></section>
+<section id="s03"><h2>03 · full_game.py：怎样接受、拒绝与防止重复？</h2><p><a class="open" href="03-行动校验.html">打开 Archify 流程图 ↗</a></p><p><code>service.reduce_action</code> 按 mode 选规则；完整局进入 <code>full_game.reduce_action(state, actor, command, *, now)</code>。先检查请求格式，再查 receipts；没有旧请求才检查 phase_id、expected_version、允许的工具、参数和目标。通过后 deepcopy，交给 <code>_apply</code> 按 tool 分支修改副本，version 加一并保存回执。函数返回 <code>(updated, receipt)</code>，不执行 SQL。</p><p>首次投票前后，仅展示原字典中的这些字段：</p><pre>{
+  &quot;before&quot;: {
+    &quot;phase&quot;: &quot;exile_vote&quot;,
+    &quot;phase_id&quot;: &quot;f1f55f9e-7a54-420b-8011-6b745f6c58e9&quot;,
+    &quot;version&quot;: 31,
+    &quot;completed&quot;: {}
+  },
+  &quot;after&quot;: {
+    &quot;phase&quot;: &quot;exile_vote&quot;,
+    &quot;phase_id&quot;: &quot;f1f55f9e-7a54-420b-8011-6b745f6c58e9&quot;,
+    &quot;version&quot;: 32,
+    &quot;completed&quot;: {
+      &quot;1&quot;: 7
+    }
+  }
+}</pre><p>此次 _apply 返回 event_id=48，回执 version=32。events 追加记录，completed 的键是字符串席位，receipts 保存完整 command 与 result。同一请求原样重发仍 HTTP 200，状态不再变化；同编号改投6号拒绝 request_id_conflict；换编号却沿用31版本拒绝 stale_version。</p><p class="caption">真实代码节选：<a href="https://github.com/nhh37740-glitch/langrensha-agent/blob/8a4a82a0d7710246574bee7cd0e237b4361b1fa2/src/langrensha/full_game.py#L429-L434">full_game.py:429–434</a>；省略部分请点源码。</p><pre><code>    key = f&quot;{actor}:{request_id}&quot;
+    prior = state[&quot;receipts&quot;].get(key)
+    if prior:
+        if json.dumps(prior[&quot;command&quot;], sort_keys=True, allow_nan=False) != canonical:
+            raise Rejected(&quot;request_id_conflict&quot;)
+        return copy.deepcopy(state), copy.deepcopy(prior[&quot;result&quot;])</code></pre><p class="caption">真实代码节选：<a href="https://github.com/nhh37740-glitch/langrensha-agent/blob/8a4a82a0d7710246574bee7cd0e237b4361b1fa2/src/langrensha/full_game.py#L453-L463">full_game.py:453–463</a>；省略部分请点源码。</p><pre><code>    updated = copy.deepcopy(state)
+    event_id = _apply(updated, actor, tool, payload, now)
+    updated[&quot;version&quot;] += 1
+    receipt = {
+        &quot;request_id&quot;: request_id,
+        &quot;accepted&quot;: True,
+        &quot;event_id&quot;: event_id,
+        &quot;version&quot;: updated[&quot;version&quot;],
+    }
+    updated[&quot;receipts&quot;][key] = {&quot;command&quot;: copy.deepcopy(command), &quot;result&quot;: receipt}
+    return updated, copy.deepcopy(receipt)</code></pre></section>
+<section id="s04"><h2>04 · full_game.py：阶段怎样继续？</h2><p><a class="open" href="04-阶段队列.html">打开 Archify 流程图 ↗</a></p><p>普通行动在 <code>_apply</code> 中更新 <code>completed[str(actor)]</code>；所有 actors 都完成才依次调用 <code>_settle</code>、<code>_advance</code>。_settle 统计投票，必要时把平票等任务插到 queue 前面。_advance 用最多100次的 for 循环，取 <code>queue.pop(0)</code>，更新阶段，再按阶段计算 actors。next_night、dawn 自动处理后 continue；没有行动者则结算并继续；有行动者便 return，等待下一次请求。</p><p><code>pending(state)</code> 从 actors 中排除已完成席位，发言阶段只给下一人。它不是所有允许工具的清单；额外技能仍由 tools 判断。wolf_chat 记录后提前 return；explode 自己设置队列并推进，不走普通投票分支。</p><p>注意同名区别：<code>full_game._advance</code> 只改字典与列表，返回 None；<code>web.advance</code> 是 HTTP 路由，检查 waiting 后最多启动一个 AI 决策窗口。</p><p class="caption">真实代码节选：<a href="https://github.com/nhh37740-glitch/langrensha-agent/blob/8a4a82a0d7710246574bee7cd0e237b4361b1fa2/src/langrensha/full_game.py#L166-L181">full_game.py:166–181</a>；省略部分请点源码。</p><pre><code>def _advance(state, now):
+    # 空阶段自动跳过，不通过公开口播透露是否仍有对应夜间身份。
+    for _ in range(100):
+        if state[&quot;winner&quot;] or not state[&quot;queue&quot;]:
+            return
+        task = state[&quot;queue&quot;].pop(0)
+        phase = task[&quot;name&quot;]
+        state.update(phase=phase, phase_id=str(uuid4()), completed={}, task=task)
+        seats = alive(state)
+        if phase == &quot;next_night&quot;:
+            state[&quot;round&quot;] += 1
+            _night(state)
+            continue
+        if phase == &quot;dawn&quot;:
+            _dawn(state, now)
+            continue</code></pre></section>
+<section id="s05"><h2>05 · ai.py：模型回复怎样变成输入？</h2><p><a class="open" href="05-AI循环.html">打开 Archify 流程图 ↗</a></p><p><code>DecisionRunner.run(session, persona)</code> 先读该玩家的 view。<code>model_step</code> 准备消息与工具描述，执行 <code>self.model.bind_tools(...).invoke(messages)</code> 请求模型。模型返回 tool_calls；<code>dispatch</code> 对每项 name/args 分支，查询调 session.query，行动则补上 request_id、phase_id、expected_version 后调 session.submit，仍由规则检查。</p><p><code>LoopState</code> 保存 rounds、messages、calls、audit、done 等循环数据。只有 model_step、dispatch、fallback 三个函数被 add_node 注册；after_model / after_dispatch 是返回下一跳名称的条件函数。图把这些条件函数也展开，方便读 Python 分支，不能把图框数当作 LangGraph 节点数。</p><p>查询与 wolf_chat 可继续下一轮；其他成功行动令 done=True，剩余工具标记 window_completed。模型异常或默认3轮用尽走 fallback；窗口已变或无可用工具则结束，否则尝试规则允许的自动弃权。每轮最多处理8项工具调用。</p><details><summary>真实执行记录：脚本模型先查资料，再投票</summary><pre>{
+  &quot;model&quot;: &quot;脚本替身，未调用外部 DeepSeek&quot;,
+  &quot;round_1_tool_calls&quot;: [
+    {
+      &quot;name&quot;: &quot;search_history&quot;,
+      &quot;args&quot;: {
+        &quot;query&quot;: &quot;谁认为那个手艺人不太对劲&quot;
+      },
+      &quot;id&quot;: &quot;teaching-1&quot;,
+      &quot;type&quot;: &quot;tool_call&quot;
+    }
+  ],
+  &quot;round_2_tool_calls&quot;: [
+    {
+      &quot;name&quot;: &quot;exile_vote&quot;,
+      &quot;args&quot;: {
+        &quot;target&quot;: 7
+      },
+      &quot;id&quot;: &quot;teaching-2&quot;,
+      &quot;type&quot;: &quot;tool_call&quot;
+    }
+  ],
+  &quot;state_after_excerpt&quot;: {
+    &quot;phase&quot;: &quot;exile_vote&quot;,
+    &quot;version&quot;: 33,
+    &quot;completed&quot;: {
+      &quot;1&quot;: 7,
+      &quot;2&quot;: 7
+    }
+  }
+}</pre><p>查询保持 version32；第二轮经 submit 后变为33。只有模型回复被替换，LangGraph 和规则函数实际执行。run 最后把显式模型文本与工具结果记到 ai_decisions；不是模型隐藏推理。</p></details><p class="caption">真实代码节选：<a href="https://github.com/nhh37740-glitch/langrensha-agent/blob/8a4a82a0d7710246574bee7cd0e237b4361b1fa2/src/langrensha/ai.py#L383-L391">ai.py:383–391</a>；省略部分请点源码。</p><pre><code>        graph = StateGraph(LoopState)
+        graph.add_node(&quot;model&quot;, model_step)
+        graph.add_node(&quot;dispatch&quot;, dispatch)
+        graph.add_node(&quot;fallback&quot;, fallback)
+        graph.add_edge(START, &quot;model&quot;)
+        graph.add_conditional_edges(&quot;model&quot;, after_model)
+        graph.add_conditional_edges(&quot;dispatch&quot;, after_dispatch)
+        graph.add_edge(&quot;fallback&quot;, END)
+        with tracing_context(enabled=False):</code></pre></section>
+<section id="s06"><h2>06 · retrieval.py / semantic.py：只从可见文本里选</h2><p><a class="open" href="06-权限检索.html">打开 Archify 流程图 ↗</a></p><p><code>PlayerSession.query(name, payload)</code> 先调用 self.view，再交给 retrieval.query。历史候选由 history_documents(view) 从可见事件形成；世界书候选由 visible_entries(book, role) 筛选。之后才按需分块、评分。<code>Chunk</code> 是文本段及来源信息，<code>SemanticIndex</code> 是本次 chunks 的封装，没有持久化向量数据库。</p><p><code>semantic.scores(documents, query)</code> 返回浮点数列表：_embed_many 先查 _CACHE[text]，缺失才由 ONNX CPU 模型计算向量，再做点积。retrieval 按分数排序，阈值0.40、同来源去重，最多返回12份原文档。self_info 直接返回事实，summarize_player 取摘录，空查询也不走语义模型。</p><p>实际查询“谁认为那个手艺人不太对劲”：两条公开文本分数约0.445与0.307，结果 sources 包含 event:37，method=semantic_retrieval；私密 event:14 没有进入候选。同一问题首次2批推理，第二次0批。故障注入 EmbeddingUnavailable 后走词项匹配，本例变成 event:38，method=lexical_fallback 且带 warning，不能说降级结果相同。</p><p>返回字典包含 answer、sources、method，必要时加 warning；不写游戏状态，但可能下载语义模型、更新向量缓存。Web 的 safe_query 可再经 assistant.assist 请求聊天模型整理已选来源；AI 工具查询直接返回检索结果，不走这个整理步骤。</p><p class="caption">真实代码节选：<a href="https://github.com/nhh37740-glitch/langrensha-agent/blob/8a4a82a0d7710246574bee7cd0e237b4361b1fa2/src/langrensha/retrieval.py#L182-L192">retrieval.py:182–192</a>；省略部分请点源码。</p><pre><code>def _rank(documents, question, *, view):
+    if not question.strip():
+        return documents[-RESULT_LIMIT:], &quot;extractive_retrieval&quot;, None
+    index = SemanticIndex.build(documents, view=view)
+    try:
+        matches = index.search(question)
+    except semantic.EmbeddingUnavailable as exc:
+        _LOG.warning(&quot;语义检索不可用，回退词项检索：%s&quot;, exc)
+        matches = _lexical_rank(documents, question)
+        return matches, &quot;lexical_fallback&quot;, &quot;语义模型不可用，已回退词项检索。&quot;
+    return matches, &quot;semantic_retrieval&quot;, None</code></pre></section>
+<footer><p>图由仓库 Archify 3.2.0 生成。图中省略单个狼人杀技能的全部规则分支，保留请求、保存、拒绝、循环与检索条件；完整实现以固定提交源码为准。含第三方许可说明，见“许可”目录。</p></footer></main></body></html>

@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "3d38cc33-ff1e-412c-ab70-1bbba1485ad8",
+  "status": "current",
+  "command": "deliver",
+  "type": "workflow",
+  "input": "/workspace/issue-92/文档/架构/后端运行流程/06-权限检索.workflow.json",
+  "output": "/workspace/issue-92/文档/架构/后端运行流程/06-权限检索.html",
+  "specification": {
+    "sha256": "45495143f8dec74a2abaeaa5a15e4c74703b3de966a5e13201c3b8ba968c71db",
+    "bytes": 6176
+  },
+  "artifact": {
+    "sha256": "a84819d52c86e3c9c946b93b1bbf2a86ebc28f74e36d93fd6fe70303a246888e",
+    "bytes": 822802
+  }
+}

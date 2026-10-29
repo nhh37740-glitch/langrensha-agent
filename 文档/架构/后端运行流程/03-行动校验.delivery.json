@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "9be414e5-9aaa-4556-b189-96a208ef7b2b",
+  "status": "current",
+  "command": "deliver",
+  "type": "workflow",
+  "input": "/workspace/issue-92/文档/架构/后端运行流程/03-行动校验.workflow.json",
+  "output": "/workspace/issue-92/文档/架构/后端运行流程/03-行动校验.html",
+  "specification": {
+    "sha256": "35f12e9c99f7f82fb92b28ed9597f10bda42a0608316890a2c603ab0319609c9",
+    "bytes": 6268
+  },
+  "artifact": {
+    "sha256": "20c3884f793b02160bf01f1e497d53722ef476c930d6997ebf25c6d138855e7e",
+    "bytes": 824193
+  }
+}

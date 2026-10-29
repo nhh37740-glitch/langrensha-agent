@@ -1,0 +1,253 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "retrieval.py + semantic.py｜文本怎么被查出来",
+    "output": "文档/架构/后端运行流程/06-权限检索.html",
+    "locale": "zh-CN",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/nhh37740-glitch/langrensha-agent.git",
+      "revision": "8a4a82a0d7710246574bee7cd0e237b4361b1fa2"
+    }
+  },
+  "lanes": [
+    {
+      "id": "main",
+      "label": "函数执行顺序"
+    },
+    {
+      "id": "branch",
+      "label": "条件分支"
+    },
+    {
+      "id": "end",
+      "label": "返回与异常"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "session",
+      "col": 0,
+      "lane": "main",
+      "type": "backend",
+      "label": "session.query(...)",
+      "sublabel": "name + payload",
+      "sources": [
+        {
+          "path": "src/langrensha/service.py",
+          "line": 141,
+          "end_line": 144
+        }
+      ]
+    },
+    {
+      "id": "view",
+      "col": 1,
+      "lane": "main",
+      "type": "backend",
+      "label": "self.view()",
+      "sublabel": "load → player_view",
+      "sources": [
+        {
+          "path": "src/langrensha/service.py",
+          "line": 108,
+          "end_line": 110
+        }
+      ]
+    },
+    {
+      "id": "docs",
+      "col": 2,
+      "lane": "main",
+      "type": "backend",
+      "label": "retrieval.query(...)",
+      "sublabel": "参数校验；可见文档",
+      "sources": [
+        {
+          "path": "src/langrensha/retrieval.py",
+          "line": 232,
+          "end_line": 298
+        }
+      ]
+    },
+    {
+      "id": "rank",
+      "col": 3,
+      "lane": "main",
+      "type": "backend",
+      "label": "_rank(...)",
+      "sublabel": "分块 → index.search",
+      "sources": [
+        {
+          "path": "src/langrensha/retrieval.py",
+          "line": 163,
+          "end_line": 192
+        }
+      ]
+    },
+    {
+      "id": "scores",
+      "col": 4,
+      "lane": "main",
+      "type": "backend",
+      "label": "semantic.scores(...)",
+      "sublabel": "向量相乘得分",
+      "sources": [
+        {
+          "path": "src/langrensha/semantic.py",
+          "line": 223,
+          "end_line": 237
+        }
+      ]
+    },
+    {
+      "id": "answer",
+      "col": 5,
+      "lane": "main",
+      "type": "backend",
+      "label": "返回结果字典",
+      "sublabel": "answer/sources/method",
+      "sources": [
+        {
+          "path": "src/langrensha/retrieval.py",
+          "line": 299,
+          "end_line": 330
+        }
+      ]
+    },
+    {
+      "id": "direct",
+      "col": 2,
+      "lane": "branch",
+      "type": "backend",
+      "label": "直接回答或摘录",
+      "sublabel": "无需语义评分",
+      "sources": [
+        {
+          "path": "src/langrensha/retrieval.py",
+          "line": 232,
+          "end_line": 298
+        }
+      ]
+    },
+    {
+      "id": "lexical",
+      "col": 4,
+      "lane": "branch",
+      "type": "backend",
+      "label": "_lexical_rank(...)",
+      "sublabel": "语义不可用时回退",
+      "sources": [
+        {
+          "path": "src/langrensha/retrieval.py",
+          "line": 182,
+          "end_line": 192
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "id": "session-view",
+      "from": "session",
+      "to": "view",
+      "role": "main",
+      "label": "固定 game_id/actor"
+    },
+    {
+      "id": "view-docs",
+      "from": "view",
+      "to": "docs",
+      "role": "main",
+      "label": "已过滤 view"
+    },
+    {
+      "id": "docs-rank",
+      "from": "docs",
+      "to": "rank",
+      "role": "main",
+      "label": "需评分的文本问题"
+    },
+    {
+      "id": "rank-scores",
+      "from": "rank",
+      "to": "scores",
+      "role": "main",
+      "label": "chunk.text 列表 + question"
+    },
+    {
+      "id": "scores-answer",
+      "from": "scores",
+      "to": "answer",
+      "role": "main",
+      "label": "分数→阈值筛选→文档"
+    },
+    {
+      "id": "docs-direct",
+      "from": "docs",
+      "to": "direct",
+      "role": "branch",
+      "label": "事实或直接摘录"
+    },
+    {
+      "id": "direct-answer",
+      "from": "direct",
+      "to": "answer",
+      "role": "branch",
+      "label": "fact / extractive_retrieval"
+    },
+    {
+      "id": "scores-lexical",
+      "from": "scores",
+      "to": "lexical",
+      "role": "error",
+      "label": "模型不可用",
+      "variant": "security"
+    },
+    {
+      "id": "lexical-answer",
+      "from": "lexical",
+      "to": "answer",
+      "role": "branch",
+      "label": "method=lexical_fallback"
+    }
+  ],
+  "mainPath": [
+    "session",
+    "view",
+    "docs",
+    "rank",
+    "scores",
+    "answer"
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "三个相近的名字",
+      "items": [
+        "history_documents(view) 把可见事件转成带 source/text 的文档字典；不读取全库。",
+        "Chunk 保存一段文本和原 document；SemanticIndex 只是本次 chunks 的封装，没有持久化向量库。",
+        "ask_world 的候选来自 visible_entries(book,role)；历史查询来自已过滤 view.events。"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "semantic 内部是缓存与计算",
+      "items": [
+        "_embed_many 先从 _CACHE[text] 取向量；缺失文本才调用 _embed_batch 的 ONNX CPU 模型。",
+        "scores 返回浮点数列表；retrieval._semantic_rank 按分数排序、阈值0.40和来源去重，最多12份文档。",
+        "实际样例：两段公开文本得分约0.445/0.307，返回 event:37；私密 event:14 未进入候选。"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "返回与副作用",
+      "items": [
+        "相同查询二次运行：首次2批推理，第二次0批；每次仍按当前视图重新形成候选，缓存不增加可见范围。",
+        "降级可能改变结果：故障注入后本例词项检索返回 event:38，并带 warning，不能冒充语义命中。",
+        "查询不修改对局字典；semantic 可能下载模型文件、读缓存和做推理，所以“只读”指对局写操作。"
+      ]
+    }
+  ]
+}

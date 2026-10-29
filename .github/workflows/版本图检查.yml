@@ -66,6 +66,34 @@ jobs:
             node .agents/skills/archify/bin/archify.mjs visual-check "$output_path" \
               --out-dir "临时/版本图检查/后端源码导读/$diagram_path-截图" --summary --require-provenance
           done
+      - name: 核对后端运行流程与离线入口
+        run: |
+          for source_path in 文档/架构/后端运行流程/*.workflow.json; do
+            diagram_name=$(basename "$source_path" .workflow.json)
+            revision=$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["meta"]["repository"]["revision"])' "$source_path")
+            git cat-file -e "$revision^{commit}"
+            git merge-base --is-ancestor "$revision" HEAD
+            output_path="临时/版本图检查/后端运行流程/$diagram_name.html"
+            node .agents/skills/archify/bin/archify.mjs finalize workflow \
+              "$source_path" "$output_path" --repo-root . --quality showcase \
+              --out-dir "临时/版本图检查/后端运行流程/$diagram_name-证据" --json
+            python .github/scripts/校验版本图.py "$source_path" \
+              "文档/架构/后端运行流程/$diagram_name.html" "$output_path"
+            node .agents/skills/archify/bin/archify.mjs visual-check "$output_path" \
+              --out-dir "临时/版本图检查/后端运行流程/$diagram_name-截图" --summary --require-provenance
+          done
+          google-chrome --headless --disable-gpu --no-sandbox --window-size=1440,1100 \
+            --screenshot="$(pwd)/临时/版本图检查/后端运行流程/打开入口.png" \
+            "file://$(pwd)/文档/架构/后端运行流程/打开我.html"
+      - name: 打包可离线阅读的后端流程
+        run: |
+          python .github/scripts/打包后端流程.py 临时/后端运行流程.zip
+      - name: 保存后端运行流程下载包
+        uses: actions/upload-artifact@v4
+        with:
+          name: 后端运行流程
+          path: 临时/后端运行流程.zip
+          if-no-files-found: error
       - name: 保存版本图验证证据
         if: always()
         uses: actions/upload-artifact@v4

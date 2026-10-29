@@ -1,0 +1,262 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "full_game.reduce_action｜怎样修改一局字典",
+    "output": "文档/架构/后端运行流程/03-行动校验.html",
+    "locale": "zh-CN",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/nhh37740-glitch/langrensha-agent.git",
+      "revision": "8a4a82a0d7710246574bee7cd0e237b4361b1fa2"
+    }
+  },
+  "lanes": [
+    {
+      "id": "main",
+      "label": "函数执行顺序"
+    },
+    {
+      "id": "branch",
+      "label": "条件分支"
+    },
+    {
+      "id": "end",
+      "label": "返回与异常"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "command",
+      "col": 0,
+      "lane": "main",
+      "type": "backend",
+      "label": "检查 command",
+      "sublabel": "字段、actor、request_id",
+      "sources": [
+        {
+          "path": "src/langrensha/full_game.py",
+          "line": 412,
+          "end_line": 428
+        }
+      ]
+    },
+    {
+      "id": "prior",
+      "col": 1,
+      "lane": "main",
+      "type": "backend",
+      "label": "查 receipts[key]",
+      "sublabel": "key=actor:request_id",
+      "sources": [
+        {
+          "path": "src/langrensha/full_game.py",
+          "line": 429,
+          "end_line": 434
+        }
+      ]
+    },
+    {
+      "id": "validate",
+      "col": 2,
+      "lane": "main",
+      "type": "backend",
+      "label": "检查当前许可",
+      "sublabel": "阶段/版本/工具/参数/目标",
+      "sources": [
+        {
+          "path": "src/langrensha/full_game.py",
+          "line": 435,
+          "end_line": 452
+        }
+      ]
+    },
+    {
+      "id": "apply",
+      "col": 3,
+      "lane": "main",
+      "type": "backend",
+      "label": "deepcopy → _apply",
+      "sublabel": "只修改 copied state",
+      "sources": [
+        {
+          "path": "src/langrensha/full_game.py",
+          "line": 453,
+          "end_line": 454
+        }
+      ]
+    },
+    {
+      "id": "receipt",
+      "col": 4,
+      "lane": "main",
+      "type": "backend",
+      "label": "version += 1",
+      "sublabel": "保存 command + receipt",
+      "sources": [
+        {
+          "path": "src/langrensha/full_game.py",
+          "line": 455,
+          "end_line": 462
+        }
+      ]
+    },
+    {
+      "id": "return",
+      "col": 5,
+      "lane": "main",
+      "type": "backend",
+      "label": "return updated, receipt",
+      "sublabel": "交给 GameService 保存",
+      "sources": [
+        {
+          "path": "src/langrensha/full_game.py",
+          "line": 462,
+          "end_line": 463
+        }
+      ]
+    },
+    {
+      "id": "replay",
+      "col": 2,
+      "lane": "branch",
+      "type": "backend",
+      "label": "比较 prior.command",
+      "sublabel": "相同内容：返回旧 result",
+      "sources": [
+        {
+          "path": "src/langrensha/full_game.py",
+          "line": 431,
+          "end_line": 434
+        }
+      ]
+    },
+    {
+      "id": "reject",
+      "col": 1,
+      "lane": "end",
+      "type": "security",
+      "label": "raise Rejected(code)",
+      "sublabel": "不进入复制和 _apply",
+      "sources": [
+        {
+          "path": "src/langrensha/full_game.py",
+          "line": 412,
+          "end_line": 452
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "id": "command-prior",
+      "from": "command",
+      "to": "prior",
+      "role": "main",
+      "label": "规范化 command"
+    },
+    {
+      "id": "prior-validate",
+      "from": "prior",
+      "to": "validate",
+      "role": "main",
+      "label": "未见此请求"
+    },
+    {
+      "id": "validate-apply",
+      "from": "validate",
+      "to": "apply",
+      "role": "main",
+      "label": "全部通过"
+    },
+    {
+      "id": "apply-receipt",
+      "from": "apply",
+      "to": "receipt",
+      "role": "main",
+      "label": "event_id"
+    },
+    {
+      "id": "receipt-return",
+      "from": "receipt",
+      "to": "return",
+      "role": "main",
+      "label": "新状态和回执"
+    },
+    {
+      "id": "prior-replay",
+      "from": "prior",
+      "to": "replay",
+      "role": "branch",
+      "label": "已处理过"
+    },
+    {
+      "id": "replay-return",
+      "from": "replay",
+      "to": "return",
+      "role": "branch",
+      "label": "相同：当前 state 副本+旧回执"
+    },
+    {
+      "id": "replay-reject",
+      "from": "replay",
+      "to": "reject",
+      "role": "error",
+      "label": "内容不同",
+      "variant": "security"
+    },
+    {
+      "id": "command-reject",
+      "from": "command",
+      "to": "reject",
+      "role": "error",
+      "label": "格式不合法",
+      "variant": "security"
+    },
+    {
+      "id": "validate-reject",
+      "from": "validate",
+      "to": "reject",
+      "role": "error",
+      "label": "条件不满足",
+      "variant": "security"
+    }
+  ],
+  "mainPath": [
+    "command",
+    "prior",
+    "validate",
+    "apply",
+    "receipt",
+    "return"
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "command / payload / receipt",
+      "items": [
+        "command 是完整行动请求；payload 只是它的参数，如 {\"target\":7}。",
+        "receipt 是请求处理结果：accepted、request_id、event_id、version；不是游戏状态。",
+        "receipts 是 state 内的字典，值包含原 command 和 result，用来识别重试。"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "实际运行的字段变化",
+      "items": [
+        "1号首次投7号：completed {} → {\"1\":7}，version 31→32，新增 event id=48。",
+        "events 是记录列表，event() 追加记录；一次行动可能产生多条事件，event_id 不是 version。",
+        "回执检查早于阶段/版本检查：相同请求可重放；同编号改目标被 request_id_conflict 拒绝。"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "函数名对应代码",
+      "items": [
+        "reduce_action 是处理入口，不是类；service.py 也有同名选择函数。",
+        "_apply 按 tool 分支执行，返回 event_id；内部可继续结算与推进阶段，见下一图。",
+        "本图不画每项狼人杀技能；目标限制来自 tools(state,actor) 和 targets(state,actor,tool)。"
+      ]
+    }
+  ]
+}
