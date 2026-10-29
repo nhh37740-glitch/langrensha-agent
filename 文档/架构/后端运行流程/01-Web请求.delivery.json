@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "c8eaee2d-f762-4326-9672-cd2ae61cbd56",
+  "status": "current",
+  "command": "deliver",
+  "type": "workflow",
+  "input": "/workspace/issue-92/文档/架构/后端运行流程/01-Web请求.workflow.json",
+  "output": "/workspace/issue-92/文档/架构/后端运行流程/01-Web请求.html",
+  "specification": {
+    "sha256": "8f79b93bb25faa3e3e9b4bc1f73fb46185b88d9cc49341f08f149165ed55d0c4",
+    "bytes": 5927
+  },
+  "artifact": {
+    "sha256": "5512804311fa2efca89a0efb86b379773f324ae712b1d83727997861958ee62f",
+    "bytes": 821913
+  }
+}

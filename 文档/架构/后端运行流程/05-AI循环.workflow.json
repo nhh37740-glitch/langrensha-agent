@@ -1,0 +1,273 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "ai.py｜LangGraph 实际调用哪些函数",
+    "output": "文档/架构/后端运行流程/05-AI循环.html",
+    "locale": "zh-CN",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/nhh37740-glitch/langrensha-agent.git",
+      "revision": "8a4a82a0d7710246574bee7cd0e237b4361b1fa2"
+    },
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Python 函数与条件"
+        },
+        "security": {
+          "label": "拒绝与异常"
+        },
+        "database": {
+          "label": "SQL 操作"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "main",
+      "label": "函数执行顺序"
+    },
+    {
+      "id": "branch",
+      "label": "条件分支"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "start",
+      "col": 0,
+      "lane": "main",
+      "type": "backend",
+      "label": "START",
+      "sublabel": "run(session, persona)",
+      "sources": [
+        {
+          "path": "src/langrensha/ai.py",
+          "line": 231,
+          "end_line": 235
+        }
+      ]
+    },
+    {
+      "id": "model",
+      "col": 1,
+      "lane": "main",
+      "type": "backend",
+      "label": "model_step(state)",
+      "sublabel": "请求模型；写 calls/rounds",
+      "sources": [
+        {
+          "path": "src/langrensha/ai.py",
+          "line": 243,
+          "end_line": 281
+        }
+      ]
+    },
+    {
+      "id": "aftermodel",
+      "col": 2,
+      "lane": "main",
+      "type": "backend",
+      "label": "after_model(state)",
+      "sublabel": "按 done / reason 分支",
+      "sources": [
+        {
+          "path": "src/langrensha/ai.py",
+          "line": 369,
+          "end_line": 374
+        }
+      ]
+    },
+    {
+      "id": "dispatch",
+      "col": 3,
+      "lane": "main",
+      "type": "backend",
+      "label": "dispatch(state)",
+      "sublabel": "query 或 submit；写 audit",
+      "sources": [
+        {
+          "path": "src/langrensha/ai.py",
+          "line": 283,
+          "end_line": 345
+        }
+      ]
+    },
+    {
+      "id": "afterdispatch",
+      "col": 4,
+      "lane": "main",
+      "type": "backend",
+      "label": "after_dispatch(state)",
+      "sublabel": "完成 / 轮数 / 继续",
+      "sources": [
+        {
+          "path": "src/langrensha/ai.py",
+          "line": 376,
+          "end_line": 381
+        }
+      ]
+    },
+    {
+      "id": "end",
+      "col": 5,
+      "lane": "main",
+      "type": "backend",
+      "label": "END → report",
+      "sublabel": "_record_decision(report)",
+      "sources": [
+        {
+          "path": "src/langrensha/ai.py",
+          "line": 383,
+          "end_line": 421
+        }
+      ]
+    },
+    {
+      "id": "fallback",
+      "col": 3,
+      "lane": "branch",
+      "type": "backend",
+      "label": "fallback(state)",
+      "sublabel": "窗口有效时尝试弃权",
+      "sources": [
+        {
+          "path": "src/langrensha/ai.py",
+          "line": 347,
+          "end_line": 367
+        }
+      ]
+    },
+    {
+      "id": "earlyend",
+      "lane": "branch",
+      "col": 1,
+      "type": "backend",
+      "label": "END → report",
+      "sublabel": "窗口变化或无工具",
+      "sources": [
+        {
+          "path": "src/langrensha/ai.py",
+          "line": 243,
+          "end_line": 247
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "id": "start-model",
+      "from": "start",
+      "to": "model",
+      "role": "main",
+      "label": "add_edge(START,\"model\")"
+    },
+    {
+      "id": "model-aftermodel",
+      "from": "model",
+      "to": "aftermodel",
+      "role": "main",
+      "label": "LoopState 更新"
+    },
+    {
+      "id": "aftermodel-dispatch",
+      "from": "aftermodel",
+      "to": "dispatch",
+      "role": "main",
+      "label": "否则"
+    },
+    {
+      "id": "dispatch-afterdispatch",
+      "from": "dispatch",
+      "to": "afterdispatch",
+      "role": "main",
+      "label": "done / rounds"
+    },
+    {
+      "id": "afterdispatch-end",
+      "from": "afterdispatch",
+      "to": "end",
+      "role": "main",
+      "label": "done=True"
+    },
+    {
+      "id": "aftermodel-earlyend",
+      "from": "aftermodel",
+      "to": "earlyend",
+      "role": "branch",
+      "label": "done=True"
+    },
+    {
+      "id": "aftermodel-fallback",
+      "from": "aftermodel",
+      "to": "fallback",
+      "role": "error",
+      "label": "model_unavailable",
+      "variant": "security"
+    },
+    {
+      "id": "afterdispatch-fallback",
+      "from": "afterdispatch",
+      "to": "fallback",
+      "role": "branch",
+      "label": "轮数达到上限"
+    },
+    {
+      "id": "afterdispatch-model",
+      "from": "afterdispatch",
+      "to": "model",
+      "role": "return",
+      "label": "未完成且未到上限",
+      "route": "up-channel",
+      "fromSide": "top",
+      "toSide": "top"
+    },
+    {
+      "id": "fallback-end",
+      "from": "fallback",
+      "to": "end",
+      "role": "branch",
+      "label": "返回 done=True"
+    }
+  ],
+  "mainPath": [
+    "start",
+    "model",
+    "aftermodel",
+    "dispatch",
+    "afterdispatch",
+    "end"
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "这里的 state 不是游戏 state",
+      "items": [
+        "LoopState 保存本次模型循环的 rounds、messages、calls、audit、done、reason、acted、view。",
+        "model_step、dispatch、fallback 才是 add_node 注册的三个节点；after_* 是条件边函数，不是节点。",
+        "model_step 内 self.model.bind_tools(...).invoke(messages) 才会请求外部模型。",
+        "两个 END 框表示不同分支抵达同一终点，结束后均生成 report；不是两个额外图节点。"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "工具只是数据，执行在 Python 中",
+      "items": [
+        "模型 tool_calls 的 name/args 经 dispatch 分支：查询调用 session.query；行动包装成 command 调用 session.submit。",
+        "查询不完成行动；wolf_chat 也可继续。其他被接受的行动设置 done=True，剩余工具标记 window_completed。",
+        "真实教学运行：第一轮 search_history 保持 version32；第二轮 exile_vote 经规则后 version33。模型回复为脚本替身，未调用真实 DeepSeek。"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "循环如何停止",
+      "items": [
+        "默认最多3轮、每回复最多8个工具；异常 reason=model_unavailable 走 fallback。",
+        "窗口变化或没有可用工具：model_step/fallback 结束，不向新窗口强行提交。",
+        "fallback 调 session._automatic_abstain，仍经规则检查；report 记录显式文本和执行结果，不是隐藏推理。"
+      ]
+    }
+  ]
+}

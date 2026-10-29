@@ -1,0 +1,281 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "service.py + store.py｜字典如何进出数据库",
+    "output": "文档/架构/后端运行流程/02-事务和SQL.html",
+    "locale": "zh-CN",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/nhh37740-glitch/langrensha-agent.git",
+      "revision": "8a4a82a0d7710246574bee7cd0e237b4361b1fa2"
+    },
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Python 函数与条件"
+        },
+        "security": {
+          "label": "拒绝与异常"
+        },
+        "database": {
+          "label": "SQL 操作"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "main",
+      "label": "函数执行顺序"
+    },
+    {
+      "id": "branch",
+      "label": "条件分支"
+    },
+    {
+      "id": "end",
+      "label": "返回与异常"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "transaction",
+      "col": 0,
+      "lane": "main",
+      "type": "backend",
+      "label": "transaction()",
+      "sublabel": "BEGIN IMMEDIATE",
+      "sources": [
+        {
+          "path": "src/langrensha/store.py",
+          "line": 27,
+          "end_line": 38
+        }
+      ]
+    },
+    {
+      "id": "load",
+      "col": 1,
+      "lane": "main",
+      "type": "backend",
+      "label": "Store.load(...)",
+      "sublabel": "SQL → json.loads",
+      "sources": [
+        {
+          "path": "src/langrensha/store.py",
+          "line": 40,
+          "end_line": 45
+        }
+      ]
+    },
+    {
+      "id": "reduce",
+      "col": 2,
+      "lane": "main",
+      "type": "backend",
+      "label": "reduce_action(...)",
+      "sublabel": "state / actor / command",
+      "sources": [
+        {
+          "path": "src/langrensha/service.py",
+          "line": 112,
+          "end_line": 129
+        }
+      ]
+    },
+    {
+      "id": "save",
+      "col": 3,
+      "lane": "main",
+      "type": "backend",
+      "label": "Store.save(...)",
+      "sublabel": "json.dumps → SQL",
+      "sources": [
+        {
+          "path": "src/langrensha/store.py",
+          "line": 47,
+          "end_line": 53
+        }
+      ]
+    },
+    {
+      "id": "commit",
+      "col": 4,
+      "lane": "main",
+      "type": "backend",
+      "label": "commit(); close()",
+      "sublabel": "with 正常退出",
+      "sources": [
+        {
+          "path": "src/langrensha/store.py",
+          "line": 27,
+          "end_line": 38
+        }
+      ]
+    },
+    {
+      "id": "result",
+      "col": 5,
+      "lane": "main",
+      "type": "backend",
+      "label": "return / raise",
+      "sublabel": "看 error 是否为空",
+      "sources": [
+        {
+          "path": "src/langrensha/service.py",
+          "line": 124,
+          "end_line": 129
+        }
+      ]
+    },
+    {
+      "id": "reject",
+      "col": 2,
+      "lane": "branch",
+      "type": "security",
+      "label": "except Rejected",
+      "sublabel": "记住异常 error=exc",
+      "sources": [
+        {
+          "path": "src/langrensha/service.py",
+          "line": 118,
+          "end_line": 123
+        }
+      ]
+    },
+    {
+      "id": "audit",
+      "col": 3,
+      "lane": "branch",
+      "type": "database",
+      "label": "INSERT rejections",
+      "sublabel": "只写拒绝记录",
+      "sources": [
+        {
+          "path": "src/langrensha/service.py",
+          "line": 120,
+          "end_line": 123
+        }
+      ]
+    },
+    {
+      "id": "rollback",
+      "col": 0,
+      "lane": "end",
+      "type": "security",
+      "label": "db.rollback(); raise",
+      "sublabel": "其他异常；finally close",
+      "sources": [
+        {
+          "path": "src/langrensha/store.py",
+          "line": 34,
+          "end_line": 38
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "id": "transaction-load",
+      "from": "transaction",
+      "to": "load",
+      "role": "main",
+      "label": "进入 with"
+    },
+    {
+      "id": "load-reduce",
+      "from": "load",
+      "to": "reduce",
+      "role": "main",
+      "label": "完整 state 字典"
+    },
+    {
+      "id": "reduce-save",
+      "from": "reduce",
+      "to": "save",
+      "role": "main",
+      "label": "updated, result"
+    },
+    {
+      "id": "save-commit",
+      "from": "save",
+      "to": "commit",
+      "role": "main",
+      "label": "SQL 成功"
+    },
+    {
+      "id": "commit-result",
+      "from": "commit",
+      "to": "result",
+      "role": "main",
+      "label": "事务已结束"
+    },
+    {
+      "id": "reduce-reject",
+      "from": "reduce",
+      "to": "reject",
+      "role": "error",
+      "label": "Rejected",
+      "variant": "security"
+    },
+    {
+      "id": "reject-audit",
+      "from": "reject",
+      "to": "audit",
+      "role": "branch",
+      "label": "actor/code/time"
+    },
+    {
+      "id": "audit-commit",
+      "from": "audit",
+      "to": "commit",
+      "role": "branch",
+      "label": "不调用 save"
+    },
+    {
+      "id": "transaction-rollback",
+      "from": "transaction",
+      "to": "rollback",
+      "role": "error",
+      "label": "with 体未捕获异常",
+      "variant": "security"
+    }
+  ],
+  "mainPath": [
+    "transaction",
+    "load",
+    "reduce",
+    "save",
+    "commit",
+    "result"
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "谁调用这些函数",
+      "items": [
+        "PlayerSession.submit(command) → GameService._submit(game_id, actor, command)。",
+        "GameService 持有 Store；service.reduce_action 按 state[\"mode\"] 选完整规则或旧演练规则。"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "数据库具体存什么",
+      "items": [
+        "games(id, state)：state 列是一整局字典编码成的 JSON 文本；events 和 receipts 也在其中。",
+        "load 返回 dict；save 返回 None，副作用是 INSERT 或 UPDATE。db 是 sqlite3.Connection。",
+        "建局的 save(create=True) 使用 INSERT；正常行动使用 UPDATE。"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "异常顺序不能看反",
+      "items": [
+        "Rejected 被 _submit 在 with 内捕获，故先提交拒绝审计，退出后才重新抛出。",
+        "没有被 with 内部捕获的异常交给 transaction 回滚；图左侧异常箭头表示上下文退出处理。",
+        "本例首次投票 version 31→32；重发不再递增。其他连接的可见性以事务提交为界。"
+      ]
+    }
+  ]
+}

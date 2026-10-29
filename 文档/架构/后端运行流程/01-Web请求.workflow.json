@@ -1,0 +1,256 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "web.py｜一次 /api/action 请求",
+    "output": "文档/架构/后端运行流程/01-Web请求.html",
+    "locale": "zh-CN",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/nhh37740-glitch/langrensha-agent.git",
+      "revision": "8a4a82a0d7710246574bee7cd0e237b4361b1fa2"
+    },
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Python 函数与条件"
+        },
+        "security": {
+          "label": "拒绝与异常"
+        },
+        "database": {
+          "label": "SQL 操作"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "main",
+      "label": "函数执行顺序"
+    },
+    {
+      "id": "branch",
+      "label": "条件分支"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "boundary",
+      "col": 0,
+      "lane": "main",
+      "type": "backend",
+      "label": "boundary(request)",
+      "sublabel": "检查头、来源、请求体",
+      "sources": [
+        {
+          "path": "src/langrensha/web.py",
+          "line": 46,
+          "end_line": 71
+        }
+      ]
+    },
+    {
+      "id": "login",
+      "col": 1,
+      "lane": "main",
+      "type": "backend",
+      "label": "session → login",
+      "sublabel": "Cookie 摘要查会话 SQL",
+      "sources": [
+        {
+          "path": "src/langrensha/web.py",
+          "line": 73,
+          "end_line": 88
+        }
+      ]
+    },
+    {
+      "id": "bind",
+      "col": 2,
+      "lane": "main",
+      "type": "backend",
+      "label": "bind_player",
+      "sublabel": "固定 game_id 与 seat",
+      "sources": [
+        {
+          "path": "src/langrensha/service.py",
+          "line": 52,
+          "end_line": 57
+        }
+      ]
+    },
+    {
+      "id": "read",
+      "col": 3,
+      "lane": "main",
+      "type": "backend",
+      "label": "request.json()",
+      "sublabel": "得到行动字典 data",
+      "sources": [
+        {
+          "path": "src/langrensha/web.py",
+          "line": 216,
+          "end_line": 224
+        }
+      ]
+    },
+    {
+      "id": "submit",
+      "col": 4,
+      "lane": "main",
+      "type": "backend",
+      "label": "player.submit(data)",
+      "sublabel": "调用已绑定的玩家对象",
+      "sources": [
+        {
+          "path": "src/langrensha/service.py",
+          "line": 146,
+          "end_line": 147
+        }
+      ]
+    },
+    {
+      "id": "present",
+      "col": 5,
+      "lane": "main",
+      "type": "backend",
+      "label": "present(player.view())",
+      "sublabel": "受限字典 → 返回 JSON",
+      "sources": [
+        {
+          "path": "src/langrensha/web.py",
+          "line": 216,
+          "end_line": 224
+        }
+      ]
+    },
+    {
+      "id": "unauthorized",
+      "col": 1,
+      "lane": "branch",
+      "type": "security",
+      "label": "HTTP 拒绝",
+      "sublabel": "403/415/413 或 401/404",
+      "sources": [
+        {
+          "path": "src/langrensha/web.py",
+          "line": 46,
+          "end_line": 88
+        }
+      ]
+    },
+    {
+      "id": "rejected",
+      "col": 4,
+      "lane": "branch",
+      "type": "security",
+      "label": "except Rejected",
+      "sublabel": "HTTP 409；不再 view",
+      "sources": [
+        {
+          "path": "src/langrensha/web.py",
+          "line": 220,
+          "end_line": 224
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "id": "boundary-login",
+      "from": "boundary",
+      "to": "login",
+      "role": "main",
+      "label": "进入 action"
+    },
+    {
+      "id": "login-bind",
+      "from": "login",
+      "to": "bind",
+      "role": "main",
+      "label": "认证得到局号/席位"
+    },
+    {
+      "id": "bind-read",
+      "from": "bind",
+      "to": "read",
+      "role": "main",
+      "label": "返回 PlayerSession"
+    },
+    {
+      "id": "read-submit",
+      "from": "read",
+      "to": "submit",
+      "role": "main",
+      "label": "command=data"
+    },
+    {
+      "id": "submit-present",
+      "from": "submit",
+      "to": "present",
+      "role": "main",
+      "label": "成功后重新查看"
+    },
+    {
+      "id": "boundary-unauthorized",
+      "from": "boundary",
+      "to": "unauthorized",
+      "role": "error",
+      "label": "请求不合规",
+      "variant": "security"
+    },
+    {
+      "id": "login-unauthorized",
+      "from": "login",
+      "to": "unauthorized",
+      "role": "error",
+      "label": "未登录/未建局",
+      "variant": "security"
+    },
+    {
+      "id": "submit-rejected",
+      "from": "submit",
+      "to": "rejected",
+      "role": "error",
+      "label": "行动被拒绝",
+      "variant": "security"
+    }
+  ],
+  "mainPath": [
+    "boundary",
+    "login",
+    "bind",
+    "read",
+    "submit",
+    "present"
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "对象的实际含义",
+      "items": [
+        "PlayerSession 只保存 _service、_game_id、_actor；不是 Cookie、登录表或数据库连接。",
+        "web_sessions 表保存 digest、game_id、seat、debug。actor 不从行动 JSON 取。"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "返回哪种数据",
+      "items": [
+        "player.view() → GameService._view → Store.load → player_view(state, actor)。",
+        "present 把受限 view 转成显示字段；POST /api/action 不直接返回内部行动回执。",
+        "submit 后的 view 是另一次事务读取，可能看到比本次回执更新的局势。"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "范围与例外",
+      "items": [
+        "本图展开正常行动请求；JSON/ValueError 另由 malformed 返回 422。",
+        "/api/debug 是独立开发观察入口，默认开启时读取主持快照，不走普通 player_view。",
+        "程序启动在 web.main：创建模型与 create_app，再调用 uvicorn.run(workers=1)。"
+      ]
+    }
+  ]
+}

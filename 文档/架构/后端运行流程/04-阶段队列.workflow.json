@@ -1,0 +1,297 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "full_game._advance｜一次循环体与继续条件",
+    "output": "文档/架构/后端运行流程/04-阶段队列.html",
+    "locale": "zh-CN",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/nhh37740-glitch/langrensha-agent.git",
+      "revision": "8a4a82a0d7710246574bee7cd0e237b4361b1fa2"
+    },
+    "legend": {
+      "entries": {
+        "backend": {
+          "label": "Python 函数与条件"
+        },
+        "security": {
+          "label": "拒绝与异常"
+        },
+        "database": {
+          "label": "SQL 操作"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "end",
+      "label": "循环保护"
+    },
+    {
+      "id": "main",
+      "label": "函数执行顺序"
+    },
+    {
+      "id": "branch",
+      "label": "条件分支"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "loop",
+      "col": 0,
+      "lane": "main",
+      "type": "backend",
+      "label": "for _ in range(100)",
+      "sublabel": "尝试找到需等待的阶段",
+      "sources": [
+        {
+          "path": "src/langrensha/full_game.py",
+          "line": 166,
+          "end_line": 170
+        }
+      ]
+    },
+    {
+      "id": "check",
+      "col": 1,
+      "lane": "main",
+      "type": "backend",
+      "label": "winner 或 queue 空？",
+      "sublabel": "是则 return",
+      "sources": [
+        {
+          "path": "src/langrensha/full_game.py",
+          "line": 169,
+          "end_line": 170
+        }
+      ]
+    },
+    {
+      "id": "pop",
+      "col": 2,
+      "lane": "main",
+      "type": "backend",
+      "label": "task=queue.pop(0)",
+      "sublabel": "取下一项字典",
+      "sources": [
+        {
+          "path": "src/langrensha/full_game.py",
+          "line": 171,
+          "end_line": 173
+        }
+      ]
+    },
+    {
+      "id": "phase",
+      "col": 3,
+      "lane": "main",
+      "type": "backend",
+      "label": "更新 phase 等字段",
+      "sublabel": "phase_id/completed/task",
+      "sources": [
+        {
+          "path": "src/langrensha/full_game.py",
+          "line": 171,
+          "end_line": 181
+        }
+      ]
+    },
+    {
+      "id": "actors",
+      "col": 4,
+      "lane": "main",
+      "type": "backend",
+      "label": "按 phase 计算 actors",
+      "sublabel": "本阶段参与者列表",
+      "sources": [
+        {
+          "path": "src/langrensha/full_game.py",
+          "line": 182,
+          "end_line": 210
+        }
+      ]
+    },
+    {
+      "id": "wait",
+      "col": 5,
+      "lane": "main",
+      "type": "backend",
+      "label": "actors 非空 → return",
+      "sublabel": "等待下一次行动输入",
+      "sources": [
+        {
+          "path": "src/langrensha/full_game.py",
+          "line": 211,
+          "end_line": 212
+        }
+      ]
+    },
+    {
+      "id": "automatic",
+      "col": 3,
+      "lane": "branch",
+      "type": "backend",
+      "label": "_night / _dawn",
+      "sublabel": "continue → for 下一轮",
+      "sources": [
+        {
+          "path": "src/langrensha/full_game.py",
+          "line": 175,
+          "end_line": 181
+        }
+      ]
+    },
+    {
+      "id": "settle",
+      "col": 4,
+      "lane": "branch",
+      "type": "backend",
+      "label": "_settle(state, now)",
+      "sublabel": "执行完 → for 下一轮",
+      "sources": [
+        {
+          "path": "src/langrensha/full_game.py",
+          "line": 211,
+          "end_line": 214
+        }
+      ]
+    },
+    {
+      "id": "stop",
+      "col": 1,
+      "lane": "end",
+      "type": "backend",
+      "label": "return",
+      "sublabel": "已结束或无后续任务",
+      "sources": [
+        {
+          "path": "src/langrensha/full_game.py",
+          "line": 169,
+          "end_line": 170
+        }
+      ]
+    },
+    {
+      "id": "limit",
+      "col": 0,
+      "lane": "end",
+      "type": "security",
+      "label": "raise RuntimeError",
+      "sublabel": "100 次仍未 return",
+      "sources": [
+        {
+          "path": "src/langrensha/full_game.py",
+          "line": 214,
+          "end_line": 214
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "id": "loop-check",
+      "from": "loop",
+      "to": "check",
+      "role": "main",
+      "label": "本轮循环"
+    },
+    {
+      "id": "check-pop",
+      "from": "check",
+      "to": "pop",
+      "role": "main",
+      "label": "否则"
+    },
+    {
+      "id": "pop-phase",
+      "from": "pop",
+      "to": "phase",
+      "role": "main",
+      "label": "task[\"name\"]"
+    },
+    {
+      "id": "phase-actors",
+      "from": "phase",
+      "to": "actors",
+      "role": "main",
+      "label": "需计算参与者"
+    },
+    {
+      "id": "actors-wait",
+      "from": "actors",
+      "to": "wait",
+      "role": "main",
+      "label": "有参与者"
+    },
+    {
+      "id": "check-stop",
+      "from": "check",
+      "to": "stop",
+      "role": "branch",
+      "label": "满足停止条件"
+    },
+    {
+      "id": "phase-automatic",
+      "from": "phase",
+      "to": "automatic",
+      "role": "branch",
+      "label": "自动处理阶段"
+    },
+    {
+      "id": "actors-settle",
+      "from": "actors",
+      "to": "settle",
+      "role": "branch",
+      "label": "无参与者"
+    },
+    {
+      "id": "loop-limit",
+      "from": "loop",
+      "to": "limit",
+      "role": "error",
+      "label": "循环用尽",
+      "variant": "security"
+    }
+  ],
+  "mainPath": [
+    "loop",
+    "check",
+    "pop",
+    "phase",
+    "actors",
+    "wait"
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "task / queue / actors / pending",
+      "items": [
+        "task 是 {\"name\":阶段名,...}；queue 是这些字典组成的 Python 列表，不是消息队列。",
+        "actors 是本阶段候选行动席位；completed 用字符串席位记录已完成选择。",
+        "pending(state) 去掉 completed 的席位；发言阶段只返回下一人，投票阶段可以返回多人。"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "谁触发这个循环",
+      "items": [
+        "普通最终行动在 _apply 中写 completed；若所有 actors 完成，依次 _settle(state,now)、_advance(state,now)。",
+        "_settle 汇总投票，必要时用 _prepend 把平票等任务插到 queue 前面。",
+        "wolf_chat 记录后直接返回；explode 另设后续队列并推进；已结束时不走普通 completed 分支。",
+        "为避免回线穿过文字，两处“for 下一轮”使用控制流连接点表示回到左侧循环；并非退出 _advance，也不是新增函数。"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "两个 advance 不同",
+      "items": [
+        "full_game._advance 操作内存字典和列表，返回 None；没有 HTTP 或模型调用。",
+        "web.advance 是 /api/advance 路由：判断待行席位，最多启动一个 AI 决策窗口，再返回显示数据。",
+        "pending 不等于所有允许工具：例如部分白天阶段狼可额外 explode，仍由 tools 检查。"
+      ]
+    }
+  ]
+}

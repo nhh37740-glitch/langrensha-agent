@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "d3c2908f-2f9b-4894-a2f2-21a039700dca",
+  "status": "current",
+  "command": "deliver",
+  "type": "workflow",
+  "input": "/workspace/issue-92/文档/架构/后端运行流程/02-事务和SQL.workflow.json",
+  "output": "/workspace/issue-92/文档/架构/后端运行流程/02-事务和SQL.html",
+  "specification": {
+    "sha256": "11d7947a9ec69d13cae26ef39c1de41fc04f021c4c916dd2c68f2ed291eddce2",
+    "bytes": 6443
+  },
+  "artifact": {
+    "sha256": "75e8b9bef84b3b73dbc7f3b493e2c8ad489f42c0e4e1b86fdf7765a73f92c28c",
+    "bytes": 824710
+  }
+}
