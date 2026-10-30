@@ -49,11 +49,13 @@ def test_worldbook_metadata_and_entry_contract():
     assert len(ids) == len(set(ids))
     prefix = f"world:{WORLDBOOK['id']}:"
     for entry in entries:
-        assert set(entry) == {"id", "title", "text", "visibility"}
+        assert set(entry) == {"id", "title", "text", "visibility"} | (
+            {"chapter"} if "chapter" in entry else set()
+        )
         assert entry["id"].startswith(prefix)
         assert entry["title"].strip()
         assert entry["text"].strip()
-        assert len(entry["text"]) <= 300
+        assert len(entry["text"]) <= (1000 if "chapter" in entry else 300)
 
 
 def test_entries_fit_existing_chunker_without_losing_text():

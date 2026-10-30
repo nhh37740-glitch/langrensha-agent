@@ -33,7 +33,7 @@ def test_tidal_archive_is_discovered_with_all_six_roles():
     book = get_worldbook("tidal_archive")
     assert book["id"] == "tidal_archive"
     assert book["name"] == "潮汐档案馆"
-    assert len(book["entries"]) == 22
+    assert len(book["entries"]) == 35
     assert len(book["personas"]) == 12
     assert role_name(book, "wolf") == "噬名者"
     assert role_name(book, "villager") == "守册人"

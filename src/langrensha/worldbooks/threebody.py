@@ -6,6 +6,9 @@
 文档/调研/世界书/三体世界书调研.md。
 """
 
+from ._stories import entries as story_entries
+from ._stories.threebody import LETTERS, PUBLIC
+
 WORLDBOOK = {
     "id": "threebody",
     "name": "三体",
@@ -398,3 +401,6 @@ WORLDBOOK = {
         ("舰船厨师", "在有限配给里变花样，爽朗，记得每个人的口味与承诺。", "#d9b382"),
     ],
 }
+
+
+WORLDBOOK["entries"].extend(story_entries("threebody", PUBLIC, LETTERS))

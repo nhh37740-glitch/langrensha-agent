@@ -268,7 +268,7 @@ def query(view, name, payload):
         question = _bounded_text(payload["question"])
         docs = [
             {"source": w["id"], "text": w["text"], "title": w["title"], "category": "world"}
-            for w in visible_entries(book, view["role"])
+            for w in visible_entries(book, view["role"], view=view)
         ]
         docs.append(
             {

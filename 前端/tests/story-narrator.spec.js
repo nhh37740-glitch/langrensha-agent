@@ -16,7 +16,7 @@ const HEADERS = { "X-Mist-Request": "1" };
 
 async function openEntry(page) {
   await page.goto("/");
-  await expect(page.locator("#scene canvas")).toBeVisible();
+  await expect(page.locator("#world-picker")).toBeVisible();
   await expect(page.locator("#world-list")).toHaveAttribute("aria-busy", "false");
   await expect(page.locator("#world-list .world-card")).toHaveCount(4);
 }
@@ -92,6 +92,7 @@ test("390px 手机：四世界叙事标签与页面无横向溢出", async ({ pa
   await expectNoHorizontalOverflow(page);
 
   for (const world of WORLDS) {
+    await openEntry(page);
     await page.locator(`.world-card[data-world-id="${world.id}"]`).click();
     await expect(page.locator("#story-narrator")).toHaveText(world.narrator);
     await expectNoHorizontalOverflow(page);

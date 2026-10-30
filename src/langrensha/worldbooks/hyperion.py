@@ -4,6 +4,9 @@
 不替代阅读原著；角色能力、十二人编制与胜负条件均为本项目改编。
 """
 
+from ._stories import entries as story_entries
+from ._stories.hyperion import LETTERS, PUBLIC
+
 WORLDBOOK = {
     "id": "hyperion",
     "name": "海伯利安",
@@ -320,3 +323,6 @@ WORLDBOOK = {
         ("营地厨子", "用日常琐事缓和气氛，却记得谁缺席了哪一餐。", "#b7c58e"),
     ],
 }
+
+
+WORLDBOOK["entries"].extend(story_entries("hyperion", PUBLIC, LETTERS))

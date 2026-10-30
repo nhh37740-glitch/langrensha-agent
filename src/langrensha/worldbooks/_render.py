@@ -20,10 +20,14 @@ def _visibility_label(book, visibility):
 
 
 def _entry_section(book, entry):
+    stage = ""
+    if "chapter" in entry:
+        names = ("未入局序章", "第一夜", "第一日", "第二夜", "第二日", "第三夜", "终局")
+        stage = f"开放：{names[entry['chapter']['stage']]}；本局之前的往事，不是当前行动。\n\n"
     return (
         f"#### {entry['title']}\n\n"
         f"条目：`{entry['id']}` · 可见性：{_visibility_label(book, entry['visibility'])}\n\n"
-        f"{entry['text']}\n"
+        f"{stage}{entry['text']}\n"
     )
 
 
@@ -31,7 +35,7 @@ def _world_section(book):
     public = [entry for entry in book["entries"] if entry["visibility"] == "public"]
     secrets = [entry for entry in book["entries"] if entry["visibility"] != "public"]
     lines = [f"## {book['name']}（`{book['id']}`）", "", f"**依据**：{book['basis']}", ""]
-    lines += ["### 设定与阵营（公开条目）", ""]
+    lines += ["### 设定与往事（公开条目，章节随阶段开放）", ""]
     for entry in public:
         lines.append(_entry_section(book, entry))
     if secrets:

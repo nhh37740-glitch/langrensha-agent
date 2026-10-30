@@ -15,7 +15,8 @@ from .full_game import pending
 from .presentation import debug_timeline, present, worldbook_catalog
 from .rules import Rejected, Role
 from .service import GameService
-from .worldbooks import DEFAULT_WORLD_ID, personas_for, worldbook_ids
+from .worldbooks import DEFAULT_WORLD_ID, get_worldbook, personas_for, worldbook_ids
+from .worldbooks._reading import reading_for
 
 COOKIE = "mist_session"
 
@@ -108,6 +109,21 @@ def create_app(
     def worldbooks():
         # 目录只含公开表现数据，每次都从公开字段重建，不缓存任何世界书秘密。
         return worldbook_catalog()
+
+    @app.get("/api/reading/{worldbook_id}")
+    def reading(worldbook_id: str, request: Request):
+        if worldbook_id not in worldbook_ids():
+            raise HTTPException(404, "这本世界书不存在。")
+        view = None
+        try:
+            candidate = session(request).view()
+        except HTTPException as exc:
+            if exc.status_code not in {401, 404}:
+                raise
+        else:
+            if candidate["worldbook"] == worldbook_id:
+                view = candidate
+        return reading_for(get_worldbook(worldbook_id), view)
 
     @app.post("/api/enter")
     async def enter(request: Request, response: Response):
@@ -267,6 +283,12 @@ def create_app(
         if not (static / "index.html").exists():
             raise HTTPException(503, "网页尚未构建，请先运行 npm ci 与 npm run build。")
         return FileResponse(static / "index.html")
+
+    @app.get("/world/{worldbook_id}")
+    def world_page(worldbook_id: str):
+        if worldbook_id not in worldbook_ids():
+            raise HTTPException(404, "这本世界书不存在，请返回首页重新选择。")
+        return index()
 
     @app.exception_handler(ValueError)
     async def malformed(_request, _exc):

@@ -6,6 +6,9 @@
 不改变任何规则权限；`visibility` 必须先于索引与排序生效。
 """
 
+from ._stories import entries as story_entries
+from ._stories.tidal_archive import LETTERS, PUBLIC
+
 WORLDBOOK = {
     "id": "tidal_archive",
     "name": "潮汐档案馆",
@@ -283,3 +286,6 @@ WORLDBOOK = {
         ("潮生", "在放册台唱潮歌的年轻人，声音亮，情绪外露。", "#d18b9a"),
     ],
 }
+
+
+WORLDBOOK["entries"].extend(story_entries("tidal_archive", PUBLIC, LETTERS))

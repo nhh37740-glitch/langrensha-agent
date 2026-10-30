@@ -3,7 +3,7 @@ import { test, expect } from "@playwright/test";
 const WORLDS = ["mist", "hyperion", "threebody", "tidal_archive"];
 
 async function enter(page) {
-  await page.goto("/");
+  await page.goto("/world/mist");
   await expect(page.locator("#scene canvas")).toBeVisible();
   await page.getByRole("button", { name: "踏入雾中" }).click();
   await expect(page.locator("#identity")).toBeVisible();
@@ -23,7 +23,7 @@ test("四世界场景布局、十二席与手机宽度", async ({ page }) => {
       headers: { "X-Mist-Request": "1" },
     });
     expect(response.ok(), await response.text()).toBe(true);
-    await page.reload();
+    await page.goto(`/world/${world}`);
     await expect(page.locator("#scene")).toHaveAttribute("data-layout", world);
     await expect(page.locator("#roster .person")).toHaveCount(12);
   }
@@ -55,7 +55,7 @@ test.describe("减少动效", () => {
 
 // 这里固定合法公开视图的形状，只检验渲染/交互，不把fixture当真实模型思考。
 test("真实表情图集随神态换帧，跨阶段旧发言不误亮，点击只同步合法目标", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/world/mist");
   await page.request.post("/api/enter", {
     data: { password: "" }, headers: { "X-Mist-Request": "1" },
   });
@@ -75,7 +75,7 @@ test("真实表情图集随神态换帧，跨阶段旧发言不误亮，点击�
     const captures = [];
     for (const state of ["neutral", "speaking", "thinking"]) {
       rendered = { ...rendered, story: state === "speaking" ? [speech] : [], choices: state === "thinking" ? [] : choices };
-      await page.reload();
+      await page.goto(`/world/${world}`);
       await page.locator("#roster .person").nth(1).click();
       await expect(page.locator("#scene-focus")).toHaveAttribute("data-expression", state);
       await expect(page.locator("#scene-focus-name")).toContainText(original.players[1].name);
