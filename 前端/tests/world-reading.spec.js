@@ -70,6 +70,29 @@ test("独立世界入口、长篇正文、跨世界会话与刷新恢复", async
   expect(errors).toEqual([]);
 });
 
+test("跨世界新局后旧页面停止自动推进", async ({ page }) => {
+  await page.goto("/world/threebody");
+  await page.locator("#role-select").selectOption("seer");
+  await page.getByRole("button", { name: "踏入雾中" }).click();
+  await expect(page.locator("#identity")).toBeVisible();
+  await expect(page.locator("#waiting")).toBeVisible();
+  const created = await page.request.post("/api/game", {
+    data: { role: "villager", worldbook: "hyperion" },
+    headers,
+  });
+  expect(created.ok()).toBe(true);
+  let advances = 0;
+  const count = (request) => {
+    if (request.url().endsWith("/api/advance")) advances += 1;
+  };
+  page.on("request", count);
+  await page.waitForTimeout(3500);
+  page.off("request", count);
+  expect(advances).toBeLessThanOrEqual(1);
+  await expect(page.locator("#resume-note")).toContainText("海伯利安");
+  await expect(page.locator("#waiting")).toBeHidden();
+});
+
 test("阅读请求失败可重试，未知世界返回404", async ({ page }) => {
   await page.route("**/api/reading/mist", (route) => route.abort());
   await page.goto("/world/mist");

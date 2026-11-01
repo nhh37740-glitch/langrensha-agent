@@ -1128,6 +1128,14 @@ function bell() {
 }
 function render(state) {
   if (catalogPage || state.worldbook !== routeWorld) {
+    if (!catalogPage) {
+      // 另一标签页已换世界：停止旧页自动推进，避免继续消耗新局模型调用。
+      view = null;
+      auto = false;
+      $("auto").textContent = "继续旅人";
+      $("auto").setAttribute("aria-pressed", "false");
+      syncWaiting();
+    }
     showResume(state);
     return;
   }
