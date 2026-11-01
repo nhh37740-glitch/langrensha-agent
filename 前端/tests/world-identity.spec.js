@@ -21,9 +21,13 @@ test("四世界24身份从入场选择到真实对局、刷新与手机保持一
     for (const [role, name] of Object.entries(book.role_labels)) {
       await expect(page.locator("#world-picker")).toBeVisible();
       await expect(page.locator("#world-list")).toHaveAttribute("aria-busy", "false");
+      const previous = await (await page.request.get("/api/state")).json();
       await page.locator(`.world-card[data-world-id="${book.id}"]`).click();
       await expect(page.locator("html")).toHaveAttribute("data-world", book.id);
-      if (await page.locator("#new-story").isVisible()) await page.locator("#new-story").click();
+      if (previous.worldbook === book.id) {
+        await expect(page.locator("#new-story")).toBeVisible();
+        await page.locator("#new-story").click();
+      }
       await expect(page.locator(`#role-select option[value="${role}"]`)).toContainText(name);
       await page.locator("#role-select").selectOption(role);
       const [response] = await Promise.all([

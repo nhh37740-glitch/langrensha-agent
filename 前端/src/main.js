@@ -298,7 +298,7 @@ function syncCardSelection() {
   document.querySelectorAll(".world-card").forEach((card) => {
     card.setAttribute(
       "aria-pressed",
-      String(card.dataset.worldId === selectedWorld),
+      String(!catalogPage && card.dataset.worldId === selectedWorld),
     );
   });
 }
@@ -547,6 +547,9 @@ async function loadWorldbooks() {
   if (view) applyGameWorld(view);
   if (catalogPage) {
     document.title = "群星渡海 · 选择世界";
+    document.querySelector(".brand").setAttribute("aria-label", "群星渡海世界目录");
+    $("site-footer-text").textContent = "四本书，四段未完的故事";
+    $("site-footer-note").textContent = "群星渡海 · 文字对局";
     $("brand-name").textContent = "群星渡海";
     $("brand-sub").textContent = "四本书，四段未完的故事";
     if (!note) $("world-status").textContent = "选择书封进入独立世界页面";

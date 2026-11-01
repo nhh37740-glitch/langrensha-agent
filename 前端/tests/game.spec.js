@@ -130,7 +130,7 @@ test("四本世界可选、选择真实生效、刷新后主题一致", async ({
 
   await expect(
     page.locator('.world-card[data-world-id="mist"]'),
-  ).toHaveAttribute("aria-pressed", "true");
+  ).toHaveAttribute("aria-pressed", "false");
   await expect(page.locator("html")).toHaveAttribute("data-world", "mist");
   await page.screenshot({
     path: `${SHOTS}/世界书-四本可选.png`,
@@ -365,6 +365,9 @@ test("从网页开始完整局，行动至结局且展示复盘身份", async ({
   await expect(page.locator("#action-form")).toBeHidden();
   await expect(page.locator("html")).toHaveAttribute("data-mode", "ended");
   await expect(page.locator("#phase-label")).toHaveText(state.chapter);
+  await expect(page.locator("#reading-chapter option")).toHaveCount(8);
+  await page.locator("#reading-chapter").selectOption("world:story:6");
+  await expect(page.locator("#reading-title")).toContainText("终篇");
   await page.screenshot({
     path: `${SHOTS}/结局.png`,
     fullPage: true,

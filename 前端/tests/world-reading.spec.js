@@ -13,6 +13,10 @@ test("独立世界入口、长篇正文、跨世界会话与刷新恢复", async
   await expect(page.locator("#world-picker")).toBeVisible();
   await expect(page.locator("#intro")).toBeHidden();
   await expect(page.locator("#scene canvas")).toHaveCount(0);
+  await expect(page.locator("#world-list .world-cover__photo")).toHaveCount(4);
+  await expect.poll(() => page.locator("#world-list .world-cover__photo").evaluateAll(
+    (images) => images.every((image) => image.complete && image.naturalWidth > 0),
+  )).toBe(true);
   await page.screenshot({ path: `${shots}/独立世界目录.png`, fullPage: true });
   for (const world of ["mist", "hyperion", "threebody", "tidal_archive"]) {
     await page.goto("/");

@@ -1,0 +1,170 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "群星渡海 · 独立世界页面与阅读开放（Issue 94）",
+    "locale": "zh-CN",
+    "quality_profile": "showcase",
+    "output": "文档/版本/v0.7.0/独立世界阅读.html",
+    "repository": {
+      "url": "https://github.com/nhh37740-glitch/langrensha-agent.git",
+      "revision": "2234900d4564c67ca0c9c019c16216e298cbd706"
+    }
+  },
+  "lanes": [
+    {
+      "id": "browser",
+      "label": "浏览器页面"
+    },
+    {
+      "id": "server",
+      "label": "服务端开放判断"
+    }
+  ],
+  "mainPath": [
+    "catalog",
+    "world",
+    "session",
+    "filter",
+    "reader"
+  ],
+  "nodes": [
+    {
+      "id": "catalog",
+      "lane": "browser",
+      "col": 0,
+      "type": "frontend",
+      "label": "世界目录",
+      "sublabel": "首页不推进旧局",
+      "sources": [
+        {
+          "path": "前端/src/main.js",
+          "line": 337,
+          "end_line": 375
+        },
+        {
+          "path": "前端/src/main.js",
+          "line": 1126,
+          "end_line": 1129
+        }
+      ]
+    },
+    {
+      "id": "world",
+      "lane": "browser",
+      "col": 1,
+      "type": "frontend",
+      "label": "独立世界页面",
+      "sublabel": "同世界恢复旧局",
+      "sources": [
+        {
+          "path": "前端/src/main.js",
+          "line": 1126,
+          "end_line": 1141
+        },
+        {
+          "path": "src/langrensha/web.py",
+          "line": 287,
+          "end_line": 291
+        }
+      ]
+    },
+    {
+      "id": "session",
+      "lane": "server",
+      "col": 1,
+      "type": "security",
+      "label": "匹配世界与会话",
+      "sublabel": "不匹配只用序章视图",
+      "sources": [
+        {
+          "path": "src/langrensha/web.py",
+          "line": 113,
+          "end_line": 126
+        }
+      ]
+    },
+    {
+      "id": "filter",
+      "lane": "server",
+      "col": 2,
+      "type": "security",
+      "label": "筛选可读章节",
+      "sublabel": "阶段与本人身份",
+      "sources": [
+        {
+          "path": "src/langrensha/worldbooks/_reading.py",
+          "line": 4,
+          "end_line": 42
+        }
+      ]
+    },
+    {
+      "id": "reader",
+      "lane": "browser",
+      "col": 3,
+      "type": "frontend",
+      "label": "阅读往事与手记",
+      "sublabel": "保留选择，可回看",
+      "sources": [
+        {
+          "path": "前端/src/reading.js",
+          "line": 11,
+          "end_line": 55
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "from": "catalog",
+      "to": "world",
+      "label": "选书跳转"
+    },
+    {
+      "from": "world",
+      "to": "session",
+      "label": "请求正文"
+    },
+    {
+      "from": "session",
+      "to": "filter",
+      "label": "受限视图",
+      "variant": "security"
+    },
+    {
+      "from": "filter",
+      "to": "reader",
+      "label": "可见正文"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "世界地址与旧局",
+      "items": [
+        "/world/{id} 固定页面世界，未知世界返回404。",
+        "会话属于其他世界时显示继续链接；只有提交新局表单才替换会话。",
+        "返回目录保留旧局，不触发自动行动。"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "原创往事与当前事实分开",
+      "items": [
+        "四世界各7篇公开往事、6份本人身份手记。",
+        "序章始终可读；第一夜至第三夜逐步展开，终局开放全部公开篇章。",
+        "手记只给当前本人role，终局也不开放其他身份手记。"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "检索与模型同样受限",
+      "items": [
+        "retrieval.query先传view过滤，再切块与排序；未开放章节不进入候选。",
+        "ai.system_prompt先过滤，再取首条公开背景最多800字符；其余按需检索。",
+        "章节是对局之前的往事，不证明当前行动或人物阵营。"
+      ]
+    }
+  ]
+}
