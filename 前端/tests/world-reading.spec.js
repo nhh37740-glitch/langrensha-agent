@@ -101,6 +101,7 @@ test("跨世界新局后旧页面停止自动推进", async ({ page }) => {
   await expect(page.locator("#intro")).toBeVisible();
   await expect(page.locator("#identity")).toBeHidden();
   await expect(page.locator("#action-form")).toBeHidden();
+  await expect(page.locator("#reading-chapter option")).toHaveCount(1);
 });
 
 test("阅读请求失败可重试，未知世界返回404", async ({ page }) => {

@@ -1580,6 +1580,8 @@ function resetToIntro(previous) {
   clearDebugView("等待新局");
   selectWorld(routeWorld, { silent: true });
   showResume(previous);
+  // 旧局的私密手记与已解锁章节不属于当前会话，强制回到本世界公开序章。
+  reader.refresh(null, true);
 }
 
 function showResume(state) {
