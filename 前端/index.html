@@ -18,6 +18,8 @@
           ></a
         >
         <div class="header-right">
+          <a id="read-stories" href="#reading-panel">翻开往事</a>
+          <a id="back-worlds" href="/">返回世界目录</a>
           <span class="live-dot" aria-hidden="true"></span
           ><span id="chapter">十二位旅人，一个雾夜</span
           ><span id="phase-chip" class="phase-chip" hidden
@@ -35,10 +37,11 @@
             <span class="debug-toggle__dot" aria-hidden="true"></span
             ><span class="debug-toggle__label">调试</span
             ><span id="debug-toggle-state" class="debug-toggle__state">开</span></button
-          ><button id="reset" class="quiet" hidden>重新启程</button>
+          ><button id="new-story" class="quiet" hidden>另开本世界新局</button><button id="reset" class="quiet" hidden>返回世界选择</button>
         </div>
       </header>
       <main>
+        <div id="resume-banner" hidden><span id="resume-note"></span> <a id="resume-link">继续原来的故事</a></div>
         <section
           id="world-picker"
           class="world-picker"
@@ -48,7 +51,7 @@
             <div>
               <span class="eyebrow" id="world-picker-title">选择世界</span>
               <p class="world-picker__hint">
-                每本世界书都有自己的称谓、广场与秘密。
+                选一本书，走进它的世界。人物的往事会随昼夜慢慢展开。
               </p>
             </div>
             <span
@@ -66,6 +69,7 @@
             aria-label="世界书目录"
             aria-busy="true"
           ></div>
+        </section>
           <div id="world-detail" class="world-detail" hidden>
             <div
               id="world-detail-cover"
@@ -103,7 +107,7 @@
               <p id="world-detail-note" class="world-detail__note"></p>
             </div>
           </div>
-        </section>
+
         <section class="world-panel" aria-label="雾钟镇场景与旅人">
           <div class="scene-wrap" id="scene-wrap">
             <div
@@ -153,7 +157,7 @@
             ><span id="world-footer-book">雾钟镇 · 第一卷</span>
           </div>
         </section>
-        <section class="story-panel" aria-label="对局记录和行动">
+        <section id="game-story" class="story-panel" aria-label="对局记录和行动">
           <div class="story-header">
             <div>
               <span id="story-narrator" class="eyebrow">钟楼记事</span>
@@ -242,6 +246,12 @@
             </button>
           </form>
           <div id="ending" class="ending" role="status" hidden></div>
+        </section>
+        <section id="reading-panel" class="reading-panel" aria-labelledby="reading-heading" hidden>
+          <header><h2 id="reading-heading">翻开往事</h2><a href="#game-story">回到眼前的抉择</a></header>
+          <p class="reading-caption">这些篇章发生在本次对局之前。眼前的证词、去留和结局，请以对局记录为准。</p>
+          <div class="reading-layout"><aside><label for="reading-chapter">选择篇章</label><select id="reading-chapter"></select><p id="reading-status" role="status"></p><button id="reading-retry" class="quiet" type="button">重新取回正文</button></aside>
+          <article><h3 id="reading-title"></h3><p id="reading-meta"></p><div id="reading-text"></div></article></div>
         </section>
       </main>
       <section

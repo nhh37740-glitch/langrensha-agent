@@ -4,7 +4,7 @@ const SHOTS = "../临时/完整可玩版/网页截图";
 
 async function openEntry(page) {
   await page.goto("/");
-  await expect(page.locator("#scene canvas")).toBeVisible();
+  await expect(page.locator("#world-picker")).toBeVisible();
   await expect(page.locator("#world-picker")).toBeVisible();
   await expect(page.locator("#debug-toggle")).toHaveAttribute(
     "aria-pressed",
@@ -20,6 +20,7 @@ async function openEntry(page) {
 
 async function start(page, role = "wolf") {
   await openEntry(page);
+  await page.locator('.world-card[data-world-id="mist"]').click();
   await page.locator("#role-select").selectOption(role);
   await page.getByRole("button", { name: "踏入雾中" }).click();
   await expect(page.locator("#identity")).toBeVisible();
@@ -37,7 +38,7 @@ async function post(page, path, data) {
 test("入镇、私语、权限、札记、刷新与手机画面", async ({ page }) => {
   const failures = [];
   page.on("pageerror", (e) => failures.push(e.message));
-  await page.goto("/");
+  await page.goto("/world/mist");
   await expect(page.locator("#scene canvas")).toBeVisible();
   await expect(page.locator("html")).toHaveAttribute("data-mode", "entering");
   await expect(page.locator("#intro")).toBeVisible();
@@ -129,7 +130,7 @@ test("四本世界可选、选择真实生效、刷新后主题一致", async ({
 
   await expect(
     page.locator('.world-card[data-world-id="mist"]'),
-  ).toHaveAttribute("aria-pressed", "true");
+  ).toHaveAttribute("aria-pressed", "false");
   await expect(page.locator("html")).toHaveAttribute("data-world", "mist");
   await page.screenshot({
     path: `${SHOTS}/世界书-四本可选.png`,
@@ -225,15 +226,11 @@ test("四本世界可选、选择真实生效、刷新后主题一致", async ({
     fullPage: true,
   });
   await expect(page.locator("#world-picker")).toBeHidden();
-  page.once("dialog", (dialog) => dialog.accept());
   await page.locator("#reset").click();
   await expect(page.locator("#world-picker")).toBeVisible();
   await expect(page.locator("#world-list .world-card")).toHaveCount(4);
-  await expect(page.locator("#brand-name")).toHaveText(hyperion.name);
-  await expect(page.locator("#day")).toHaveText(`${hyperion.name} · 初至`);
-  await expect(page.locator("#story-title")).toHaveText(
-    hyperion.scene.chapter,
-  );
+  await expect(page.locator("#brand-name")).toHaveText("群星渡海");
+  await expect(page.locator("#resume-link")).toHaveAttribute("href", "/world/hyperion");
   expect(failures).toEqual([]);
 });
 
@@ -255,10 +252,10 @@ test("390px 下世界卡可键盘选择并入镇", async ({ page }) => {
     "tidal_archive",
   );
   await expect(page.locator("#world-detail-name")).toHaveText("潮汐档案馆");
-  const box = await card.boundingBox();
+  const box = await page.locator("#world-detail").boundingBox();
   expect(box.x).toBeGreaterThanOrEqual(0);
   expect(box.x + box.width).toBeLessThanOrEqual(390);
-  await page.locator("#world-picker").scrollIntoViewIfNeeded();
+  await page.locator("#world-detail").scrollIntoViewIfNeeded();
   await page.screenshot({
     path: `${SHOTS}/世界书-手机选择.png`,
     fullPage: false,
@@ -295,7 +292,7 @@ test("世界书目录失败、封面图片失败仍可入镇", async ({ page }) 
       : route.continue(),
   );
   await page.goto("/");
-  await expect(page.locator("#scene canvas")).toBeVisible();
+  await expect(page.locator("#world-picker")).toBeVisible();
   await expect(page.locator("#world-status")).toContainText("内置世界");
   await expect(page.locator("#world-list .world-card")).toHaveCount(4);
   await expect
@@ -327,7 +324,7 @@ test("世界书空目录给出提示且仍可入镇", async ({ page }) => {
     }),
   );
   await page.goto("/");
-  await expect(page.locator("#scene canvas")).toBeVisible();
+  await expect(page.locator("#world-picker")).toBeVisible();
   await expect(page.locator("#world-status")).toContainText("内置世界");
   await expect(page.locator("#world-list .world-card")).toHaveCount(4);
   await page.locator('.world-card[data-world-id="mist"]').click();
@@ -368,6 +365,9 @@ test("从网页开始完整局，行动至结局且展示复盘身份", async ({
   await expect(page.locator("#action-form")).toBeHidden();
   await expect(page.locator("html")).toHaveAttribute("data-mode", "ended");
   await expect(page.locator("#phase-label")).toHaveText(state.chapter);
+  await expect(page.locator("#reading-chapter option")).toHaveCount(8);
+  await page.locator("#reading-chapter").selectOption("world:story:6");
+  await expect(page.locator("#reading-title")).toContainText("终篇");
   await page.screenshot({
     path: `${SHOTS}/结局.png`,
     fullPage: true,
@@ -407,7 +407,7 @@ test("减少动效：系统偏好减少动效时仍可选择世界、入镇、�
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/");
   await expect(page.locator("html")).toHaveAttribute("data-motion", "reduced");
-  await expect(page.locator("#scene canvas")).toBeVisible();
+  await expect(page.locator("#world-picker")).toBeVisible();
   await expect(page.locator("#world-list .world-card")).toHaveCount(4);
   await expect(page.locator("#debug-toggle")).toHaveAttribute(
     "aria-pressed",

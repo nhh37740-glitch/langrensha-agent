@@ -33,8 +33,7 @@ def _validate(book):
         if not isinstance(entry, dict) or not {"id", "title", "text", "visibility"} <= entry.keys():
             raise ValueError("世界书条目缺少 id/title/text/visibility")
         if not all(
-            isinstance(entry[key], str) and entry[key].strip()
-            for key in ("id", "title", "text")
+            isinstance(entry[key], str) and entry[key].strip() for key in ("id", "title", "text")
         ):
             raise ValueError("世界书条目的 id/title/text 必须是非空字符串")
         if entry["id"] in seen:
@@ -44,6 +43,17 @@ def _validate(book):
         prefix = "world:" if book["id"] == DEFAULT_WORLD_ID else f"world:{book['id']}:"
         if not entry["id"].startswith(prefix):
             raise ValueError(f"世界书条目 id 必须以 {prefix} 开头")
+        chapter = entry.get("chapter")
+        if chapter is not None:
+            if (
+                not isinstance(chapter, dict)
+                or set(chapter) != {"stage", "cast"}
+                or type(chapter["stage"]) is not int
+                or not 0 <= chapter["stage"] <= 6
+                or not isinstance(chapter["cast"], list)
+                or not all(isinstance(name, str) and name for name in chapter["cast"])
+            ):
+                raise ValueError("章节必须有 0—6 的 stage 和人物名称列表 cast")
         visibility = entry["visibility"]
         if visibility == "public":
             continue
@@ -91,14 +101,18 @@ def worldbook_ids():
     return tuple(sorted(_WORLDBOOKS))
 
 
-def visible_entries(worldbook, role):
-    """先按查看者角色过滤条目；秘密条目不会进入后续索引与排序。"""
+def visible_entries(worldbook, role, *, view=None):
+    """按角色过滤；运行时必须传 view 叠加章节阶段，省略仅供正文全量审校。"""
     if isinstance(worldbook, str):
         worldbook = get_worldbook(worldbook)
+    from ._reading import unlocked
+
     entries = []
     for entry in worldbook["entries"]:
         visibility = entry["visibility"]
-        if visibility == "public" or role in visibility:
+        if (visibility == "public" or role in visibility) and (
+            view is None or unlocked(entry, view)
+        ):
             entries.append(entry)
     return entries
 

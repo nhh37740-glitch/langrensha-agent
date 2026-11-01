@@ -14,7 +14,7 @@ from langsmith import tracing_context
 from .content import story_language
 from .retrieval import QUERY_TOOLS, history_documents
 from .rules import Rejected
-from .worldbooks import DEFAULT_WORLD_ID, get_worldbook, guidance_for, role_name
+from .worldbooks import DEFAULT_WORLD_ID, get_worldbook, guidance_for, role_name, visible_entries
 
 
 @dataclass(frozen=True)
@@ -76,7 +76,11 @@ def system_prompt(view, persona=None):
     except KeyError:
         book = get_worldbook()
     intro = next(
-        (entry["text"] for entry in book["entries"] if entry["visibility"] == "public"),
+        (
+            entry["text"][:800]
+            for entry in visible_entries(book, view["role"], view=view)
+            if entry["visibility"] == "public"
+        ),
         "",
     )
     return (
@@ -90,6 +94,7 @@ def system_prompt(view, persona=None):
         f"人物姓名：{persona.name}；人物资料：{persona.description}"
         f"身份称谓：{role_name(book, view['role'])}；"
         f"身份指导 {book['id']}-v1：{guidance_for(book, view['role'])}"
+        "世界书中的往事不是本局已发生的行动或身份依据；其他内容按需检索。"
         f"入场背景：{intro}"
     )
 

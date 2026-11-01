@@ -18,7 +18,9 @@ async function game(page, tool, world = "threebody") {
   });
   expect(response.ok(), await response.text()).toBe(true);
   const state = await response.json();
-  return { state, prepared: prepare(state.game_id, tool) };
+  const prepared = prepare(state.game_id, tool);
+  await page.goto(`/world/${world}`);
+  return { state, prepared };
 }
 
 test("三体四技能真实规则窗口、实际施放、刷新及跨世界图标隔离", async ({ page }) => {

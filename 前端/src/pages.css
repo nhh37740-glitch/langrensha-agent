@@ -1,0 +1,44 @@
+/* 世界首页只负责选书；对局阅读保持世界自己的颜色和材质。 */
+html[data-page="catalog"] .world-panel,
+html[data-page="catalog"] .story-panel,
+html[data-page="catalog"] #debug-panel,
+html[data-page="catalog"] #debug-toggle,
+html[data-page="catalog"] #sound,
+html[data-page="catalog"] #chapter,
+html[data-page="catalog"] #world-detail,
+html[data-page="catalog"] #reading-panel,
+html[data-page="catalog"] #back-worlds,
+html[data-page="catalog"] #read-stories { display: none !important; }
+html[data-page="game"] #world-picker { display: none !important; }
+html[data-page="catalog"] main { display: block; }
+html[data-page="catalog"] .world-picker__head { margin-bottom: 28px; }
+html[data-page="catalog"] #world-picker-title { font: 700 clamp(28px, 4vw, 44px)/1.3 var(--font-display); letter-spacing: 0; }
+html[data-page="catalog"] .world-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+html[data-page="catalog"] .world-card { cursor: pointer; }
+html[data-page="catalog"] .world-card__cover { min-height: 260px; }
+#back-worlds, #resume-link { color: var(--gold, #d8bd85); }
+#resume-banner { grid-column: 1 / -1; padding: 18px 22px; border: 1px solid var(--line); line-height: 1.7; }
+.reading-panel { grid-column: 1 / -1; padding: clamp(20px, 4vw, 48px); border-top: 1px solid var(--line); background: var(--ink-2); }
+.reading-panel header { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
+.reading-panel h2 { font: 700 28px/1.4 var(--font-display); }
+.reading-layout { display: grid; grid-template-columns: minmax(160px, 0.6fr) minmax(0, 2fr); gap: 36px; margin-top: 24px; }
+.reading-layout aside { min-width: 0; }
+.reading-layout label { display: block; margin-bottom: 12px; }
+#reading-chapter { width: 100%; max-width: 100%; }
+#reading-status, #reading-meta, .reading-caption { color: var(--muted, #a8b8b6); font-size: 14px; line-height: 1.8; }
+#reading-title { margin: 0 0 12px; font: 600 25px/1.5 var(--font-display); }
+#reading-text { max-width: 40em; font: 18px/2.05 var(--font-display); }
+#reading-text p { margin: 1.1em 0; }
+@media(max-width: 680px) {
+  html[data-page="catalog"] .world-list { display: grid; grid-template-columns: 1fr; grid-auto-flow: row; grid-auto-columns: auto; overflow: visible; scroll-snap-type: none; }
+  html[data-page="catalog"] .world-card { min-width: 0; }
+  .reading-layout { grid-template-columns: 1fr; gap: 24px; }
+  .reading-panel header { display: block; }
+  #reading-text { font-size: 17px; }
+}
+
+html[data-page="game"] #world-detail { grid-column: 1 / -1; }
+html[data-mode="playing"] #world-detail, html[data-mode="ended"] #world-detail { display: none; }
+
+.reading-panel a, #read-stories { color: var(--gold); }
+#reading-panel { scroll-margin-top: 24px; }

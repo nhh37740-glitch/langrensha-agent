@@ -69,13 +69,14 @@ function collectStrings(value, strings = []) {
 
 async function openEntry(page) {
   await page.goto("/");
-  await expect(page.locator("#scene canvas")).toBeVisible();
+  await expect(page.locator("#world-picker")).toBeVisible();
   await expect(page.locator("#world-picker")).toBeVisible();
   await expect(page.locator("#world-list")).toHaveAttribute("aria-busy", "false");
   await expect(page.locator("#world-list .world-card")).toHaveCount(4);
 }
 
 async function selectWorld(page, worldId) {
+  if (new URL(page.url()).pathname !== "/") await openEntry(page);
   await page.locator(`.world-card[data-world-id="${worldId}"]`).click();
   await expect(page.locator("html")).toHaveAttribute("data-world", worldId);
   await expect(
@@ -139,6 +140,7 @@ test("四世界封面真实加载，目录接口只含公开字段", async ({ pa
   expect(catalogText).not.toMatch(/\bentries\b|\bguidance\b/i);
 
   for (const world of WORLDS) {
+    await openEntry(page);
     const card = page.locator(`.world-card[data-world-id="${world.id}"]`);
     const cover = card.locator(".world-cover__photo");
     await expect(cover, `${world.name} 封面图应存在`).toHaveCount(1);

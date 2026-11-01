@@ -80,10 +80,12 @@ def test_entry_ids_are_namespaced_unique_and_bounded():
     assert len(ids) == len(set(ids))
     assert all(entry_id.startswith("world:threebody:") for entry_id in ids)
     for entry in BOOK["entries"]:
-        assert set(entry) == {"id", "title", "text", "visibility"}
+        assert set(entry) == {"id", "title", "text", "visibility"} | (
+            {"chapter"} if "chapter" in entry else set()
+        )
         assert entry["title"].strip() and len(entry["title"]) <= 40
-        assert entry["text"].strip() and len(entry["text"]) <= 300
-    # 只做世界书条目，不把整章原文搬进 RAG；总正文规模保持可审阅。
+        assert entry["text"].strip() and len(entry["text"]) <= (1000 if "chapter" in entry else 300)
+    # Issue94 增加原创往事；检索仍切为≤300字块，总正文规模保持可审阅。
     assert sum(len(entry["text"]) for entry in BOOK["entries"]) < 12_000
 
 
@@ -99,18 +101,16 @@ def test_visibility_values_are_public_or_known_roles():
 
 
 def test_each_role_only_sees_its_own_secret_entries():
-    public_ids = {
-        entry["id"] for entry in BOOK["entries"] if entry["visibility"] == "public"
-    }
+    public_ids = {entry["id"] for entry in BOOK["entries"] if entry["visibility"] == "public"}
     for role in ROLES:
         actual = visible_ids(role) - public_ids
-        assert actual == SECRET_IDS_BY_ROLE.get(role, set()), role
+        assert actual == SECRET_IDS_BY_ROLE.get(role, set()) | {
+            f"world:threebody:story:letter:{role}"
+        }, role
 
 
 def test_public_projection_never_contains_secret_title_or_text():
-    public_text = "".join(
-        entry["title"] + entry["text"] for entry in visible_entries(BOOK, "villager")
-    )
+    public_text = "".join(entry["title"] + entry["text"] for entry in visible_entries(BOOK, None))
     for entry in BOOK["entries"]:
         if entry["visibility"] == "public":
             continue
@@ -181,17 +181,12 @@ def test_cross_world_ids_and_retrieval_do_not_collide():
     assert "world:bell" not in threebody_sources
 
     mist_sources, _ = ask("villager", "黑暗森林 智子", worldbook="mist")
-    assert all(
-        source == "self:guide" or source.startswith("world:")
-        for source in mist_sources
-    )
+    assert all(source == "self:guide" or source.startswith("world:") for source in mist_sources)
     assert not any(source.startswith("world:threebody:") for source in mist_sources)
 
 
 def test_chunks_use_current_worldbook_name():
-    documents = [
-        {"source": "event:1", "text": "站内第一句证词。", "category": "speech"}
-    ]
+    documents = [{"source": "event:1", "text": "站内第一句证词。", "category": "speech"}]
     assert build_chunks(documents, view=view("villager"))[0].world == "三体"
     assert build_chunks(documents, view=view("villager", worldbook="mist"))[0].world == "雾钟镇"
 

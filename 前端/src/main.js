@@ -1,13 +1,19 @@
 import "./style.css";
 import "./catalog.css";
 import "./debug.css";
+import "./pages.css";
+import { makeReader } from "./reading.js";
 import * as worldart from "./worldart.js";
 import { makeScene } from "./scene.js";
 
 const $ = (id) => document.getElementById(id);
 const root = document.documentElement;
+const routeWorld = /^\/world\/([a-z_]+)\/?$/.exec(location.pathname)?.[1] || null;
+const catalogPage = !routeWorld;
+root.dataset.page = catalogPage ? "catalog" : "game";
+const reader = makeReader(routeWorld, api);
 const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
-const scene = makeScene({
+const scene = catalogPage ? {} : makeScene({
   reducedMotion: motionQuery.matches,
   onSelectSeat: (seat) => {
     const target = $("target");
@@ -123,7 +129,7 @@ const SAFE_BOOK = {
 };
 let activeWorld = "mist",
   books = [],
-  selectedWorld = "mist",
+  selectedWorld = routeWorld || "mist",
   serverDefaultWorld = "mist",
   catalogMode = "loading",
   catalogNote = "",
@@ -292,7 +298,7 @@ function syncCardSelection() {
   document.querySelectorAll(".world-card").forEach((card) => {
     card.setAttribute(
       "aria-pressed",
-      String(card.dataset.worldId === selectedWorld),
+      String(!catalogPage && card.dataset.worldId === selectedWorld),
     );
   });
 }
@@ -357,9 +363,9 @@ function renderWorldCards() {
     fillRoleChips(roles, book);
     if (roles.childElementCount) body.append(roles);
     card.append(cover, body);
-    card.addEventListener("click", () =>
-      selectWorld(book.id, { silent: false }),
-    );
+    card.addEventListener("click", () => {
+      location.assign(`/world/${book.id}`);
+    });
     card.addEventListener("keydown", (event) =>
       focusOtherCard(event, book.id),
     );
@@ -539,6 +545,15 @@ async function loadWorldbooks() {
   if (note) setWorldCatalogMode("fallback", note);
   else setWorldCatalogMode("ready");
   if (view) applyGameWorld(view);
+  if (catalogPage) {
+    document.title = "群星渡海 · 选择世界";
+    document.querySelector(".brand").setAttribute("aria-label", "群星渡海世界目录");
+    $("site-footer-text").textContent = "四本书，四段未完的故事";
+    $("site-footer-note").textContent = "群星渡海 · 文字对局";
+    $("brand-name").textContent = "群星渡海";
+    $("brand-sub").textContent = "四本书，四段未完的故事";
+    if (!note) $("world-status").textContent = "选择书封进入独立世界页面";
+  }
 }
 
 function applyGameWorld(state) {
@@ -588,6 +603,8 @@ function setBusy(value) {
   busy = value;
   root.dataset.busy = value ? "yes" : "no";
   $("submit-action").disabled = value;
+  $("new-story").disabled = value;
+  $("reset").disabled = value;
   document.querySelectorAll(".choice-chip").forEach((chip) => {
     chip.disabled = value;
   });
@@ -1110,6 +1127,22 @@ function bell() {
   oscillator.stop(audio.currentTime + 1.4);
 }
 function render(state) {
+  if (catalogPage || state.worldbook !== routeWorld) {
+    if (!catalogPage) {
+      if (view) {
+        // 另一标签页已换世界：完整退回入场界面，停止自动推进并隐藏旧局操作区。
+        resetToIntro(state);
+      } else {
+        // 首次进入其他世界的页面：入场表单本已可见，避免与正在进行的入场竞态。
+        showResume(state);
+      }
+      return;
+    }
+    showResume(state);
+    return;
+  }
+  $("resume-banner").hidden = true;
+  reader.refresh(state);
   const oldVersion = view?.version;
   view = state;
   if (debugEnabled) $("debug-panel").hidden = false;
@@ -1117,7 +1150,7 @@ function render(state) {
   scene.update(state);
   $("intro").hidden = true;
   $("world-picker").hidden = true;
-  ["identity", "story", "reset", "auto", "assistant"].forEach(
+  ["identity", "story", "reset", "new-story", "auto", "assistant"].forEach(
     (id) => ($(id).hidden = false),
   );
   $("chapter").textContent = state.chapter;
@@ -1311,7 +1344,7 @@ function syncChoiceChips() {
 }
 
 function choiceChanged() {
-  const c = view?.choices.find((c) => c.tool === $("choice").value);
+  const c = view?.choices?.find((c) => c.tool === $("choice").value);
   const description = $("choice-description");
   const note = c?.description || "";
   description.textContent = note;
@@ -1338,12 +1371,13 @@ $("enter-form").addEventListener("submit", async (e) => {
   entering = true;
   error("");
   try {
-    // 目录加载慢时不阻塞入镇：超时后退回默认世界。
+    // 目录加载慢时仍使用 URL 中经服务端验证的世界，绝不改用其他世界。
     await Promise.race([
       catalogPromise.catch(() => {}),
       new Promise((resolve) => setTimeout(resolve, 3500)),
     ]);
-    const worldbook = selectedWorld || serverDefaultWorld || "mist";
+    const worldbook = routeWorld;
+    if (!worldbook) return;
     await api("enter", { password: $("password").value });
     auto = true;
     $("auto").textContent = "暂停旅人";
@@ -1354,6 +1388,7 @@ $("enter-form").addEventListener("submit", async (e) => {
       }),
     );
     $("password").value = "";
+    reader.refresh(view, true);
   } catch (err) {
     error(err.message, err.status ? "app" : "network");
   } finally {
@@ -1402,30 +1437,14 @@ $("auto").addEventListener("click", () => {
 });
 $("reset").addEventListener("click", () => {
   if (busy) {
-    error("请等眼前这位旅人的思绪结束，再重新启程。");
+    error("请等眼前这位旅人的思绪结束，再返回目录。");
     return;
   }
-  if (!confirm("结束眼前的故事，重新入镇吗？")) return;
-  auto = false;
-  view = null;
-  $("debug-panel").hidden = true;
-  $("intro").hidden = false;
-  $("world-picker").hidden = false;
-  [
-    "identity",
-    "story",
-    "action-form",
-    "ending",
-    "assistant",
-    "auto",
-    "reset",
-  ].forEach((id) => ($(id).hidden = true));
-  $("status").textContent = "";
-  error("");
-  applyUiState(null);
-  syncDebugPolling();
-  clearDebugView(debugEnabled ? "等待入镇" : "调试已关闭");
-  selectWorld(selectedWorld, { silent: true });
+  location.assign("/");
+});
+$("new-story").addEventListener("click", () => {
+  if (busy) return error("请等眼前这位旅人的思绪结束。");
+  resetToIntro(view);
 });
 $("assistant-toggle").addEventListener("click", () => {
   const hidden = !$("assistant-body").hidden;
@@ -1535,15 +1554,47 @@ window.addEventListener("online", () => error(""));
 setInterval(advance, 1200);
 root.dataset.mode = "entering";
 root.dataset.busy = "no";
-applyWorld("mist");
+applyWorld(routeWorld || "mist");
 applyUiState(null);
 applyDebugEnabled(true);
 clearDebugView("等待入镇");
 catalogPromise = loadWorldbooks();
-bootDebug();
+if (!catalogPage) {
+  bootDebug();
+  reader.refresh();
+}
 api("state")
   .then(render)
   .catch((err) => {
     if (![401, 404].includes(err.status))
       error(err.message, err.status ? "app" : "network");
   });
+
+// 退回当前世界的入场界面；previous 用于保留另一世界旧局的继续入口。
+function resetToIntro(previous) {
+  auto = false;
+  view = null;
+  $("debug-panel").hidden = true;
+  $("intro").hidden = false;
+  ["identity", "story", "action-form", "ending", "assistant", "auto", "reset", "new-story"]
+    .forEach((id) => ($(id).hidden = true));
+  $("status").textContent = "";
+  error("");
+  applyUiState(null);
+  syncDebugPolling();
+  clearDebugView("等待新局");
+  selectWorld(routeWorld, { silent: true });
+  showResume(previous);
+  // 旧局的私密手记与已解锁章节不属于当前会话，强制回到本世界公开序章。
+  reader.refresh(null, true);
+}
+
+function showResume(state) {
+  if (!state?.game_id) return;
+  $("resume-banner").hidden = false;
+  $("resume-note").textContent = catalogPage
+    ? `你在${state.worldbook_name}还有一段故事。返回目录不会清除对局。`
+    : `当前会话属于${state.worldbook_name}；点击下方入场按钮才会替换它，刷新可返回原局。将开始${books.find((book) => book.id === routeWorld)?.name || "所选世界"}的新故事。`;
+  $("resume-link").href = `/world/${state.worldbook}`;
+  $("resume-link").textContent = `继续${state.worldbook_name}`;
+}

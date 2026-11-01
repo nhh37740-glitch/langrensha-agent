@@ -1,6 +1,8 @@
 """雾钟镇世界书适配：复用 content 中已发布的对局设定，保持来源 id 不变。"""
 
 from ..content import GUIDANCE, PERSONAS, ROLE_NAMES, WORLD
+from ._stories import entries as story_entries
+from ._stories.mist import LETTERS, PUBLIC
 
 WORLDBOOK = {
     "id": "mist",
@@ -19,3 +21,6 @@ WORLDBOOK = {
     "guidance": dict(GUIDANCE),
     "personas": list(PERSONAS),
 }
+
+
+WORLDBOOK["entries"].extend(story_entries("mist", PUBLIC, LETTERS))
