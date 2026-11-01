@@ -57,6 +57,11 @@ test("独立世界入口、长篇正文、跨世界会话与刷新恢复", async
   await page.locator("#resume-link").click();
   await expect(page.locator("#identity")).toBeVisible();
   await expect(page.locator("#role-title")).toContainText("监听员");
+  // 自动推进请求进行中时“另开新局”会被 busy 保护拦下，先暂停并等请求结束。
+  if ((await page.locator("#auto").getAttribute("aria-pressed")) === "true") {
+    await page.locator("#auto").click();
+  }
+  await expect(page.locator("html")).toHaveAttribute("data-busy", "no");
   await page.locator("#new-story").click();
   await expect(page.locator("#intro")).toBeVisible();
   await page.reload();
