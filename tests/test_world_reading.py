@@ -57,7 +57,10 @@ def test_reading_unlocks_follow_round_and_phase():
 
 
 def test_reading_api_uses_cookie_role_and_never_switches_world(tmp_path):
-    app = create_app(database=tmp_path / "reading.db")
+    static = tmp_path / "static"
+    static.mkdir()
+    (static / "index.html").write_text("<!doctype html>", encoding="utf-8")
+    app = create_app(database=tmp_path / "reading.db", static_dir=static)
     with TestClient(app) as client:
         assert client.get("/api/reading/no-such-world").status_code == 404
         assert client.get("/world/no-such-world").status_code == 404

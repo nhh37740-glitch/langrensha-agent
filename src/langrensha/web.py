@@ -22,7 +22,12 @@ COOKIE = "mist_session"
 
 
 def create_app(
-    *, database="临时/完整对局/对局.sqlite3", access_token=None, runner=None, secure=False
+    *,
+    database="临时/完整对局/对局.sqlite3",
+    access_token=None,
+    runner=None,
+    secure=False,
+    static_dir=None,
 ):
     Path(database).parent.mkdir(parents=True, exist_ok=True)
     service = GameService(database)
@@ -274,7 +279,7 @@ def create_app(
         finally:
             advance_lock.release()
 
-    static = Path(__file__).parent / "static"
+    static = Path(static_dir) if static_dir is not None else Path(__file__).parent / "static"
     if (static / "assets").exists():
         app.mount("/assets", StaticFiles(directory=static / "assets"), name="assets")
 
