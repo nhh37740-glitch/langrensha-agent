@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "7b6a1d1d-bc2e-47c7-8182-fae276096e60",
+  "status": "current",
+  "command": "deliver",
+  "type": "workflow",
+  "input": "C:\\Users\\ZZ\\Documents\\project\\lrs\\文档\\版本\\v0.7.0\\独立世界阅读.workflow.json",
+  "output": "C:\\Users\\ZZ\\Documents\\project\\lrs\\临时\\版本图检查\\独立世界阅读.html",
+  "specification": {
+    "sha256": "6cfb27d8e19063eac2433e3931f97f96fb4396392a6510b9c2aa1127f54c2c68",
+    "bytes": 4051
+  },
+  "artifact": {
+    "sha256": "ffb902e512b3406ce044d7f0f213999d981cfc89b1aaec6879406ba6fabb6145",
+    "bytes": 815242
+  }
+}
