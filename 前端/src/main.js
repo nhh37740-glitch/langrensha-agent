@@ -1344,7 +1344,7 @@ function syncChoiceChips() {
 }
 
 function choiceChanged() {
-  const c = view?.choices.find((c) => c.tool === $("choice").value);
+  const c = view?.choices?.find((c) => c.tool === $("choice").value);
   const description = $("choice-description");
   const note = c?.description || "";
   description.textContent = note;
