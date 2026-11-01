@@ -26,6 +26,11 @@ test("四世界24身份从入场选择到真实对局、刷新与手机保持一
       await expect(page.locator("html")).toHaveAttribute("data-world", book.id);
       if (previous.worldbook === book.id) {
         await expect(page.locator("#new-story")).toBeVisible();
+        // 自动推进请求进行中时“另开新局”会被 busy 保护拦下，先暂停并等请求结束。
+        if ((await page.locator("#auto").getAttribute("aria-pressed")) === "true") {
+          await page.locator("#auto").click();
+        }
+        await expect(page.locator("html")).toHaveAttribute("data-busy", "no");
         await page.locator("#new-story").click();
       }
       await expect(page.locator(`#role-select option[value="${role}"]`)).toContainText(name);
