@@ -1129,8 +1129,13 @@ function bell() {
 function render(state) {
   if (catalogPage || state.worldbook !== routeWorld) {
     if (!catalogPage) {
-      // 另一标签页已换世界：完整退回入场界面，停止自动推进并隐藏旧局操作区。
-      resetToIntro(state);
+      if (view) {
+        // 另一标签页已换世界：完整退回入场界面，停止自动推进并隐藏旧局操作区。
+        resetToIntro(state);
+      } else {
+        // 首次进入其他世界的页面：入场表单本已可见，避免与正在进行的入场竞态。
+        showResume(state);
+      }
       return;
     }
     showResume(state);

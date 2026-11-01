@@ -76,13 +76,8 @@ test("跨世界新局后旧页面停止自动推进", async ({ page }) => {
   await page.getByRole("button", { name: "踏入雾中" }).click();
   await expect(page.locator("#identity")).toBeVisible();
   await expect(page.locator("#waiting")).toBeVisible();
-  let advances = 0;
-  let switched = false;
-  const count = (request) => {
-    if (switched && request.url().endsWith("/api/advance")) advances += 1;
-  };
-  page.on("request", count);
-  switched = true;
+  await page.locator("#auto").click();
+  await expect(page.locator("html")).toHaveAttribute("data-busy", "no");
   let created;
   for (let attempt = 0; attempt < 5; attempt += 1) {
     created = await page.request.post("/api/game", {
@@ -93,6 +88,12 @@ test("跨世界新局后旧页面停止自动推进", async ({ page }) => {
     await page.waitForTimeout(300);
   }
   expect(created.ok()).toBe(true);
+  let advances = 0;
+  const count = (request) => {
+    if (request.url().endsWith("/api/advance")) advances += 1;
+  };
+  page.on("request", count);
+  await page.locator("#auto").click();
   await page.waitForTimeout(3500);
   page.off("request", count);
   expect(advances).toBeLessThanOrEqual(1);
