@@ -1129,12 +1129,9 @@ function bell() {
 function render(state) {
   if (catalogPage || state.worldbook !== routeWorld) {
     if (!catalogPage) {
-      // 另一标签页已换世界：停止旧页自动推进，避免继续消耗新局模型调用。
-      view = null;
-      auto = false;
-      $("auto").textContent = "继续旅人";
-      $("auto").setAttribute("aria-pressed", "false");
-      syncWaiting();
+      // 另一标签页已换世界：完整退回入场界面，停止自动推进并隐藏旧局操作区。
+      resetToIntro(state);
+      return;
     }
     showResume(state);
     return;
@@ -1442,20 +1439,7 @@ $("reset").addEventListener("click", () => {
 });
 $("new-story").addEventListener("click", () => {
   if (busy) return error("请等眼前这位旅人的思绪结束。");
-  const previous = view;
-  auto = false;
-  view = null;
-  $("debug-panel").hidden = true;
-  $("intro").hidden = false;
-  ["identity", "story", "action-form", "ending", "assistant", "auto", "reset", "new-story"]
-    .forEach((id) => ($(id).hidden = true));
-  $("status").textContent = "";
-  error("");
-  applyUiState(null);
-  syncDebugPolling();
-  clearDebugView("等待新局");
-  selectWorld(routeWorld, { silent: true });
-  showResume(previous);
+  resetToIntro(view);
 });
 $("assistant-toggle").addEventListener("click", () => {
   const hidden = !$("assistant-body").hidden;
@@ -1580,6 +1564,23 @@ api("state")
     if (![401, 404].includes(err.status))
       error(err.message, err.status ? "app" : "network");
   });
+
+// 退回当前世界的入场界面；previous 用于保留另一世界旧局的继续入口。
+function resetToIntro(previous) {
+  auto = false;
+  view = null;
+  $("debug-panel").hidden = true;
+  $("intro").hidden = false;
+  ["identity", "story", "action-form", "ending", "assistant", "auto", "reset", "new-story"]
+    .forEach((id) => ($(id).hidden = true));
+  $("status").textContent = "";
+  error("");
+  applyUiState(null);
+  syncDebugPolling();
+  clearDebugView("等待新局");
+  selectWorld(routeWorld, { silent: true });
+  showResume(previous);
+}
 
 function showResume(state) {
   if (!state?.game_id) return;

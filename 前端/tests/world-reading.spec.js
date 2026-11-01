@@ -98,6 +98,9 @@ test("跨世界新局后旧页面停止自动推进", async ({ page }) => {
   expect(advances).toBeLessThanOrEqual(1);
   await expect(page.locator("#resume-note")).toContainText("海伯利安");
   await expect(page.locator("#waiting")).toBeHidden();
+  await expect(page.locator("#intro")).toBeVisible();
+  await expect(page.locator("#identity")).toBeHidden();
+  await expect(page.locator("#action-form")).toBeHidden();
 });
 
 test("阅读请求失败可重试，未知世界返回404", async ({ page }) => {
