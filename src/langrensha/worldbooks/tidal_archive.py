@@ -12,6 +12,11 @@ from ._stories.tidal_archive import LETTERS, PUBLIC
 WORLDBOOK = {
     "id": "tidal_archive",
     "name": "潮汐档案馆",
+    "terms": {
+        "bell": "潮钟钥匙",
+        "vision": "潮影",
+        "jargon": {"铜铃": "潮钟钥匙", "争铃": "争钥"},
+    },
     "basis": (
         "原创虚构世界，不改编任何小说或未授权全文。潮汐、潮间带、灯塔、"
         "档案遗产与非仪器航海的事实灵感均来自公开可核验资料，逐条来源见"

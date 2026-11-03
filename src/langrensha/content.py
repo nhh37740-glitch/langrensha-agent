@@ -66,19 +66,3 @@ GUIDANCE = {
     "hunter": "你因袭击或逐离离去时，尚未决出胜负才可最后开枪；毒药使你无法开枪。",
     "idiot": ("第一次被逐离可亮明誓印而留下，之后仍可发言但永久失去选票；夜间遇害无法免死。"),
 }
-
-
-def story_language(text):
-    for original, replacement in {
-        "跳预言家": "声称能读星兆",
-        "跳狼人": "自称夜裔",
-        "查杀": "星兆显出暗影",
-        "金水": "星兆中的清白者",
-        "银水": "被药救下的人",
-        "上警": "争取铜铃",
-        "退水": "退出争铃",
-        "警徽": "铜铃",
-        "狼刀": "夜间袭击",
-    }.items():
-        text = text.replace(original, replacement)
-    return text

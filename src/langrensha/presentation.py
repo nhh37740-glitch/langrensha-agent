@@ -1,7 +1,6 @@
 """仅消费受限玩家视图；将事实映射为当前世界书故事，不输出主持审计。"""
 
 from .content import PERSONAS
-from .content import story_language as _story_language
 from .worldbooks import get_worldbook, worldbook_ids
 
 DEFAULT_WORLD = "mist"
@@ -376,10 +375,26 @@ def _theme_for(worldbook_id):
     base = THEMES[DEFAULT_WORLD]
     theme = THEMES[worldbook_id]
     if theme is base:
-        return {**base, **_copy_nested(base, _MERGE_KEYS)}
-    merged = {**base, **theme}
-    merged.update(_copy_nested(theme, _MERGE_KEYS, fallback=base))
+        merged = {**base, **_copy_nested(base, _MERGE_KEYS)}
+    else:
+        merged = {**base, **theme}
+        merged.update(_copy_nested(theme, _MERGE_KEYS, fallback=base))
+    # 世界称谓以世界书为唯一来源，提示词与展示不会各自漂移。
+    terms = _book_terms(worldbook_id)
+    for key in ("bell", "vision"):
+        if isinstance(terms.get(key), str) and terms[key]:
+            merged[key] = terms[key]
+    if isinstance(terms.get("jargon"), dict):
+        merged["jargon"] = {**merged.get("jargon", {}), **terms["jargon"]}
     return merged
+
+
+def _book_terms(worldbook_id):
+    try:
+        terms = get_worldbook(worldbook_id).get("terms")
+    except KeyError:
+        return {}
+    return terms if isinstance(terms, dict) else {}
 
 
 def _copy_nested(source, keys, fallback=None):
@@ -406,8 +421,7 @@ def _personas(worldbook_id):
 
 
 def story_language(text, replacements=None):
-    """沿用默认黑话替换，再按世界覆盖表现词；不传替换表时行为不变。"""
-    text = _story_language(text)
+    """只按当前世界替换专有名词，不改写自由文本的句意。"""
     for original, replacement in (replacements or {}).items():
         text = text.replace(original, replacement)
     return text
