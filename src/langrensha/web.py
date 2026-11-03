@@ -101,7 +101,9 @@ def create_app(
             if runner is not None and getattr(runner, "model", None) is not None:
                 from .assistant import assist
 
-                return assist(runner.model, data["name"], data["payload"], retrieved)
+                return assist(
+                    runner.model, data["name"], data["payload"], retrieved, player.view()
+                )
             return retrieved
         except Rejected as exc:
             raise HTTPException(422, "现有线索无法支持这次询问。") from exc

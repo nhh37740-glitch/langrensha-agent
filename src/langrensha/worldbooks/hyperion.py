@@ -10,6 +10,7 @@ from ._stories.hyperion import LETTERS, PUBLIC
 WORLDBOOK = {
     "id": "hyperion",
     "name": "海伯利安",
+    "terms": {"bell": "灯盏", "vision": "时隙残影", "jargon": {"铜铃": "灯盏", "争铃": "争灯"}},
     "basis": (
         "据丹·西蒙斯《Hyperion》（1989，Doubleday Foundation；1990 Bantam Spectra "
         "平装本）的公开书目、出版社与百科资料改写；中文译名按 2007 年万卷出版公司版"

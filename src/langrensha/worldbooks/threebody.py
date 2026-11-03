@@ -12,6 +12,11 @@ from ._stories.threebody import LETTERS, PUBLIC
 WORLDBOOK = {
     "id": "threebody",
     "name": "三体",
+    "terms": {
+        "bell": "执剑权限",
+        "vision": "信号",
+        "jargon": {"铜铃": "执剑权限", "争铃": "执剑推选"},
+    },
     "basis": (
         "依据刘慈欣《三体》三部曲的公开书目、百科条目与公开评论自行撰写；"
         "中文版由重庆出版社出版，英文版由 Tor Books 出版（刘宇昆、Joel Martinsen 译）。"

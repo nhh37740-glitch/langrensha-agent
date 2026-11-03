@@ -142,15 +142,17 @@ def test_present_switches_chapters_action_labels_and_endings():
             assert "铜铃" not in inspect["label"]
 
 
-def test_world_jargon_keeps_mist_default_and_removes_bell_from_other_worlds():
+def test_world_jargon_only_localizes_canonical_bell_and_keeps_speech_intact():
     expected = {
         "hyperion": "灯盏",
         "threebody": "执剑权限",
         "tidal_archive": "潮钟钥匙",
     }
-    assert story_language("我先上警，再谈警徽。") == "我先争取铜铃，再谈铜铃。"
+    # 自由发言不做黑话逐字替换，避免“查杀”被改写成“星兆显出暗影”这类病句。
+    assert story_language("我先上警，再谈警徽。") == "我先上警，再谈警徽。"
+    assert story_language("2号对3号的查杀。") == "2号对3号的查杀。"
     for worldbook in WORLDS:
-        text = "我先上警，再谈警徽。"
+        text = "我接过铜铃，继续听证词。"
         state_for_world = state(worldbook)
         game.event(
             state_for_world,
@@ -161,11 +163,21 @@ def test_world_jargon_keeps_mist_default_and_removes_bell_from_other_worlds():
         )
         line = present(game.player_view(state_for_world, 1))["story"][-1]["text"]
         if worldbook == "mist":
-            assert line == "我先争取铜铃，再谈铜铃。"
-            assert "铜铃" in line
+            assert line == text
         else:
             assert "铜铃" not in line
             assert expected[worldbook] in line
+    # 旧黑话与别的世界专名原样保留，交由生成提示统一称谓，而不是机械替换。
+    sample = "2号说3号夜里有查杀，先看警徽。"
+    state_for_world = state("threebody")
+    game.event(
+        state_for_world,
+        "action",
+        {"tool": "speak", "text": sample},
+        actor=1,
+        now=NOW,
+    )
+    assert present(game.player_view(state_for_world, 1))["story"][-1]["text"] == sample
 
 
 def test_vision_narration_switches_by_world():

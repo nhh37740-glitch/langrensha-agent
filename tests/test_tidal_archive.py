@@ -38,11 +38,14 @@ def test_worldbook_metadata_and_entry_contract():
         "id",
         "name",
         "basis",
+        "terms",
         "entries",
         "roles",
         "guidance",
         "personas",
     }
+    assert WORLDBOOK["terms"]["bell"] == "潮钟钥匙"
+    assert WORLDBOOK["terms"]["vision"] == "潮影"
     entries = WORLDBOOK["entries"]
     assert len(entries) >= 12
     ids = [entry["id"] for entry in entries]

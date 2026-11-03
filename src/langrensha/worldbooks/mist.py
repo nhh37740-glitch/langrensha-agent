@@ -8,6 +8,7 @@ WORLDBOOK = {
     "id": "mist",
     "name": "雾钟镇",
     "basis": "本项目原创的雾钟镇设定，沿用 content.py 中已发布的对局文案。",
+    "terms": {"bell": "铜铃", "vision": "星兆", "jargon": {}},
     "entries": [
         {
             "id": item["id"],

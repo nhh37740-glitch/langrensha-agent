@@ -11,7 +11,6 @@ from langchain_deepseek import ChatDeepSeek
 from langgraph.graph import END, START, StateGraph
 from langsmith import tracing_context
 
-from .content import story_language
 from .retrieval import QUERY_TOOLS, history_documents
 from .rules import Rejected
 from .worldbooks import DEFAULT_WORLD_ID, get_worldbook, guidance_for, role_name, visible_entries
@@ -68,6 +67,16 @@ class ModelResponseError(RuntimeError):
     """模型返回无法承载工具调用的对象；不保存响应正文。"""
 
 
+def _terms(book):
+    """取本书世界的核心称谓；缺失时回退雾钟镇，避免提示词出现空词。"""
+    terms = book.get("terms") if isinstance(book, dict) else None
+    terms = terms if isinstance(terms, dict) else {}
+    return {
+        "bell": terms.get("bell") if isinstance(terms.get("bell"), str) else "铜铃",
+        "vision": terms.get("vision") if isinstance(terms.get("vision"), str) else "星兆",
+    }
+
+
 def system_prompt(view, persona=None):
     """按当前世界书生成系统提示；未知世界书回退默认雾钟镇。"""
     persona = persona or Persona()
@@ -75,6 +84,7 @@ def system_prompt(view, persona=None):
         book = get_worldbook(view.get("worldbook", DEFAULT_WORLD_ID))
     except KeyError:
         book = get_worldbook()
+    terms = _terms(book)
     intro = next(
         (
             entry["text"][:800]
@@ -89,7 +99,10 @@ def system_prompt(view, persona=None):
         "只有原生工具调用能产生行动，单说打算做什么不算行动。"
         "每次调用工具前先用一句不超过 80 字的可见说明写清本回合判断依据；"
         "这段说明只进入 Web 调试观察，不是公开发言，也不要复述不应公开的秘密。"
-        "发言须像身处故事之中，不用查杀、跳预言家等黑话，不讲后台工具名。"
+        f"发言须像身处{book['name']}之中，使用本书世界的称谓（{terms['bell']}、{terms['vision']}）"
+        "与日常词汇；不要套用其他世界的专名或狼人杀圈内黑话，也不讲后台工具名。"
+        "用直白中文说清对象、主张与依据，同一概念前后使用同一称呼；"
+        "角色声称只是声称，不当作已经证实的事实。"
         "不要将夜间私有信息或秘密身份当成公开事实；公开表达可以按身份策略选择。"
         f"人物姓名：{persona.name}；人物资料：{persona.description}"
         f"身份称谓：{role_name(book, view['role'])}；"
@@ -161,7 +174,12 @@ def _error_diagnostic(error):
     return diagnostic
 
 
-def tool_schemas(names):
+def tool_schemas(names, worldbook=None):
+    try:
+        book = get_worldbook(worldbook) if worldbook else get_worldbook()
+    except KeyError:
+        book = get_worldbook()
+    bell = _terms(book)["bell"]
     specs = {
         "wolf_vote": (
             "为今晚的袭击提交一票，目标为座位编号。",
@@ -182,17 +200,17 @@ def tool_schemas(names):
         "inspect": "询问一个人的阵营；不可自己或连续两夜同一人。",
         "poison": "消耗唯一毒药，指定一位存活者。",
         "shoot": "最后开枪指定一位存活者。",
-        "transfer_badge": "把铜铃交给一位存活者。",
-        "sheriff_vote": "支持一位争铃者。",
-        "exile_vote": "选择一位应离开广场的人。",
+        "transfer_badge": f"把{bell}交给一位存活者。",
+        "sheriff_vote": f"支持一位正在争取{bell}的人。",
+        "exile_vote": "选择一位应离开的人。",
     }.items():
         specs[name] = (description, target)
     for name, description in {
-        "signup": "参加争铃。",
-        "withdraw": "退出本次争铃。",
+        "signup": f"参加争取{bell}。",
+        "withdraw": f"退出本次争取{bell}。",
         "antidote": "消耗解药救当夜遇袭者。",
-        "reveal": "亮明誓印免于这次逐离，永久放弃选票。",
-        "explode": "暴露夜裔身份离去，中止今日议事。",
+        "reveal": "亮明身份印记，免于这次逐离，永久放弃选票。",
+        "explode": f"暴露{role_name(book, 'wolf')}身份离去，中止今日议事。",
         "self_info": "了解自己的身份、能力与任务。",
     }.items():
         specs[name] = (description, {})
@@ -255,7 +273,7 @@ class DecisionRunner:
             names = view["tools"] + (sorted(QUERY_TOOLS) if view["mode"] == "full_game" else [])
             turns = state["rounds"] + 1
             try:
-                bound = self.model.bind_tools(tool_schemas(names))
+                bound = self.model.bind_tools(tool_schemas(names, view.get("worldbook")))
                 reply = bound.invoke(
                     [
                         rules,
@@ -290,8 +308,6 @@ class DecisionRunner:
             version = state["view"]["version"]
             for index, call in enumerate(state["calls"][: self.config.max_tools_per_reply]):
                 name, args = call["name"], call["args"]
-                if name in {"speak", "wolf_chat"} and isinstance(args.get("text"), str):
-                    args = {**args, "text": story_language(args["text"])}
                 try:
                     if name in QUERY_TOOLS and state["view"]["mode"] == "full_game":
                         if current_view() is None:
